@@ -162,6 +162,7 @@
             padding: 4px 5px;
             gap: 3px;
             overflow: hidden;
+            height: 46px;
         }
         #wb-go {
             padding: 4px 0;
@@ -209,6 +210,8 @@
             font-weight: 600;
             border: 1px solid transparent;
             line-height: 1.2;
+            overflow: hidden;
+            white-space: nowrap;
         }
         .wc .wn { color: #ffffffb0; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
         .wc .wt { color: #fff; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
@@ -218,8 +221,16 @@
         .wc.active .wt { color: #fff; }
         .wc.type-normal { border-left: 2px solid #ff0066; }
         .wc.type-ghost { border-left: 2px solid #aa44ff; }
-        .wc.type-boss { border-left: 2px solid #ff6600; }
         .wc.type-splitter { border-left: 2px solid #00ff88; }
+        .wc.type-fast { border-left: 2px solid #eeee00; }
+        .wc.type-swarm { border-left: 2px solid #00bbbb; }
+        .wc.type-shield { border-left: 2px solid #6aadee; }
+        .wc.type-boss_normal { border-left: 2px solid #ff6600; }
+        .wc.type-boss_ghost { border-left: 2px solid #8844cc; }
+        .wc.type-boss_splitter { border-left: 2px solid #22aa44; }
+        .wc.type-boss_fast { border-left: 2px solid #cccc00; }
+        .wc.type-boss_swarm { border-left: 2px solid #009999; }
+        .wc.type-boss_shield { border-left: 2px solid #4488aa; }
     </style>
 </head>
 <body>
@@ -262,6 +273,18 @@
                     <canvas id="ticon-5" width="24" height="24"></canvas>
                     <span class="cost">15g</span>
                 </button>
+                <button class="tower-btn" id="tbtn-6" onclick="toggleTowerMode(6)">
+                    <canvas id="ticon-6" width="24" height="24"></canvas>
+                    <span class="cost">20g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-7" onclick="toggleTowerMode(7)">
+                    <canvas id="ticon-7" width="24" height="24"></canvas>
+                    <span class="cost">10g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-8" onclick="toggleTowerMode(8)">
+                    <canvas id="ticon-8" width="24" height="24"></canvas>
+                    <span class="cost">25g</span>
+                </button>
             </div>
         </div>
         <div id="info">
@@ -292,6 +315,6 @@
             <button id="wb-go" onclick="startWave()">Lancer</button>
         </div>
     </div>
-    <script src="game.js?v=63"></script>
+    <script src="game.js?v=79"></script>
 </body>
 </html>
