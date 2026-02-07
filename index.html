@@ -165,8 +165,8 @@
             height: 46px;
         }
         #wb-go {
-            padding: 4px 0;
-            width: 90px;
+            padding: 4px 8px;
+            min-width: 110px;
             text-align: center;
             background: #00f0ff;
             color: #030308;
@@ -237,6 +237,8 @@
     <div id="wrap">
         <div id="bar">
             <div id="bar-top">
+                <a href="https://temos.io" id="back-btn" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:rgba(0,240,255,0.08);border:1px solid rgba(0,240,255,0.25);border-radius:3px;color:#00f0ff;text-decoration:none;font-size:14px;cursor:pointer;transition:all 0.2s;flex-shrink:0" onmouseenter="this.style.background='rgba(0,240,255,0.2)';this.style.boxShadow='0 0 8px rgba(0,240,255,0.3)'" onmouseleave="this.style.background='rgba(0,240,255,0.08)';this.style.boxShadow='none'">&#8592;</a>
+                <div class="sep"></div>
                 <div class="s" id="v-gold">Or <b id="gold">100</b></div>
                 <div class="sep"></div>
                 <div class="s" id="v-lives">Vies <b id="lives">20</b></div>
@@ -315,6 +317,6 @@
             <button id="wb-go" onclick="startWave()">Lancer</button>
         </div>
     </div>
-    <script src="game.js?v=79"></script>
+    <script src="game.js?v=80"></script>
 </body>
 </html>
