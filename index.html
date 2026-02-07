@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TD Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #030308;
+            color: #a0b8cc;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+#wrap {
+            display: inline-flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+            border: 1px solid #00f0ff30;
+            box-shadow: 0 0 15px #00f0ff15, 0 0 40px #00f0ff08, inset 0 0 20px #00f0ff05;
+        }
+
+        /* ── TOP BAR ── */
+        #bar {
+            display: flex;
+            flex-direction: column;
+            background: #080c14;
+            border-bottom: 1px solid #00f0ff25;
+        }
+        #bar-top {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+        }
+        #bar-towers {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px 5px;
+            border-top: 1px solid #0a1828;
+        }
+        .s {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 10px;
+            padding: 0 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #506878;
+        }
+        .s b { font-weight: 700; }
+        #v-gold b { color: #ffaa00; text-shadow: 0 0 6px #ffaa0060; }
+        #v-lives b { color: #ff0044; text-shadow: 0 0 6px #ff004460; }
+        #v-wave b, #v-enemies b { color: #00f0ff; text-shadow: 0 0 6px #00f0ff40; }
+        #v-score b { color: #00ff88 !important; text-shadow: 0 0 8px #00ff8860; }
+        #v-wtype { font-size: 9px; color: #405060; margin-left: 2px; letter-spacing: 1px; text-transform: uppercase; }
+        .sep { width: 1px; height: 16px; background: #0a1828; }
+
+        .tower-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 7px 2px 2px;
+            background: #0a0e18;
+            border: 1px solid #1a2840;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all .15s;
+            color: #607888;
+            font-size: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .tower-btn:hover { border-color: #00f0ff60; box-shadow: 0 0 8px #00f0ff20; }
+        .tower-btn.on { border-color: #00f0ff; background: #0a1828; box-shadow: 0 0 12px #00f0ff30, inset 0 0 8px #00f0ff10; }
+        .tower-btn:disabled { opacity: .3; pointer-events: none; }
+        .tower-btn canvas { display: block; border-radius: 2px; }
+        .tower-btn .cost { color: #ffaa00; font-weight: 700; text-shadow: 0 0 4px #ffaa0040; }
+
+        /* ── INFO BAR ── */
+        #info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 3px 10px;
+            height: 28px;
+            background: #060a12;
+            border-left: 1px solid #00f0ff15;
+            border-right: 1px solid #00f0ff15;
+            font-size: 10px;
+            letter-spacing: 0.5px;
+        }
+        #info .il { color: #405060; display: none; }
+        #info .iv { color: #a0c0d0; margin-right: 8px; }
+        #info .stat { display: inline-flex; align-items: center; gap: 3px; }
+        #info .stat svg { width: 13px; height: 13px; flex-shrink: 0; }
+        #sel-name, #tow-name { color: #00f0ff; font-weight: 700; margin-right: 10px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 6px #00f0ff40; }
+        #sel-desc { color: #506070; font-size: 10px; margin-right: 6px; }
+        #info-stats { display: flex; align-items: center; gap: 0; }
+        #info-desc { display: none; }
+        #info-tower { display: none; align-items: center; gap: 8px; }
+        #msg { color: #ff0066; margin-left: auto; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 0 6px #ff006640; }
+        #up-btn {
+            padding: 2px 8px;
+            background: transparent;
+            color: #00f0ff;
+            border: 1px solid #00f0ff;
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #up-btn:hover { background: #00f0ff; color: #030308; box-shadow: 0 0 10px #00f0ff60; }
+        #up-btn:disabled { opacity: .3; pointer-events: none; }
+        #sell-btn {
+            padding: 2px 8px;
+            background: transparent;
+            color: #ff0066;
+            border: 1px solid #ff0066;
+            border-radius: 2px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #sell-btn:hover { background: #ff0066; color: #030308; box-shadow: 0 0 10px #ff006660; }
+
+        /* ── CANVAS ── */
+        #game {
+            display: block;
+            border-left: 1px solid #00f0ff15;
+            border-right: 1px solid #00f0ff15;
+            border-top: 1px solid #0a1828;
+            cursor: crosshair;
+        }
+
+        /* ── WAVE BAR ── */
+        #wave-bar {
+            display: flex;
+            align-items: stretch;
+            background: #080c14;
+            border-top: 1px solid #0a1828;
+            padding: 4px 5px;
+            gap: 3px;
+            overflow: hidden;
+        }
+        #wb-go {
+            padding: 4px 0;
+            width: 90px;
+            text-align: center;
+            background: #00f0ff;
+            color: #030308;
+            border: none;
+            border-radius: 2px;
+            font-size: 9px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #wb-go:hover { background: #40ffff; box-shadow: 0 0 15px #00f0ff60; }
+        #wb-go:disabled { opacity: .3; cursor: default; background: #1a3040; color: #405060; }
+        #wb-waves {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            position: relative;
+            min-height: 38px;
+        }
+        #wb-inner {
+            display: flex;
+            gap: 3px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+        }
+        .wc {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 4px;
+            border-radius: 2px;
+            font-weight: 600;
+            border: 1px solid transparent;
+            line-height: 1.2;
+        }
+        .wc .wn { color: #ffffffb0; font-size: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .wc .wt { color: #fff; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; }
+        .wc .wc-hp { color: #ffffffa0; font-size: 7px; }
+        .wc.active { border-color: #00f0ff; box-shadow: 0 0 8px #00f0ff40, inset 0 0 6px #00f0ff15; }
+        .wc.active .wn { color: #fff; }
+        .wc.active .wt { color: #fff; }
+        .wc.type-normal { border-left: 2px solid #ff0066; }
+        .wc.type-ghost { border-left: 2px solid #aa44ff; }
+        .wc.type-boss { border-left: 2px solid #ff6600; }
+        .wc.type-splitter { border-left: 2px solid #00ff88; }
+    </style>
+</head>
+<body>
+    <div id="wrap">
+        <div id="bar">
+            <div id="bar-top">
+                <div class="s" id="v-gold">Or <b id="gold">100</b></div>
+                <div class="sep"></div>
+                <div class="s" id="v-lives">Vies <b id="lives">20</b></div>
+                <div class="sep"></div>
+                <div class="s" id="v-wave">Vague <b id="wave">0/20</b></div>
+                <span id="v-wtype"></span>
+                <div class="sep"></div>
+                <div class="s" id="v-enemies">Restants <b id="enemies-left">0</b></div>
+                <div class="sep"></div>
+                <div class="s" id="v-score" style="margin-left:auto">Score <b id="score">0</b></div>
+            </div>
+            <div id="bar-towers">
+                <button class="tower-btn" id="tbtn-0" onclick="toggleTowerMode(0)">
+                    <canvas id="ticon-0" width="24" height="24"></canvas>
+                    <span class="cost">15g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-1" onclick="toggleTowerMode(1)">
+                    <canvas id="ticon-1" width="24" height="24"></canvas>
+                    <span class="cost">25g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-2" onclick="toggleTowerMode(2)">
+                    <canvas id="ticon-2" width="24" height="24"></canvas>
+                    <span class="cost">10g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-3" onclick="toggleTowerMode(3)">
+                    <canvas id="ticon-3" width="24" height="24"></canvas>
+                    <span class="cost">20g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-4" onclick="toggleTowerMode(4)">
+                    <canvas id="ticon-4" width="24" height="24"></canvas>
+                    <span class="cost">20g</span>
+                </button>
+                <button class="tower-btn" id="tbtn-5" onclick="toggleTowerMode(5)">
+                    <canvas id="ticon-5" width="24" height="24"></canvas>
+                    <span class="cost">15g</span>
+                </button>
+            </div>
+        </div>
+        <div id="info">
+            <div id="info-desc">
+                <span id="sel-name">-</span>
+                <span id="sel-desc">-</span>
+                <span id="info-stats">
+                    <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ff0066" stroke-width="2.5" stroke-linecap="round"><path d="M14.5 3l6.5 6.5-11 11L3 13.5z"/><path d="M14.5 3L21 9.5"/><path d="M3 13.5L10.5 21"/></svg><span class="iv" id="desc-damage">-</span></span>
+                    <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#00f0ff"/></svg><span class="iv" id="desc-range">-</span></span>
+                    <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6600" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="iv" id="desc-rate">-</span></span>
+                    <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 6v2m0 8v2m-6-6h2m8 0h2"/><circle cx="12" cy="12" r="3" fill="#ffaa00"/></svg><span class="iv" id="desc-cost">-</span></span>
+                </span>
+            </div>
+            <div id="info-tower">
+                <span id="tow-name">-</span>
+                <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#a0a0a0" stroke-width="2" stroke-linecap="round"><path d="M12 3l3 6h6l-5 4 2 7-6-4-6 4 2-7-5-4h6z"/></svg><span class="iv" id="tow-level">-</span></span>
+                <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ff0066" stroke-width="2.5" stroke-linecap="round"><path d="M14.5 3l6.5 6.5-11 11L3 13.5z"/><path d="M14.5 3L21 9.5"/><path d="M3 13.5L10.5 21"/></svg><span class="iv" id="tow-damage">-</span></span>
+                <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#00f0ff"/></svg><span class="iv" id="tow-range">-</span></span>
+                <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6600" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="iv" id="tow-rate">-</span></span>
+                <button id="up-btn" onclick="upgradeSelected()">Niv.2</button>
+                <button id="sell-btn" onclick="sellSelected()">Vendre</button>
+            </div>
+            <span id="msg"></span>
+        </div>
+        <canvas id="game"></canvas>
+        <div id="wave-bar">
+            <div id="wb-waves"></div>
+            <button id="wb-go" onclick="startWave()">Lancer</button>
+        </div>
+    </div>
+    <script src="game.js?v=63"></script>
+</body>
+</html>
