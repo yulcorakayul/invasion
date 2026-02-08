@@ -40,6 +40,12 @@ const EXIT_ROWS = [8, 9, 10, 11, 12];
 const ENTRY_COL = 0;
 const EXIT_COL = GRID - 1;
 
+function setEntryGroups(groups) {
+    ENTRY_GROUPS.splice(0, ENTRY_GROUPS.length, ...groups);
+    ENTRY_GROUP_WEIGHTS.splice(0, ENTRY_GROUP_WEIGHTS.length, ...groups.map(g => g.length));
+    ENTRY_ROWS.splice(0, ENTRY_ROWS.length, ...groups.flat());
+}
+
 function pickEntryRow(validRows) {
     const groups = ENTRY_GROUPS.map((g, i) => ({ rows: g.filter(r => validRows.includes(r)), w: ENTRY_GROUP_WEIGHTS[i] })).filter(g => g.rows.length > 0);
     if (groups.length === 0) return undefined;
@@ -159,31 +165,61 @@ const ENEMY_TYPES = {
 };
 
 const WAVES = [
-    { count: 5,  hp: 60,   type: 'normal' },        // 1
-    { count: 6,  hp: 80,   type: 'normal' },        // 2
-    { count: 4,  hp: 50,   type: 'ghost' },         // 3
-    { count: 8,  hp: 40,   type: 'fast' },          // 4
-    { count: 6,  hp: 90,   type: 'shield' },        // 5
-    { count: 2,  hp: 600,  type: 'boss_normal' },   // 6
-    { count: 15, hp: 50,   type: 'swarm' },         // 7
-    { count: 8,  hp: 70,   type: 'splitter' },      // 8
-    { count: 8,  hp: 130,  type: 'normal' },        // 9
-    { count: 6,  hp: 90,   type: 'ghost' },         // 10
-    { count: 10, hp: 60,   type: 'fast' },          // 11
-    { count: 8,  hp: 120,  type: 'shield' },        // 12
-    { count: 2,  hp: 1000, type: 'boss_ghost' },    // 13
-    { count: 20, hp: 80,   type: 'swarm' },         // 14
-    { count: 10, hp: 170,  type: 'normal' },        // 15
-    { count: 9,  hp: 130,  type: 'splitter' },      // 16
-    { count: 12, hp: 80,   type: 'fast' },          // 17
-    { count: 3,  hp: 1500, type: 'boss_fast' },     // 18
-    { count: 11, hp: 220,  type: 'normal' },        // 19
-    { count: 10, hp: 160,  type: 'shield' },        // 20
-    { count: 25, hp: 120,  type: 'swarm' },         // 21
-    { count: 2,  hp: 2000, type: 'boss_splitter' }, // 22
-    { count: 7,  hp: 160,  type: 'ghost' },         // 23
-    { count: 3,  hp: 2000, type: 'boss_swarm' },    // 24
-    { count: 3,  hp: 3500, type: 'boss_shield' },   // 25
+    // --- Early (1-10): intro de chaque type ---
+    { count: 5,  hp: 50,    type: 'normal' },        // 1
+    { count: 6,  hp: 65,    type: 'normal' },        // 2
+    { count: 4,  hp: 45,    type: 'ghost' },         // 3
+    { count: 8,  hp: 35,    type: 'fast' },          // 4
+    { count: 12, hp: 30,    type: 'swarm' },         // 5
+    { count: 6,  hp: 60,    type: 'splitter' },      // 6
+    { count: 5,  hp: 80,    type: 'shield' },        // 7
+    { count: 7,  hp: 90,    type: 'normal' },        // 8
+    { count: 2,  hp: 500,   type: 'boss_normal' },   // 9  BOSS
+    { count: 10, hp: 50,    type: 'fast' },          // 10
+    // --- Mid-early (11-20): montee en puissance ---
+    { count: 6,  hp: 80,    type: 'ghost' },         // 11
+    { count: 18, hp: 55,    type: 'swarm' },         // 12
+    { count: 8,  hp: 100,   type: 'splitter' },      // 13
+    { count: 8,  hp: 120,   type: 'shield' },        // 14
+    { count: 9,  hp: 130,   type: 'normal' },        // 15
+    { count: 12, hp: 70,    type: 'fast' },          // 16
+    { count: 2,  hp: 900,   type: 'boss_ghost' },    // 17  BOSS
+    { count: 22, hp: 75,    type: 'swarm' },         // 18
+    { count: 7,  hp: 110,   type: 'ghost' },         // 19
+    { count: 9,  hp: 100,   type: 'splitter' },      // 20
+    // --- Mid (21-30): difficulte moyenne ---
+    { count: 10, hp: 170,   type: 'normal' },        // 21
+    { count: 10, hp: 150,   type: 'shield' },        // 22
+    { count: 14, hp: 90,    type: 'fast' },          // 23
+    { count: 25, hp: 100,   type: 'swarm' },         // 24
+    { count: 3,  hp: 1200,  type: 'boss_fast' },     // 25  BOSS
+    { count: 10, hp: 140,   type: 'splitter' },      // 26
+    { count: 8,  hp: 150,   type: 'ghost' },         // 27
+    { count: 12, hp: 200,   type: 'normal' },        // 28
+    { count: 12, hp: 180,   type: 'shield' },        // 29
+    { count: 28, hp: 120,   type: 'swarm' },         // 30
+    // --- Mid-late (31-40): serieux ---
+    { count: 16, hp: 110,   type: 'fast' },          // 31
+    { count: 9,  hp: 180,   type: 'ghost' },         // 32
+    { count: 2,  hp: 1800,  type: 'boss_splitter' }, // 33  BOSS
+    { count: 12, hp: 180,   type: 'splitter' },      // 34
+    { count: 14, hp: 250,   type: 'normal' },        // 35
+    { count: 14, hp: 220,   type: 'shield' },        // 36
+    { count: 30, hp: 150,   type: 'swarm' },         // 37
+    { count: 18, hp: 130,   type: 'fast' },          // 38
+    { count: 10, hp: 220,   type: 'ghost' },         // 39
+    { count: 3,  hp: 2500,  type: 'boss_swarm' },    // 40  BOSS
+    // --- Late (41-50): enfer ---
+    { count: 15, hp: 300,   type: 'normal' },        // 41
+    { count: 14, hp: 200,   type: 'splitter' },      // 42
+    { count: 16, hp: 280,   type: 'shield' },        // 43
+    { count: 35, hp: 180,   type: 'swarm' },         // 44
+    { count: 20, hp: 160,   type: 'fast' },          // 45
+    { count: 12, hp: 280,   type: 'ghost' },         // 46
+    { count: 16, hp: 350,   type: 'normal' },        // 47
+    { count: 3,  hp: 4000,  type: 'boss_shield' },   // 48  BOSS
+    { count: 18, hp: 300,   type: 'shield' },        // 49
+    { count: 18, hp: 400,   type: 'normal' },        // 50
 ];
 const SPAWN_INT = 0.7;
 
@@ -213,6 +249,30 @@ let score = 0;
 let nextWaveTimer = 0;
 let explosions = [];
 let waveDuration = 0;
+let gameOverPlayed = false;
+
+// === DUEL STATE ===
+let isDuel = false;
+let peer = null;
+let conn = null;
+let isHost = false;
+let opponentLives = 20;
+let opponentScore = 0;
+let opponentWave = 0;
+let gameStartTime = 0;
+let gameEndTime = 0;
+let duelEnded = false;
+let opponentFinished = false;
+let opponentFinalScore = 0;
+let opponentFinalTime = 0;
+let _fromSync = false;
+let _pendingWaveSync = false;
+let _lastStatusSend = 0;
+let duelResultTitle = '';
+let duelResultSub = '';
+let duelStartTimer = 0;
+let _bgInterval = null;
+let oppBoardData = null;
 
 function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
@@ -223,6 +283,7 @@ function killEnemy(e) {
     gold += e.reward;
     score += (ENEMY_TYPES[e.typeName] || {}).pts || 1;
     spawnGoldText(e.x, e.y, e.reward);
+    playSfx('kill');
     updateUI();
 }
 
@@ -377,6 +438,7 @@ class Tower {
                         }
                     }
                     explosions.push({ x: this.x, y: this.y, radius: st.splashR * CS, timer: 0.5, maxTimer: 0.5 });
+                    playSfx('explosion');
                     this.destroyed = true;
                     grid[this.row][this.col] = 0;
                     if (selectedTower === this) selectedTower = null;
@@ -844,6 +906,7 @@ class Enemy {
         if (this.wpIdx >= this.waypoints.length) {
             this.alive = false;
             lives--;
+            playSfx('hit');
             updateUI();
             return;
         }
@@ -1058,7 +1121,7 @@ function toggleTowerMode(typeIdx) {
 function upgradeSelected() {
     if (!selectedTower) return;
     if (selectedTower.upgradeTimer > 0) { showMessage('Amelioration en cours...'); return; }
-    if (selectedTower.upgrade()) { showMessage('Amelioration lancee'); updateUI(); }
+    if (selectedTower.upgrade()) { showMessage('Amelioration lancee'); playSfx('upgrade'); updateUI(); }
     else showMessage('Pas assez d\'or');
 }
 
@@ -1070,6 +1133,7 @@ function sellSelected() {
     const refund = Math.floor(selectedTower.totalCost * 0.6);
     gold += refund;
     selectedTower = null;
+    playSfx('sell');
     updateUI();
     showMessage('Vendu +' + refund + 'g');
     for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
@@ -1098,6 +1162,8 @@ function computeMaxTraversal(speed, ghost) {
 function startWave() {
     if (waveActive) return;
     if (waveNum >= WAVES.length) return;
+    // Duel: wave 1 only starts via countdown timer
+    if (isDuel && waveNum === 0 && duelStartTimer > 0) return;
     nextWaveTimer = 0;
     waveDuration = 0;
     if (getValidEntryRows().length === 0) { showMessage('Chemin bloque !'); return; }
@@ -1113,6 +1179,14 @@ function startWave() {
     waveDuration = (w.count - 1) * si + maxTrav;
     nextWaveTimer = waveDuration;
     showMessage('Vague ' + waveNum + ' lancee');
+    playSfx('wave');
+    // Duel sync: send wave_start to opponent (only if I initiated)
+    if (isDuel && conn && !_fromSync) {
+        conn.send({ type: 'wave_start' });
+    }
+    _fromSync = false;
+    // Track game start time for tiebreaker
+    if (isDuel && waveNum === 1) gameStartTime = Date.now();
     updateUI();
 }
 
@@ -1151,6 +1225,7 @@ canvas.addEventListener('click', () => {
     grid[row][col] = 1;
     towers.push(new Tower(row, col, placingType));
     gold -= cost;
+    playSfx('place');
     updateUI();
     for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
 });
@@ -1166,6 +1241,7 @@ canvas.addEventListener('contextmenu', (e) => {
     const refund = Math.floor(tower.totalCost * 0.6);
     gold += refund;
     if (selectedTower === tower) selectedTower = null;
+    playSfx('sell');
     updateUI();
     showMessage('Vendu +' + refund + 'g');
     for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
@@ -1266,9 +1342,17 @@ function drawScene() {
 // === GAME LOOP ===
 let lastTime = 0;
 
+function scheduleLoop() {
+    if (isDuel && document.hidden) return; // background interval handles it
+    requestAnimationFrame(gameLoop);
+}
+
 function gameLoop(time) {
-    const dt = Math.min((time - lastTime) / 1000, 0.05);
+    if (!time) time = performance.now();
+    const rawDt = (time - lastTime) / 1000;
     lastTime = time;
+    // In duel: allow larger dt so background tabs catch up (up to 0.5s per step)
+    const dt = Math.min(rawDt, isDuel ? 0.5 : 0.05);
 
     if (waveActive && enemiesToSpawn > 0) {
         spawnTimer -= dt;
@@ -1322,10 +1406,18 @@ function gameLoop(time) {
     if (waveActive && enemiesToSpawn === 0 && enemies.length === 0) {
         waveActive = false;
         if (waveNum >= WAVES.length) {
-            if (lives > 0) showMessage('Victoire !');
+            if (lives > 0) {
+                if (isDuel) {
+                    gameEndTime = Date.now();
+                    if (conn) conn.send({ type: 'game_complete', score, time: gameEndTime - gameStartTime });
+                    if (opponentFinished) checkDuelEnd();
+                    else { showMessage('Termine ! En attente...'); playSfx('victory'); }
+                } else {
+                    showMessage('Victoire !'); playSfx('victory');
+                }
+            }
         } else {
             if (lives > 0) showMessage('Vague ' + waveNum + ' terminee');
-            // If auto-timer already expired, relaunch with short delay
             if (waveNum >= 1 && nextWaveTimer <= 0) {
                 nextWaveTimer = 1;
             }
@@ -1337,29 +1429,101 @@ function gameLoop(time) {
         nextWaveTimer -= dt;
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
-            if (waveNum < WAVES.length && lives > 0) startWave();
+            if (waveNum < WAVES.length && lives > 0) {
+                if (isDuel) _fromSync = true; // auto-launch: don't sync (opponent has own timer)
+                startWave();
+            }
+        }
+    }
+
+    // Duel: 15-second countdown before wave 1
+    if (isDuel && duelStartTimer > 0) {
+        duelStartTimer -= dt;
+        if (duelStartTimer <= 0) {
+            duelStartTimer = 0;
+            _fromSync = true; // don't send sync, both timers fire independently
+            startWave();
         }
     }
 
     if (lives <= 0) {
         lives = 0;
+        if (!gameOverPlayed) {
+            playSfx('gameover'); gameOverPlayed = true;
+            if (isDuel && !duelEnded) {
+                duelEnded = true;
+                if (conn) conn.send({ type: 'game_over' });
+                duelResultTitle = 'DEFAITE';
+                duelResultSub = 'Vous avez ete elimine';
+            }
+        }
         updateUI();
         drawScene();
         for (const t of towers) t.draw();
         for (const e of enemies) e.draw();
         ctx.fillStyle = 'rgba(3,3,8,0.8)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        ctx.fillStyle = '#ff0066';
+        if (isDuel && duelResultTitle) {
+            const isWin = duelResultTitle === 'VICTOIRE';
+            ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
+            ctx.font = '700 14px "Press Start 2P", monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
+            ctx.fillText(duelResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#506070';
+            ctx.font = '10px "JetBrains Mono", monospace';
+            ctx.fillText(duelResultSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        } else {
+            ctx.fillStyle = '#ff0066';
+            ctx.font = '700 14px "Press Start 2P", monospace';
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
+            ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 10);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#506070';
+            ctx.font = '10px "JetBrains Mono", monospace';
+            ctx.fillText('SCORE: ' + score, CANVAS_W / 2, CANVAS_H / 2 + 20);
+        }
+        return;
+    }
+
+    // Duel result overlay (when opponent dies but I'm still alive)
+    if (duelEnded && duelResultTitle && lives > 0) {
+        updateUI();
+        drawScene();
+        for (const t of towers) t.draw();
+        for (const p of projectiles) p.draw();
+        for (const e of enemies) e.draw();
+        ctx.fillStyle = 'rgba(3,3,8,0.8)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        const isWin = duelResultTitle === 'VICTOIRE';
+        ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
         ctx.font = '700 14px "Press Start 2P", monospace';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
-        ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 10);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
+        ctx.fillText(duelResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
         ctx.font = '10px "JetBrains Mono", monospace';
-        ctx.fillText('SCORE: ' + score, CANVAS_W / 2, CANVAS_H / 2 + 20);
+        ctx.fillText(duelResultSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        scheduleLoop();
         return;
+    }
+
+    // Duel: send periodic status updates
+    if (isDuel && conn) {
+        _lastStatusSend += dt;
+        if (_lastStatusSend >= 0.5) {
+            _lastStatusSend = 0;
+            conn.send({
+                type: 'status', lives, score, wave: waveNum,
+                tw: towers.map(function(t) { return { r: t.row, c: t.col, i: t.typeIdx }; }),
+                en: enemies.filter(function(e) { return e.alive; }).map(function(e) {
+                    return { gx: (e.x - GX) / CS, gy: e.y / CS, t: e.typeName, s: ENEMY_TYPES[e.typeName].scale || 1 };
+                })
+            });
+        }
     }
 
     if (messageTimer > 0) {
@@ -1379,6 +1543,8 @@ function gameLoop(time) {
     explosions = explosions.filter(ex => ex.timer > 0);
 
     updateUI();
+    // Skip rendering when tab is hidden (background duel)
+    if (document.hidden) { scheduleLoop(); return; }
     drawScene();
     for (const t of towers) t.draw();
     for (const p of projectiles) p.draw();
@@ -1415,7 +1581,7 @@ function gameLoop(time) {
         ctx.globalAlpha = 1;
     }
 
-    requestAnimationFrame(gameLoop);
+    scheduleLoop();
 }
 
 // === TOWER ICONS ===
@@ -1731,18 +1897,24 @@ function updateWaveBar() {
     if (waveNum >= WAVES.length && allDead) {
         goBtn.textContent = 'GG';
         goBtn.disabled = true;
+    } else if (isDuel && duelStartTimer > 0 && waveNum === 0) {
+        goBtn.textContent = 'Debut ' + Math.ceil(duelStartTimer) + 's';
+        goBtn.disabled = true;
     } else if (waveNum === 0) {
         goBtn.textContent = 'Lancer 1';
         goBtn.disabled = lives <= 0;
     } else if (waveActive && alive > 0) {
         goBtn.textContent = alive + ' restants';
         goBtn.disabled = true;
-    } else if (nextWaveTimer > 0) {
-        goBtn.textContent = 'Auto ' + Math.ceil(nextWaveTimer) + 's';
+    } else if (isDuel && duelEnded) {
+        goBtn.textContent = 'Termine';
         goBtn.disabled = true;
+    } else if (nextWaveTimer > 0) {
+        goBtn.textContent = 'Lancer ' + (waveNum + 1) + ' (' + Math.ceil(nextWaveTimer) + 's)';
+        goBtn.disabled = lives <= 0;
     } else {
         goBtn.textContent = 'Lancer ' + (waveNum + 1);
-        goBtn.disabled = true;
+        goBtn.disabled = lives <= 0;
     }
 }
 
@@ -1783,3 +1955,606 @@ function resizeGame() {
     _wbCellW = 0;
 }
 window.addEventListener('resize', resizeGame);
+
+// === BACKGROUND TAB (duel) ===
+document.addEventListener('visibilitychange', function() {
+    if (!isDuel) return;
+    if (document.hidden) {
+        // Tab hidden: start backup interval so game keeps running
+        if (!_bgInterval) {
+            _bgInterval = setInterval(function() {
+                gameLoop(performance.now());
+            }, 100);
+        }
+    } else {
+        // Tab visible: stop interval, resume rAF
+        if (_bgInterval) { clearInterval(_bgInterval); _bgInterval = null; }
+        lastTime = performance.now(); // reset to avoid huge dt spike
+        scheduleLoop();
+    }
+});
+
+// === AUDIO ENGINE ===
+let audioCtx = null;
+let masterGain = null;
+let musicGain = null;
+let sfxGain = null;
+let isMuted = false;
+let musicStarted = false;
+
+function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1;
+    masterGain.connect(audioCtx.destination);
+    musicGain = audioCtx.createGain();
+    musicGain.gain.value = 0.25;
+    musicGain.connect(masterGain);
+    sfxGain = audioCtx.createGain();
+    sfxGain.gain.value = 0.5;
+    sfxGain.connect(masterGain);
+}
+
+function toggleMute() {
+    initAudio();
+    isMuted = !isMuted;
+    masterGain.gain.setTargetAtTime(isMuted ? 0 : 1, audioCtx.currentTime, 0.05);
+    document.getElementById('mute-btn').classList.toggle('muted', isMuted);
+    document.getElementById('mute-icon-on').style.display = isMuted ? 'none' : '';
+    document.getElementById('mute-icon-off').style.display = isMuted ? '' : 'none';
+    if (!musicStarted) { startMusic(); musicStarted = true; }
+}
+
+// --- SFX ---
+function playSfx(type) {
+    if (!audioCtx) return;
+    const t = audioCtx.currentTime;
+    if (type === 'place') {
+        // Short mechanical click
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'square';
+        o.frequency.setValueAtTime(800, t);
+        o.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+        g.gain.setValueAtTime(0.3, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+        o.connect(g); g.connect(sfxGain);
+        o.start(t); o.stop(t + 0.1);
+    } else if (type === 'kill') {
+        // Quick blip
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sine';
+        o.frequency.setValueAtTime(600, t);
+        o.frequency.exponentialRampToValueAtTime(1200, t + 0.06);
+        g.gain.setValueAtTime(0.15, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o.connect(g); g.connect(sfxGain);
+        o.start(t); o.stop(t + 0.08);
+    } else if (type === 'wave') {
+        // Rising sweep
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(150, t);
+        o.frequency.exponentialRampToValueAtTime(600, t + 0.3);
+        g.gain.setValueAtTime(0.2, t);
+        g.gain.linearRampToValueAtTime(0.2, t + 0.15);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        o.connect(g); g.connect(sfxGain);
+        o.start(t); o.stop(t + 0.4);
+    } else if (type === 'sell') {
+        // Coin-like descending
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(1000, t);
+        o.frequency.exponentialRampToValueAtTime(400, t + 0.15);
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        o.connect(g); g.connect(sfxGain);
+        o.start(t); o.stop(t + 0.2);
+    } else if (type === 'explosion') {
+        // Noise burst
+        const bufSize = audioCtx.sampleRate * 0.3;
+        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2);
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0.35, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        const filt = audioCtx.createBiquadFilter();
+        filt.type = 'lowpass';
+        filt.frequency.setValueAtTime(800, t);
+        filt.frequency.exponentialRampToValueAtTime(100, t + 0.3);
+        src.connect(filt); filt.connect(g); g.connect(sfxGain);
+        src.start(t);
+    } else if (type === 'upgrade') {
+        // Two-tone ascending
+        for (let i = 0; i < 2; i++) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(500 + i * 300, t + i * 0.1);
+            g.gain.setValueAtTime(0.2, t + i * 0.1);
+            g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.1 + 0.15);
+            o.connect(g); g.connect(sfxGain);
+            o.start(t + i * 0.1); o.stop(t + i * 0.1 + 0.15);
+        }
+    } else if (type === 'hit') {
+        // Enemy reaches exit
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(200, t);
+        o.frequency.exponentialRampToValueAtTime(50, t + 0.25);
+        g.gain.setValueAtTime(0.3, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        o.connect(g); g.connect(sfxGain);
+        o.start(t); o.stop(t + 0.3);
+    } else if (type === 'gameover') {
+        // Descending doom
+        for (let i = 0; i < 4; i++) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sawtooth';
+            o.frequency.setValueAtTime(300 - i * 60, t + i * 0.2);
+            g.gain.setValueAtTime(0.25, t + i * 0.2);
+            g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.2 + 0.3);
+            o.connect(g); g.connect(sfxGain);
+            o.start(t + i * 0.2); o.stop(t + i * 0.2 + 0.3);
+        }
+    } else if (type === 'victory') {
+        // Ascending fanfare
+        const notes = [523, 659, 784, 1047];
+        for (let i = 0; i < notes.length; i++) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(notes[i], t + i * 0.15);
+            g.gain.setValueAtTime(0.2, t + i * 0.15);
+            g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.15 + 0.3);
+            o.connect(g); g.connect(sfxGain);
+            o.start(t + i * 0.15); o.stop(t + i * 0.15 + 0.3);
+        }
+    }
+}
+
+// --- MUSIC: dark ambient cyberpunk loop ---
+function startMusic() {
+    if (!audioCtx) return;
+    const bpm = 75;
+    const beat = 60 / bpm;
+    const bar = beat * 4;
+
+    // Bass sequence (low rumble pattern)
+    const bassNotes = [55, 55, 65.41, 55, 49, 49, 65.41, 49]; // A1, A1, C2, A1, G1, G1, C2, G1
+    let bassIdx = 0;
+
+    function playBass() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const freq = bassNotes[bassIdx % bassNotes.length];
+        bassIdx++;
+
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(0.15, t);
+        g.gain.setValueAtTime(0.15, t + beat * 0.7);
+        g.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.95);
+
+        const filt = audioCtx.createBiquadFilter();
+        filt.type = 'lowpass';
+        filt.frequency.setValueAtTime(200, t);
+
+        o.connect(filt); filt.connect(g); g.connect(musicGain);
+        o.start(t); o.stop(t + beat);
+
+        setTimeout(playBass, beat * 1000);
+    }
+
+    // Pad / atmosphere (slow evolving chord)
+    const padChords = [
+        [110, 130.81, 164.81],   // Am
+        [98, 130.81, 164.81],    // Gsus
+        [110, 138.59, 164.81],   // Am(b6)
+        [98, 123.47, 155.56],    // G
+    ];
+    let padIdx = 0;
+
+    function playPad() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const chord = padChords[padIdx % padChords.length];
+        padIdx++;
+
+        for (const freq of chord) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(freq, t);
+            // Slow swell
+            g.gain.setValueAtTime(0.001, t);
+            g.gain.linearRampToValueAtTime(0.06, t + bar * 0.4);
+            g.gain.linearRampToValueAtTime(0.06, t + bar * 0.7);
+            g.gain.exponentialRampToValueAtTime(0.001, t + bar * 0.98);
+
+            const filt = audioCtx.createBiquadFilter();
+            filt.type = 'lowpass';
+            filt.frequency.setValueAtTime(400, t);
+            filt.frequency.linearRampToValueAtTime(800, t + bar * 0.5);
+            filt.frequency.linearRampToValueAtTime(400, t + bar);
+
+            o.connect(filt); filt.connect(g); g.connect(musicGain);
+            o.start(t); o.stop(t + bar);
+        }
+
+        setTimeout(playPad, bar * 1000);
+    }
+
+    // Hi-hat pattern (subtle rhythm)
+    let hatStep = 0;
+    function playHat() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const accent = hatStep % 4 === 0;
+        hatStep++;
+
+        const bufSize = audioCtx.sampleRate * 0.05;
+        const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 3);
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(accent ? 0.08 : 0.04, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
+        const hp = audioCtx.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 8000;
+        src.connect(hp); hp.connect(g); g.connect(musicGain);
+        src.start(t);
+
+        setTimeout(playHat, (beat / 2) * 1000);
+    }
+
+    // Arpeggio melody (sparse cyberpunk notes)
+    const arpNotes = [0, 0, 330, 0, 0, 440, 0, 392, 0, 0, 330, 0, 349, 0, 0, 0]; // sparse E4, A4, G4, E4, F4
+    let arpIdx = 0;
+
+    function playArp() {
+        if (!audioCtx) return;
+        const t = audioCtx.currentTime;
+        const freq = arpNotes[arpIdx % arpNotes.length];
+        arpIdx++;
+
+        if (freq > 0) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(freq, t);
+            g.gain.setValueAtTime(0.07, t);
+            g.gain.exponentialRampToValueAtTime(0.001, t + beat * 0.8);
+
+            const delay = audioCtx.createDelay(1);
+            delay.delayTime.value = beat * 0.75;
+            const fb = audioCtx.createGain();
+            fb.gain.value = 0.3;
+            const dg = audioCtx.createGain();
+            dg.gain.value = 0.04;
+
+            o.connect(g); g.connect(musicGain);
+            g.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(dg); dg.connect(musicGain);
+            o.start(t); o.stop(t + beat);
+        }
+
+        setTimeout(playArp, (beat / 2) * 1000);
+    }
+
+    playBass();
+    playPad();
+    playHat();
+    setTimeout(playArp, bar * 2 * 1000); // arp enters after 2 bars
+}
+
+// Auto-init audio on first user interaction
+document.addEventListener('click', function audioInit() {
+    initAudio();
+    if (!musicStarted) { startMusic(); musicStarted = true; }
+    document.removeEventListener('click', audioInit);
+}, { once: true });
+
+// === MULTIPLAYER / MENU ===
+function generateRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let code = '';
+    for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+}
+
+function menuStartSolo() {
+    isDuel = false;
+    document.getElementById('menu-overlay').style.display = 'none';
+}
+
+function menuShowDuel() {
+    document.getElementById('menu-main').style.display = 'none';
+    document.getElementById('menu-duel').style.display = '';
+}
+
+function menuBack() {
+    document.getElementById('menu-duel').style.display = 'none';
+    document.getElementById('menu-main').style.display = '';
+}
+
+function menuCreateRoom() {
+    if (typeof Peer === 'undefined') { alert('PeerJS non charge'); return; }
+    document.getElementById('menu-duel').style.display = 'none';
+    document.getElementById('menu-host').style.display = '';
+    const code = generateRoomCode();
+    document.getElementById('menu-code').textContent = code;
+    document.getElementById('menu-wait').textContent = 'En attente d\'un adversaire...';
+    document.getElementById('menu-status').style.display = 'none';
+
+    peer = new Peer('tdpro-' + code);
+    peer.on('open', function() {
+        // Ready, waiting for connection
+    });
+    peer.on('connection', function(c) {
+        conn = c;
+        isHost = true;
+        conn.on('open', function() {
+            setupConnection();
+            // Send game config (entry groups) so both boards match
+            conn.send({ type: 'init', entryGroups: ENTRY_GROUPS });
+            document.getElementById('menu-wait').textContent = '';
+            document.getElementById('menu-status').textContent = 'Adversaire connecte !';
+            document.getElementById('menu-status').style.display = '';
+            setTimeout(startDuel, 800);
+        });
+    });
+    peer.on('error', function(err) {
+        document.getElementById('menu-wait').textContent = 'Erreur: ' + err.type;
+    });
+}
+
+function menuShowJoin() {
+    document.getElementById('menu-duel').style.display = 'none';
+    document.getElementById('menu-join').style.display = '';
+    setTimeout(function() { document.getElementById('join-code').focus(); }, 100);
+}
+
+function menuJoinRoom() {
+    if (typeof Peer === 'undefined') { alert('PeerJS non charge'); return; }
+    const code = document.getElementById('join-code').value.toUpperCase().trim();
+    if (code.length !== 4) return;
+    document.getElementById('join-error').style.display = 'none';
+
+    peer = new Peer();
+    peer.on('open', function() {
+        conn = peer.connect('tdpro-' + code, { reliable: true });
+        conn.on('open', function() {
+            isHost = false;
+            setupConnection();
+            // Don't startDuel yet — wait for 'init' message from host
+        });
+        conn.on('error', function() {
+            document.getElementById('join-error').textContent = 'Connexion impossible';
+            document.getElementById('join-error').style.display = '';
+        });
+    });
+    peer.on('error', function(err) {
+        document.getElementById('join-error').textContent = 'Erreur: ' + err.type;
+        document.getElementById('join-error').style.display = '';
+    });
+}
+
+function menuBackToDuel() {
+    document.getElementById('menu-join').style.display = 'none';
+    document.getElementById('menu-host').style.display = 'none';
+    document.getElementById('menu-duel').style.display = '';
+    if (peer) { peer.destroy(); peer = null; conn = null; }
+}
+
+function menuCancelHost() {
+    menuBackToDuel();
+}
+
+function setupConnection() {
+    conn.on('data', handlePeerMessage);
+    conn.on('close', function() {
+        if (!duelEnded) {
+            duelEnded = true;
+            duelResultTitle = 'VICTOIRE';
+            duelResultSub = 'Adversaire deconnecte';
+            showMessage('Adversaire deconnecte');
+            playSfx('victory');
+        }
+    });
+}
+
+function startDuel() {
+    isDuel = true;
+    duelEnded = false;
+    duelResultTitle = '';
+    duelResultSub = '';
+    opponentFinished = false;
+    duelStartTimer = 15; // 15s countdown before wave 1
+    document.getElementById('menu-overlay').style.display = 'none';
+    document.getElementById('opp-bar').style.display = 'flex';
+    initOpponentCanvas();
+    // Recalculate BARS_H with opponent bar visible
+    const wrapH = document.getElementById('wrap').offsetHeight;
+    BARS_H = wrapH - canvas.height;
+    resizeGame();
+}
+
+function handlePeerMessage(data) {
+    if (data.type === 'init') {
+        setEntryGroups(data.entryGroups);
+        startDuel();
+    } else if (data.type === 'wave_start') {
+        _fromSync = true;
+        waveActive = false;
+        startWave();
+    } else if (data.type === 'status') {
+        opponentLives = data.lives;
+        opponentScore = data.score;
+        opponentWave = data.wave;
+        if (data.tw) {
+            oppBoardData = { towers: data.tw, enemies: data.en };
+            drawOpponentBoard();
+        }
+        updateOpponentUI();
+    } else if (data.type === 'game_over') {
+        // Opponent died -> I win
+        if (!duelEnded) {
+            duelEnded = true;
+            duelResultTitle = 'VICTOIRE';
+            duelResultSub = 'L\'adversaire a ete elimine';
+            playSfx('victory');
+        }
+    } else if (data.type === 'game_complete') {
+        opponentFinished = true;
+        opponentFinalScore = data.score;
+        opponentFinalTime = data.time;
+        checkDuelEnd();
+    }
+}
+
+function updateOpponentUI() {
+    document.getElementById('opp-lives').textContent = opponentLives;
+    document.getElementById('opp-score').textContent = opponentScore;
+    document.getElementById('opp-wave').textContent = opponentWave;
+}
+
+function checkDuelEnd() {
+    if (duelEnded) return;
+    if (!opponentFinished) return;
+    // Check if I also finished all waves
+    if (waveNum < WAVES.length || waveActive || enemies.length > 0) return;
+    if (lives <= 0) return;
+
+    gameEndTime = gameEndTime || Date.now();
+    const myTime = gameEndTime - gameStartTime;
+    duelEnded = true;
+
+    if (score > opponentFinalScore) {
+        duelResultTitle = 'VICTOIRE';
+        duelResultSub = 'Score: ' + score + ' vs ' + opponentFinalScore;
+    } else if (score < opponentFinalScore) {
+        duelResultTitle = 'DEFAITE';
+        duelResultSub = 'Score: ' + score + ' vs ' + opponentFinalScore;
+    } else if (myTime < opponentFinalTime) {
+        duelResultTitle = 'VICTOIRE';
+        duelResultSub = 'Plus rapide ! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
+    } else if (myTime > opponentFinalTime) {
+        duelResultTitle = 'DEFAITE';
+        duelResultSub = 'Trop lent ! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
+    } else {
+        duelResultTitle = 'EGALITE';
+        duelResultSub = 'Scores et temps identiques !';
+    }
+    playSfx(duelResultTitle === 'VICTOIRE' ? 'victory' : 'gameover');
+}
+
+// Enter key to join room
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && document.getElementById('menu-join').style.display !== 'none') {
+        menuJoinRoom();
+    }
+});
+
+// === OPPONENT MINI-BOARD ===
+const OPP_TOWER_COLORS = ['#ff0066','#00f0ff','#88ccff','#ff8800','#aa44ff','#5588ff','#00ff88','#ff4400','#ff00ff'];
+
+function initOpponentCanvas() {
+    var oc = document.getElementById('opp-canvas');
+    oc.width = Math.round(CANVAS_W * 0.75);
+    oc.height = Math.round(CANVAS_H * 0.75);
+    oc.style.display = 'block';
+}
+
+function drawOpponentBoard() {
+    if (!oppBoardData) return;
+    var oc = document.getElementById('opp-canvas');
+    var ox = oc.getContext('2d');
+    var sc = 0.75;
+    oc.width = Math.round(CANVAS_W * sc);
+    oc.height = Math.round(CANVAS_H * sc);
+    ox.save();
+    ox.scale(sc, sc);
+
+    // Background
+    ox.fillStyle = '#0a0e16';
+    ox.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    // Entry zones
+    for (var ei = 0; ei < ENTRY_ROWS.length; ei++) {
+        ox.fillStyle = '#061810';
+        ox.fillRect(0, ENTRY_ROWS[ei] * CS, CS, CS);
+    }
+    // Exit zones
+    var outX = GX + GRID * CS;
+    for (var xi = 0; xi < EXIT_ROWS.length; xi++) {
+        ox.fillStyle = '#180808';
+        ox.fillRect(outX, EXIT_ROWS[xi] * CS, CS, CS);
+    }
+
+    // Grid area
+    ox.fillStyle = '#0c1018';
+    ox.fillRect(GX, 0, GRID * CS, CANVAS_H);
+
+    // Subtle grid lines
+    ox.strokeStyle = '#ffffff06';
+    ox.lineWidth = 0.5;
+    for (var r = 0; r <= GRID; r++) {
+        ox.beginPath(); ox.moveTo(GX, r * CS); ox.lineTo(GX + GRID * CS, r * CS); ox.stroke();
+    }
+    for (var c = 0; c <= GRID; c++) {
+        ox.beginPath(); ox.moveTo(GX + c * CS, 0); ox.lineTo(GX + c * CS, CANVAS_H); ox.stroke();
+    }
+
+    // Separators
+    ox.strokeStyle = '#00f0ff15';
+    ox.lineWidth = 1;
+    ox.beginPath(); ox.moveTo(GX, 0); ox.lineTo(GX, CANVAS_H); ox.stroke();
+    ox.beginPath(); ox.moveTo(outX, 0); ox.lineTo(outX, CANVAS_H); ox.stroke();
+
+    // IN / OUT labels
+    ox.fillStyle = '#00ff88';
+    ox.font = '600 9px "JetBrains Mono", monospace';
+    ox.textAlign = 'center'; ox.textBaseline = 'middle';
+    for (var gi = 0; gi < ENTRY_GROUPS.length; gi++) {
+        var g = ENTRY_GROUPS[gi];
+        var cy = (g[0] + g[g.length - 1]) / 2 * CS + CS / 2;
+        ox.fillText('IN', CS / 2, cy);
+    }
+    ox.fillStyle = '#ff0066';
+    ox.font = '600 11px "JetBrains Mono", monospace';
+    ox.fillText('OUT', outX + CS / 2, EXIT_ROWS[2] * CS + CS / 2);
+
+    // Towers
+    for (var ti = 0; ti < oppBoardData.towers.length; ti++) {
+        var tw = oppBoardData.towers[ti];
+        ox.fillStyle = OPP_TOWER_COLORS[tw.i] || '#00f0ff';
+        ox.fillRect(GX + tw.c * CS + 2, tw.r * CS + 2, CS - 4, CS - 4);
+    }
+
+    // Enemies
+    for (var eii = 0; eii < oppBoardData.enemies.length; eii++) {
+        var en = oppBoardData.enemies[eii];
+        var et = ENEMY_TYPES[en.t];
+        ox.fillStyle = et ? et.color : '#ff0000';
+        ox.beginPath();
+        ox.arc(GX + en.gx * CS, en.gy * CS, CS * 0.3 * (en.s || 1), 0, Math.PI * 2);
+        ox.fill();
+    }
+
+    ox.restore();
+}
