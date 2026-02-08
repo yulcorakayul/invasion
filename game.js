@@ -1318,6 +1318,8 @@ function startWave(sync) {
     }
     // Track game start time for tiebreaker
     if (isDuel && waveNum === 1) gameStartTime = Date.now();
+    // Duel: opponent is always at the same wave (synced)
+    if (isDuel) { opponentWave = waveNum; updateOpponentUI(); }
     updateUI();
 }
 
