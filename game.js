@@ -951,28 +951,78 @@ class Enemy {
             const flicker = 0.15 + 0.15 * Math.sin(performance.now() * 0.008);
             ctx.globalAlpha = flicker;
         }
-        if (this.ghost) ctx.globalAlpha = 0.65;
+        if (this.ghost) ctx.globalAlpha = 0.6;
 
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = this.strokeColor;
-        ctx.lineWidth = this.scale > 1.2 ? 2 : 1;
-        ctx.stroke();
+        if (this.ghost) {
+            // Ghost shape: dome top + wavy tail bottom
+            const s = this.scale;
+            const gw = r * 1.1;  // half-width
+            const gh = r * 1.4;  // full height
+            const topY = this.y - gh * 0.45;
+            const botY = this.y + gh * 0.55;
+            const wave = Math.sin(performance.now() * 0.006) * 2 * s;
+            const teeth = 3; // number of tail waves
 
-        // eyes
-        const s = this.scale;
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(this.x - 3 * s, this.y - 2 * s, 2.5 * s, 0, Math.PI * 2);
-        ctx.arc(this.x + 3 * s, this.y - 2 * s, 2.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#111';
-        ctx.beginPath();
-        ctx.arc(this.x - 2 * s, this.y - 2 * s, 1.2 * s, 0, Math.PI * 2);
-        ctx.arc(this.x + 4 * s, this.y - 2 * s, 1.2 * s, 0, Math.PI * 2);
-        ctx.fill();
+            // glow
+            ctx.shadowColor = this.strokeColor;
+            ctx.shadowBlur = 8;
+
+            ctx.beginPath();
+            // dome (top half arc)
+            ctx.arc(this.x, topY + gw, gw, Math.PI, 0);
+            // right side down
+            ctx.lineTo(this.x + gw, botY);
+            // wavy bottom
+            for (let i = teeth; i >= 0; i--) {
+                const tx = this.x + gw - (i * 2 * gw / teeth);
+                const ty = botY + ((i % 2 === 0) ? -3 * s + wave : 3 * s + wave);
+                ctx.lineTo(tx, ty);
+            }
+            // left side up
+            ctx.lineTo(this.x - gw, topY + gw);
+            ctx.closePath();
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.strokeStyle = this.strokeColor;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // big ghost eyes (white ovals)
+            const eyeY = topY + gw + 1 * s;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.ellipse(this.x - 3 * s, eyeY, 2.8 * s, 3.2 * s, 0, 0, Math.PI * 2);
+            ctx.ellipse(this.x + 3 * s, eyeY, 2.8 * s, 3.2 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // pupils (look forward)
+            ctx.fillStyle = '#226';
+            ctx.beginPath();
+            ctx.ellipse(this.x - 2 * s, eyeY + 0.5 * s, 1.3 * s, 1.8 * s, 0, 0, Math.PI * 2);
+            ctx.ellipse(this.x + 4 * s, eyeY + 0.5 * s, 1.3 * s, 1.8 * s, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+            ctx.strokeStyle = this.strokeColor;
+            ctx.lineWidth = this.scale > 1.2 ? 2 : 1;
+            ctx.stroke();
+
+            // eyes
+            const s = this.scale;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(this.x - 3 * s, this.y - 2 * s, 2.5 * s, 0, Math.PI * 2);
+            ctx.arc(this.x + 3 * s, this.y - 2 * s, 2.5 * s, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#111';
+            ctx.beginPath();
+            ctx.arc(this.x - 2 * s, this.y - 2 * s, 1.2 * s, 0, Math.PI * 2);
+            ctx.arc(this.x + 4 * s, this.y - 2 * s, 1.2 * s, 0, Math.PI * 2);
+            ctx.fill();
+        }
 
         if (this.ghost || this.stealth) ctx.globalAlpha = 1;
 
