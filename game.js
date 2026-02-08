@@ -150,76 +150,76 @@ const TOWER_TYPES = [
 ];
 
 const ENEMY_TYPES = {
-    normal:   { speed: 1.8, color: '#d33', stroke: '#f66', reward: 8,  label: 'Normal', pts: 1 },
-    ghost:    { speed: 2.0, color: '#88f', stroke: '#aaf', reward: 10, label: 'Fantome', ghost: true, pts: 2 },
-    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 5,  label: 'Division', splits: 2, splitHpRatio: 0.4, pts: 1 },
-    fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 6,  label: 'Rapide', scale: 0.8, pts: 1 },
-    swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 3,  label: 'Groupe', scale: 0.85, spawnInt: 0.15, pts: 1 },
-    shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 12, label: 'Bouclier', shield: 10, pts: 2 },
-    boss_normal:   { speed: 1.0, color: '#c40', stroke: '#e62', reward: 30,  label: 'Boss',       scale: 1.6, pts: 5 },
-    boss_ghost:    { speed: 0.9, color: '#66c', stroke: '#88e', reward: 35,  label: 'Boss Fant',  scale: 1.5, ghost: true, pts: 6 },
-    boss_splitter: { speed: 0.8, color: '#2a2', stroke: '#4e4', reward: 35,  label: 'Boss Div',   scale: 1.5, splits: 2, splitHpRatio: 0.4, pts: 6 },
-    boss_fast:     { speed: 2.2, color: '#cc0', stroke: '#ee2', reward: 35,  label: 'Boss Rap',   scale: 1.3, pts: 6 },
-    boss_swarm:    { speed: 1.0, color: '#099', stroke: '#0cc', reward: 25,  label: 'Boss Grp',   scale: 1.5, spawnInt: 0.5, pts: 5 },
-    boss_shield:   { speed: 0.8, color: '#68a', stroke: '#8be', reward: 40,  label: 'Boss Bou',   scale: 1.5, shield: 20, pts: 7 },
+    normal:   { speed: 1.8, color: '#d33', stroke: '#f66', reward: 5,  label: 'Normal', pts: 1 },
+    ghost:    { speed: 2.0, color: '#88f', stroke: '#aaf', reward: 6, label: 'Fantome', ghost: true, pts: 2 },
+    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 3,  label: 'Division', splits: 2, splitHpRatio: 0.4, pts: 1 },
+    fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 4,  label: 'Rapide', scale: 0.8, pts: 1 },
+    swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 2,  label: 'Groupe', scale: 0.85, spawnInt: 0.15, pts: 1 },
+    shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 7, label: 'Bouclier', shield: 10, pts: 2 },
+    boss_normal:   { speed: 1.0, color: '#c40', stroke: '#e62', reward: 20,  label: 'Boss',       scale: 1.6, pts: 5 },
+    boss_ghost:    { speed: 0.9, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Fant',  scale: 1.5, ghost: true, pts: 6 },
+    boss_splitter: { speed: 0.8, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Div',   scale: 1.5, splits: 2, splitHpRatio: 0.4, pts: 6 },
+    boss_fast:     { speed: 2.2, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Rap',   scale: 1.3, pts: 6 },
+    boss_swarm:    { speed: 1.0, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Grp',   scale: 1.5, spawnInt: 0.5, pts: 5 },
+    boss_shield:   { speed: 0.8, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Bou',   scale: 1.5, shield: 20, pts: 7 },
 };
 
 const WAVES = [
     // --- Early (1-10): intro de chaque type ---
-    { count: 5,  hp: 50,    type: 'normal' },        // 1
-    { count: 6,  hp: 65,    type: 'normal' },        // 2
-    { count: 4,  hp: 45,    type: 'ghost' },         // 3
-    { count: 8,  hp: 35,    type: 'fast' },          // 4
-    { count: 12, hp: 30,    type: 'swarm' },         // 5
-    { count: 6,  hp: 60,    type: 'splitter' },      // 6
-    { count: 5,  hp: 80,    type: 'shield' },        // 7
-    { count: 7,  hp: 90,    type: 'normal' },        // 8
-    { count: 2,  hp: 500,   type: 'boss_normal' },   // 9  BOSS
-    { count: 10, hp: 50,    type: 'fast' },          // 10
+    { count: 5,  hp: 55,    type: 'normal' },        // 1
+    { count: 6,  hp: 75,    type: 'normal' },        // 2
+    { count: 4,  hp: 55,    type: 'ghost' },         // 3
+    { count: 8,  hp: 45,    type: 'fast' },          // 4
+    { count: 12, hp: 35,    type: 'swarm' },         // 5
+    { count: 6,  hp: 70,    type: 'splitter' },      // 6
+    { count: 5,  hp: 100,   type: 'shield' },        // 7
+    { count: 7,  hp: 110,   type: 'normal' },        // 8
+    { count: 2,  hp: 600,   type: 'boss_normal' },   // 9  BOSS
+    { count: 10, hp: 65,    type: 'fast' },          // 10
     // --- Mid-early (11-20): montee en puissance ---
-    { count: 6,  hp: 80,    type: 'ghost' },         // 11
-    { count: 18, hp: 55,    type: 'swarm' },         // 12
-    { count: 8,  hp: 100,   type: 'splitter' },      // 13
-    { count: 8,  hp: 120,   type: 'shield' },        // 14
-    { count: 9,  hp: 130,   type: 'normal' },        // 15
-    { count: 12, hp: 70,    type: 'fast' },          // 16
-    { count: 2,  hp: 900,   type: 'boss_ghost' },    // 17  BOSS
-    { count: 22, hp: 75,    type: 'swarm' },         // 18
-    { count: 7,  hp: 110,   type: 'ghost' },         // 19
-    { count: 9,  hp: 100,   type: 'splitter' },      // 20
+    { count: 6,  hp: 110,   type: 'ghost' },         // 11
+    { count: 18, hp: 75,    type: 'swarm' },         // 12
+    { count: 8,  hp: 130,   type: 'splitter' },      // 13
+    { count: 8,  hp: 160,   type: 'shield' },        // 14
+    { count: 9,  hp: 180,   type: 'normal' },        // 15
+    { count: 12, hp: 100,   type: 'fast' },          // 16
+    { count: 2,  hp: 1200,  type: 'boss_ghost' },    // 17  BOSS
+    { count: 22, hp: 100,   type: 'swarm' },         // 18
+    { count: 7,  hp: 150,   type: 'ghost' },         // 19
+    { count: 9,  hp: 140,   type: 'splitter' },      // 20
     // --- Mid (21-30): difficulte moyenne ---
-    { count: 10, hp: 170,   type: 'normal' },        // 21
-    { count: 10, hp: 150,   type: 'shield' },        // 22
-    { count: 14, hp: 90,    type: 'fast' },          // 23
-    { count: 25, hp: 100,   type: 'swarm' },         // 24
-    { count: 3,  hp: 1200,  type: 'boss_fast' },     // 25  BOSS
-    { count: 10, hp: 140,   type: 'splitter' },      // 26
-    { count: 8,  hp: 150,   type: 'ghost' },         // 27
-    { count: 12, hp: 200,   type: 'normal' },        // 28
-    { count: 12, hp: 180,   type: 'shield' },        // 29
-    { count: 28, hp: 120,   type: 'swarm' },         // 30
+    { count: 10, hp: 250,   type: 'normal' },        // 21
+    { count: 10, hp: 220,   type: 'shield' },        // 22
+    { count: 14, hp: 140,   type: 'fast' },          // 23
+    { count: 25, hp: 150,   type: 'swarm' },         // 24
+    { count: 3,  hp: 1800,  type: 'boss_fast' },     // 25  BOSS
+    { count: 10, hp: 200,   type: 'splitter' },      // 26
+    { count: 8,  hp: 220,   type: 'ghost' },         // 27
+    { count: 12, hp: 300,   type: 'normal' },        // 28
+    { count: 12, hp: 270,   type: 'shield' },        // 29
+    { count: 28, hp: 180,   type: 'swarm' },         // 30
     // --- Mid-late (31-40): serieux ---
-    { count: 16, hp: 110,   type: 'fast' },          // 31
-    { count: 9,  hp: 180,   type: 'ghost' },         // 32
-    { count: 2,  hp: 1800,  type: 'boss_splitter' }, // 33  BOSS
-    { count: 12, hp: 180,   type: 'splitter' },      // 34
-    { count: 14, hp: 250,   type: 'normal' },        // 35
-    { count: 14, hp: 220,   type: 'shield' },        // 36
-    { count: 30, hp: 150,   type: 'swarm' },         // 37
-    { count: 18, hp: 130,   type: 'fast' },          // 38
-    { count: 10, hp: 220,   type: 'ghost' },         // 39
-    { count: 3,  hp: 2500,  type: 'boss_swarm' },    // 40  BOSS
+    { count: 16, hp: 180,   type: 'fast' },          // 31
+    { count: 9,  hp: 280,   type: 'ghost' },         // 32
+    { count: 2,  hp: 2800,  type: 'boss_splitter' }, // 33  BOSS
+    { count: 12, hp: 280,   type: 'splitter' },      // 34
+    { count: 14, hp: 400,   type: 'normal' },        // 35
+    { count: 14, hp: 350,   type: 'shield' },        // 36
+    { count: 30, hp: 230,   type: 'swarm' },         // 37
+    { count: 18, hp: 210,   type: 'fast' },          // 38
+    { count: 10, hp: 340,   type: 'ghost' },         // 39
+    { count: 3,  hp: 4000,  type: 'boss_swarm' },    // 40  BOSS
     // --- Late (41-50): enfer ---
-    { count: 15, hp: 300,   type: 'normal' },        // 41
-    { count: 14, hp: 200,   type: 'splitter' },      // 42
-    { count: 16, hp: 280,   type: 'shield' },        // 43
-    { count: 35, hp: 180,   type: 'swarm' },         // 44
-    { count: 20, hp: 160,   type: 'fast' },          // 45
-    { count: 12, hp: 280,   type: 'ghost' },         // 46
-    { count: 16, hp: 350,   type: 'normal' },        // 47
-    { count: 3,  hp: 4000,  type: 'boss_shield' },   // 48  BOSS
-    { count: 18, hp: 300,   type: 'shield' },        // 49
-    { count: 18, hp: 400,   type: 'normal' },        // 50
+    { count: 15, hp: 500,   type: 'normal' },        // 41
+    { count: 14, hp: 320,   type: 'splitter' },      // 42
+    { count: 16, hp: 450,   type: 'shield' },        // 43
+    { count: 35, hp: 280,   type: 'swarm' },         // 44
+    { count: 20, hp: 260,   type: 'fast' },          // 45
+    { count: 12, hp: 440,   type: 'ghost' },         // 46
+    { count: 16, hp: 550,   type: 'normal' },        // 47
+    { count: 3,  hp: 6000,  type: 'boss_shield' },   // 48  BOSS
+    { count: 18, hp: 480,   type: 'shield' },        // 49
+    { count: 18, hp: 600,   type: 'normal' },        // 50
 ];
 const SPAWN_INT = 0.7;
 
@@ -234,7 +234,7 @@ let grid = [];
 let towers = [];
 let enemies = [];
 let projectiles = [];
-let gold = 100;
+let gold = 80;
 let lives = 20;
 let waveActive = false;
 let waveNum = 0;
@@ -1160,6 +1160,8 @@ function computeMaxTraversal(speed, ghost) {
 }
 
 function startWave() {
+    var wasFromSync = _fromSync;
+    _fromSync = false;
     if (waveActive) return;
     if (waveNum >= WAVES.length) return;
     // Duel: wave 1 only starts via countdown timer
@@ -1181,10 +1183,9 @@ function startWave() {
     showMessage('Vague ' + waveNum + ' lancee');
     playSfx('wave');
     // Duel sync: send wave_start to opponent (only if I initiated)
-    if (isDuel && conn && !_fromSync) {
+    if (isDuel && conn && !wasFromSync) {
         conn.send({ type: 'wave_start' });
     }
-    _fromSync = false;
     // Track game start time for tiebreaker
     if (isDuel && waveNum === 1) gameStartTime = Date.now();
     updateUI();
