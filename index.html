@@ -277,6 +277,13 @@
         #mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { position:fixed; right:10px; top:50%; transform:translateY(-50%); opacity:0.25; border:1px solid #ff006630; border-radius:3px; z-index:100; display:none; }
+        /* ── REPLAY BUTTON ── */
+        #replay-btn { position:fixed; left:50%; top:55%; transform:translate(-50%,-50%); z-index:200; display:none; padding:10px 30px; background:transparent; border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
+        #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
+        /* ── SPEED BUTTON ── */
+        #speed-btn { padding:4px 10px; background:transparent; border:1px solid #405060; color:#607888; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; cursor:pointer; border-radius:2px; transition:all .2s; }
+        #speed-btn:hover { border-color:#00f0ff; color:#00f0ff; }
+        #speed-btn.fast { border-color:#00f0ff; color:#00f0ff; background:rgba(0,240,255,0.1); }
     </style>
 </head>
 <body>
@@ -347,7 +354,7 @@
                 </button>
                 <button class="tower-btn" id="tbtn-1" onclick="toggleTowerMode(1)">
                     <canvas id="ticon-1" width="24" height="24"></canvas>
-                    <span class="cost">25g</span>
+                    <span class="cost">30g</span>
                 </button>
                 <button class="tower-btn" id="tbtn-2" onclick="toggleTowerMode(2)">
                     <canvas id="ticon-2" width="24" height="24"></canvas>
@@ -355,15 +362,15 @@
                 </button>
                 <button class="tower-btn" id="tbtn-3" onclick="toggleTowerMode(3)">
                     <canvas id="ticon-3" width="24" height="24"></canvas>
-                    <span class="cost">20g</span>
+                    <span class="cost">25g</span>
                 </button>
                 <button class="tower-btn" id="tbtn-4" onclick="toggleTowerMode(4)">
                     <canvas id="ticon-4" width="24" height="24"></canvas>
-                    <span class="cost">20g</span>
+                    <span class="cost">25g</span>
                 </button>
                 <button class="tower-btn" id="tbtn-5" onclick="toggleTowerMode(5)">
                     <canvas id="ticon-5" width="24" height="24"></canvas>
-                    <span class="cost">15g</span>
+                    <span class="cost">20g</span>
                 </button>
                 <button class="tower-btn" id="tbtn-6" onclick="toggleTowerMode(6)">
                     <canvas id="ticon-6" width="24" height="24"></canvas>
@@ -371,11 +378,11 @@
                 </button>
                 <button class="tower-btn" id="tbtn-7" onclick="toggleTowerMode(7)">
                     <canvas id="ticon-7" width="24" height="24"></canvas>
-                    <span class="cost">10g</span>
+                    <span class="cost">12g</span>
                 </button>
                 <button class="tower-btn" id="tbtn-8" onclick="toggleTowerMode(8)">
                     <canvas id="ticon-8" width="24" height="24"></canvas>
-                    <span class="cost">25g</span>
+                    <span class="cost">30g</span>
                 </button>
             </div>
             <div id="opp-bar">
@@ -413,10 +420,12 @@
         <canvas id="game"></canvas>
         <div id="wave-bar">
             <div id="wb-waves"></div>
+            <button id="speed-btn" onclick="toggleSpeed()" style="display:none">x1</button>
             <button id="wb-go" onclick="startWave()">Launch</button>
         </div>
     </div>
+    <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=95"></script>
+    <script src="game.js?v=98"></script>
 </body>
 </html>
