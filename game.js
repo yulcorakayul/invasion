@@ -46,14 +46,25 @@ function setEntryGroups(groups) {
     ENTRY_ROWS.splice(0, ENTRY_ROWS.length, ...groups.flat());
 }
 
-function pickEntryRow(validRows) {
+// Seeded PRNG (mulberry32) for deterministic duel spawns
+function seededRandom(seed) {
+    return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+function pickEntryRow(validRows, randFn) {
+    const rf = randFn || Math.random;
     const groups = ENTRY_GROUPS.map((g, i) => ({ rows: g.filter(r => validRows.includes(r)), w: ENTRY_GROUP_WEIGHTS[i] })).filter(g => g.rows.length > 0);
     if (groups.length === 0) return undefined;
     let totalW = groups.reduce((s, g) => s + g.w, 0);
-    let rng = Math.random() * totalW;
-    for (const g of groups) { rng -= g.w; if (rng <= 0) return g.rows[Math.floor(Math.random() * g.rows.length)]; }
+    let rng = rf() * totalW;
+    for (const g of groups) { rng -= g.w; if (rng <= 0) return g.rows[Math.floor(rf() * g.rows.length)]; }
     const last = groups[groups.length - 1];
-    return last.rows[Math.floor(Math.random() * last.rows.length)];
+    return last.rows[Math.floor(rf() * last.rows.length)];
 }
 
 const TOWER_TYPES = [
@@ -260,6 +271,8 @@ let score = 0;
 let nextWaveTimer = 0;
 let explosions = [];
 let waveDuration = 0;
+let waveSpawnRows = [];
+let waveSpawnIdx = 0;
 let gameOverPlayed = false;
 let gameSpeed = 1;
 
@@ -1282,6 +1295,15 @@ function startWave(sync) {
     const w = WAVES[waveNum - 1];
     enemiesToSpawn = w.count;
     spawnTimer = 0;
+    // Duel: pre-generate deterministic spawn rows (same seed = same sequence for both players)
+    if (isDuel) {
+        const rng = seededRandom(waveNum);
+        waveSpawnRows = [];
+        waveSpawnIdx = 0;
+        for (let i = 0; i < w.count; i++) {
+            waveSpawnRows.push(pickEntryRow(ENTRY_ROWS, rng));
+        }
+    }
     // Timer = durée totale de la vague (spawns + traversée max)
     const et = ENEMY_TYPES[w.type];
     const si = et.spawnInt || SPAWN_INT;
@@ -1496,9 +1518,11 @@ function gameLoop(time) {
         if (spawnTimer <= 0) {
             const waveData = WAVES[waveNum - 1];
             const et = ENEMY_TYPES[waveData.type];
-            // Pick entry row weighted by group (top 30%, mid 40%, bottom 30%)
+            // Pick entry row: duel uses pre-generated deterministic sequence
             let spawnRow;
-            if (et.ghost) {
+            if (isDuel && waveSpawnIdx < waveSpawnRows.length) {
+                spawnRow = waveSpawnRows[waveSpawnIdx++];
+            } else if (et.ghost) {
                 spawnRow = pickEntryRow(ENTRY_ROWS);
             } else {
                 const valid = getValidEntryRows();
