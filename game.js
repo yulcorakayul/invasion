@@ -298,6 +298,18 @@ let duelStartTimer = 0;
 let _bgInterval = null;
 let oppBoardData = null;
 
+// === MULTIPLAYER STATE ===
+let isMulti = false;
+let multiPlayers = new Map();
+let multiConns = [];
+let myPlayerId = '';
+let selectedViewPlayer = null;
+let multiStartTimer = 0;
+let multiEnded = false;
+let multiResultTitle = '';
+let multiResultSub = '';
+let _lastMultiStatusSend = 0;
+
 function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
 }
@@ -1287,6 +1299,9 @@ function startWave(sync) {
     if (waveNum >= WAVES.length) return;
     // Duel: wave 1 only starts via countdown timer
     if (isDuel && waveNum === 0 && duelStartTimer > 0) return;
+    if (isMulti && waveNum === 0 && multiStartTimer > 0) return;
+    // Multi: only host can manually launch waves; joiners must wait for sync
+    if (isMulti && !isHost && sync) return;
     nextWaveTimer = 0;
     waveDuration = 0;
     if (getValidEntryRows().length === 0) { showMessage('Path blocked!'); return; }
@@ -1296,7 +1311,7 @@ function startWave(sync) {
     enemiesToSpawn = w.count;
     spawnTimer = 0;
     // Duel: pre-generate deterministic spawn rows (same seed = same sequence for both players)
-    if (isDuel) {
+    if (isDuel || isMulti) {
         const rng = seededRandom(waveNum);
         waveSpawnRows = [];
         waveSpawnIdx = 0;
@@ -1316,8 +1331,12 @@ function startWave(sync) {
     if (isDuel && sync && conn && conn.open) {
         conn.send({ type: 'wave_start', waveNum: waveNum });
     }
+    // Multi sync: host broadcasts wave_start to all
+    if (isMulti && sync && isHost) {
+        multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_wave_start', waveNum: waveNum }); });
+    }
     // Track game start time for tiebreaker
-    if (isDuel && waveNum === 1) gameStartTime = Date.now();
+    if ((isDuel || isMulti) && waveNum === 1) gameStartTime = Date.now();
     // Duel: opponent is always at the same wave (synced)
     if (isDuel) { opponentWave = waveNum; updateOpponentUI(); }
     updateUI();
@@ -1504,7 +1523,7 @@ function drawScene() {
 let lastTime = 0;
 
 function scheduleLoop() {
-    if (isDuel && document.hidden) return; // background interval handles it
+    if ((isDuel || isMulti) && document.hidden) return; // background interval handles it
     requestAnimationFrame(gameLoop);
 }
 
@@ -1513,7 +1532,8 @@ function gameLoop(time) {
     const rawDt = (time - lastTime) / 1000;
     lastTime = time;
     // In duel: allow larger dt so background tabs catch up (up to 0.5s per step)
-    const dt = Math.min(rawDt, isDuel ? 0.5 : 0.05) * (isDuel ? 1 : gameSpeed);
+    const mp = isDuel || isMulti;
+    const dt = Math.min(rawDt, mp ? 0.5 : 0.05) * (mp ? 1 : gameSpeed);
 
     if (waveActive && enemiesToSpawn > 0) {
         spawnTimer -= dt;
@@ -1522,7 +1542,7 @@ function gameLoop(time) {
             const et = ENEMY_TYPES[waveData.type];
             // Pick entry row: duel uses pre-generated deterministic sequence
             let spawnRow;
-            if (isDuel && waveSpawnIdx < waveSpawnRows.length) {
+            if ((isDuel || isMulti) && waveSpawnIdx < waveSpawnRows.length) {
                 spawnRow = waveSpawnRows[waveSpawnIdx++];
             } else if (et.ghost) {
                 spawnRow = pickEntryRow(ENTRY_ROWS);
@@ -1578,6 +1598,16 @@ function gameLoop(time) {
                     if (conn) conn.send({ type: 'game_complete', score: finalScore(), time: gameEndTime - gameStartTime });
                     if (opponentFinished) checkDuelEnd();
                     else { showMessage('Done! Waiting...'); playSfx('victory'); }
+                } else if (isMulti) {
+                    gameEndTime = Date.now();
+                    if (isHost) {
+                        var me = multiPlayers.get(myPlayerId);
+                        if (me) { me.finished = true; me.finalScore = finalScore(); me.finalTime = gameEndTime - gameStartTime; }
+                        checkMultiEnd();
+                    } else {
+                        if (conn) conn.send({ type: 'multi_game_complete', score: finalScore(), time: gameEndTime - gameStartTime });
+                    }
+                    showMessage('Done! Waiting...'); playSfx('victory');
                 } else {
                     showMessage('Victory!'); playSfx('victory');
                 }
@@ -1596,7 +1626,7 @@ function gameLoop(time) {
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
             if (waveNum < WAVES.length && lives > 0) {
-                startWave(isDuel); // auto-launch: sync in duel
+                startWave(isDuel || (isMulti && isHost)); // auto-launch: sync in duel/multi
             }
         }
     }
@@ -1610,6 +1640,15 @@ function gameLoop(time) {
         }
     }
 
+    // Multi: 15-second countdown before wave 1
+    if (isMulti && multiStartTimer > 0) {
+        multiStartTimer -= dt;
+        if (multiStartTimer <= 0) {
+            multiStartTimer = 0;
+            startWave(isHost); // only host syncs
+        }
+    }
+
     if (lives <= 0) {
         lives = 0;
         if (!gameOverPlayed) {
@@ -1620,6 +1659,15 @@ function gameLoop(time) {
                 duelResultTitle = 'DEFEAT';
                 duelResultSub = 'You have been eliminated';
             }
+            if (isMulti && !multiEnded) {
+                if (isHost) {
+                    var me = multiPlayers.get(myPlayerId);
+                    if (me) me.alive = false;
+                    checkMultiEnd();
+                } else {
+                    if (conn) conn.send({ type: 'multi_game_over' });
+                }
+            }
         }
         updateUI();
         drawScene();
@@ -1627,17 +1675,19 @@ function gameLoop(time) {
         for (const e of enemies) e.draw();
         ctx.fillStyle = 'rgba(3,3,8,0.8)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        if (isDuel && duelResultTitle) {
-            const isWin = duelResultTitle === 'VICTORY';
+        var rTitle = isDuel ? duelResultTitle : (isMulti ? multiResultTitle : '');
+        var rSub = isDuel ? duelResultSub : (isMulti ? multiResultSub : '');
+        if (rTitle) {
+            var isWin = rTitle === 'VICTORY';
             ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
             ctx.font = '700 14px "Press Start 2P", monospace';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
-            ctx.fillText(duelResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+            ctx.fillText(rTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#506070';
             ctx.font = '10px "JetBrains Mono", monospace';
-            ctx.fillText(duelResultSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+            ctx.fillText(rSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
         } else {
             ctx.fillStyle = '#ff0066';
             ctx.font = '700 14px "Press Start 2P", monospace';
@@ -1653,8 +1703,10 @@ function gameLoop(time) {
         return;
     }
 
-    // Duel result overlay (when opponent dies but I'm still alive)
-    if (duelEnded && duelResultTitle && lives > 0) {
+    // Duel/Multi result overlay (when ended but I'm still alive)
+    var endTitle = (duelEnded && duelResultTitle) ? duelResultTitle : ((multiEnded && multiResultTitle) ? multiResultTitle : '');
+    var endSub = (duelEnded && duelResultTitle) ? duelResultSub : ((multiEnded && multiResultTitle) ? multiResultSub : '');
+    if (endTitle && lives > 0) {
         updateUI();
         drawScene();
         for (const t of towers) t.draw();
@@ -1662,23 +1714,23 @@ function gameLoop(time) {
         for (const e of enemies) e.draw();
         ctx.fillStyle = 'rgba(3,3,8,0.8)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        const isWin = duelResultTitle === 'VICTORY';
-        ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
+        var eIsWin = endTitle === 'VICTORY';
+        ctx.fillStyle = eIsWin ? '#00ff88' : '#ff0066';
         ctx.font = '700 14px "Press Start 2P", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
-        ctx.fillText(duelResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+        ctx.fillText(endTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
         ctx.font = '10px "JetBrains Mono", monospace';
-        ctx.fillText(duelResultSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        ctx.fillText(endSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
         showReplayBtn();
         scheduleLoop();
         return;
     }
 
     // Solo victory overlay
-    if (!isDuel && waveNum >= WAVES.length && !waveActive && enemies.length === 0 && lives > 0) {
+    if (!isDuel && !isMulti && waveNum >= WAVES.length && !waveActive && enemies.length === 0 && lives > 0) {
         updateUI();
         drawScene();
         for (const t of towers) t.draw();
@@ -1709,6 +1761,31 @@ function gameLoop(time) {
                     return { gx: (e.x - GX) / CS, gy: e.y / CS, t: e.typeName, s: ENEMY_TYPES[e.typeName].scale || 1 };
                 })
             });
+        }
+    }
+
+    // Multi: send periodic status updates
+    if (isMulti) {
+        _lastMultiStatusSend += dt;
+        if (_lastMultiStatusSend >= 0.5) {
+            _lastMultiStatusSend = 0;
+            var myTw = towers.map(function(t) { return { r: t.row, c: t.col, i: t.typeIdx }; });
+            var myEn = enemies.filter(function(e) { return e.alive; }).map(function(e) {
+                return { gx: (e.x - GX) / CS, gy: e.y / CS, t: e.typeName, s: ENEMY_TYPES[e.typeName].scale || 1 };
+            });
+            if (isHost) {
+                var me = multiPlayers.get(myPlayerId);
+                if (me) { me.lives = lives; me.score = score; me.wave = waveNum; me.boardData = { towers: myTw, enemies: myEn }; me.alive = lives > 0; }
+                var allP = [];
+                multiPlayers.forEach(function(p, id) {
+                    allP.push({ id: id, name: p.name, lives: p.lives, score: p.score, wave: p.wave, alive: p.alive, tw: p.boardData ? p.boardData.towers : [], en: p.boardData ? p.boardData.enemies : [] });
+                });
+                multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_status', players: allP }); });
+                updateMultiPlayerListUI();
+                updateMultiOpponentView();
+            } else {
+                if (conn && conn.open) conn.send({ type: 'my_status', lives: lives, score: score, wave: waveNum, tw: myTw, en: myEn });
+            }
         }
     }
 
@@ -2090,13 +2167,16 @@ function updateWaveBar() {
     } else if (isDuel && duelStartTimer > 0 && waveNum === 0) {
         goBtn.textContent = 'Start ' + Math.ceil(duelStartTimer) + 's';
         goBtn.disabled = true;
+    } else if (isMulti && multiStartTimer > 0 && waveNum === 0) {
+        goBtn.textContent = 'Start ' + Math.ceil(multiStartTimer) + 's';
+        goBtn.disabled = true;
     } else if (waveNum === 0) {
         goBtn.textContent = 'Launch 1';
         goBtn.disabled = lives <= 0;
     } else if (waveActive && alive > 0) {
         goBtn.textContent = alive + ' left';
         goBtn.disabled = true;
-    } else if (isDuel && duelEnded) {
+    } else if ((isDuel && duelEnded) || (isMulti && multiEnded)) {
         goBtn.textContent = 'Done';
         goBtn.disabled = true;
     } else if (nextWaveTimer > 0) {
@@ -2148,7 +2228,7 @@ window.addEventListener('resize', resizeGame);
 
 // === BACKGROUND TAB (duel) ===
 document.addEventListener('visibilitychange', function() {
-    if (!isDuel) return;
+    if (!isDuel && !isMulti) return;
     if (document.hidden) {
         // Tab hidden: start backup interval so game keeps running
         if (!_bgInterval) {
@@ -2472,7 +2552,7 @@ function showReplayBtn() {
 }
 
 function toggleSpeed() {
-    if (isDuel) return;
+    if (isDuel || isMulti) return;
     gameSpeed = gameSpeed === 1 ? 2 : 1;
     var btn = document.getElementById('speed-btn');
     btn.textContent = 'x' + gameSpeed;
@@ -2481,6 +2561,7 @@ function toggleSpeed() {
 
 function menuStartSolo() {
     isDuel = false;
+    isMulti = false;
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('speed-btn').style.display = '';
 }
@@ -2677,10 +2758,311 @@ function checkDuelEnd() {
     playSfx(duelResultTitle === 'VICTORY' ? 'victory' : 'gameover');
 }
 
+// === MULTIPLAYER MENU ===
+function menuShowMulti() {
+    document.getElementById('menu-main').style.display = 'none';
+    document.getElementById('menu-multi').style.display = '';
+}
+function menuMultiBack() {
+    document.getElementById('menu-multi').style.display = 'none';
+    document.getElementById('menu-main').style.display = '';
+}
+function getMultiName() {
+    var n = (document.getElementById('multi-name').value || '').trim();
+    return n || 'Player';
+}
+function menuMultiCreate() {
+    if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
+    document.getElementById('menu-multi').style.display = 'none';
+    document.getElementById('menu-multi-host').style.display = '';
+    var code = generateRoomCode();
+    document.getElementById('multi-code').textContent = code;
+    document.getElementById('multi-lobby-list').textContent = 'Waiting for players...';
+    document.getElementById('multi-start-btn').disabled = true;
+    multiPlayers.clear();
+    multiConns = [];
+    var myName = getMultiName();
+    peer = new Peer('tdmulti-' + code);
+    peer.on('open', function() {
+        myPlayerId = peer.id;
+        isHost = true;
+        multiPlayers.set(myPlayerId, { conn: null, name: myName, lives: 20, score: 0, wave: 0, boardData: null, alive: true });
+        updateMultiLobbyUI();
+    });
+    peer.on('connection', function(c) {
+        c.on('open', function() {
+            c.on('data', function(data) { handleMultiHostMessage(data, c); });
+            c.on('close', function() { handleMultiDisconnect(c.peer); });
+        });
+    });
+    peer.on('error', function(err) {
+        document.getElementById('multi-lobby-list').textContent = 'Error: ' + err.type;
+    });
+}
+function menuMultiShowJoin() {
+    document.getElementById('menu-multi').style.display = 'none';
+    document.getElementById('menu-multi-join').style.display = '';
+    setTimeout(function() { document.getElementById('multi-join-code').focus(); }, 100);
+}
+function menuMultiJoin() {
+    if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
+    var code = document.getElementById('multi-join-code').value.toUpperCase().trim();
+    if (code.length !== 4) return;
+    document.getElementById('multi-join-error').style.display = 'none';
+    var myName = getMultiName();
+    peer = new Peer();
+    peer.on('open', function() {
+        myPlayerId = peer.id;
+        conn = peer.connect('tdmulti-' + code, { reliable: true });
+        conn.on('open', function() {
+            isHost = false;
+            conn.send({ type: 'multi_join', name: myName });
+            conn.on('data', handleMultiJoinerMessage);
+            conn.on('close', function() {
+                if (!multiEnded && isMulti) {
+                    multiEnded = true;
+                    multiResultTitle = 'DISCONNECTED';
+                    multiResultSub = 'Host disconnected';
+                    showMessage('Host disconnected');
+                }
+            });
+            document.getElementById('menu-multi-join').style.display = 'none';
+            document.getElementById('menu-multi-lobby').style.display = '';
+        });
+        conn.on('error', function() {
+            document.getElementById('multi-join-error').textContent = 'Connection failed';
+            document.getElementById('multi-join-error').style.display = '';
+        });
+    });
+    peer.on('error', function(err) {
+        document.getElementById('multi-join-error').textContent = 'Error: ' + err.type;
+        document.getElementById('multi-join-error').style.display = '';
+    });
+}
+function menuMultiBackToMenu() {
+    document.getElementById('menu-multi-join').style.display = 'none';
+    document.getElementById('menu-multi').style.display = '';
+    if (peer) { peer.destroy(); peer = null; conn = null; }
+}
+function menuMultiCancel() {
+    document.getElementById('menu-multi-host').style.display = 'none';
+    document.getElementById('menu-multi').style.display = '';
+    if (peer) { peer.destroy(); peer = null; }
+    multiPlayers.clear(); multiConns = [];
+}
+function menuMultiLeave() {
+    document.getElementById('menu-multi-lobby').style.display = 'none';
+    document.getElementById('menu-multi').style.display = '';
+    if (conn) conn.close();
+    if (peer) { peer.destroy(); peer = null; conn = null; }
+}
+function menuMultiStart() {
+    var roster = [];
+    multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
+    multiConns.forEach(function(c) {
+        if (c.open) c.send({ type: 'multi_init', entryGroups: ENTRY_GROUPS, players: roster, hostId: myPlayerId });
+    });
+    startMultiGame(roster);
+}
+function updateMultiLobbyUI() {
+    var list = document.getElementById('multi-lobby-list');
+    var html = '';
+    var count = 0;
+    multiPlayers.forEach(function(p, id) {
+        count++;
+        var isMe = id === myPlayerId;
+        html += '<div style="color:' + (isMe ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + (isMe ? p.name + ' (Host)' : p.name) + '</div>';
+    });
+    list.innerHTML = html;
+    document.getElementById('multi-start-btn').disabled = count < 2;
+}
+
+// === MULTIPLAYER HOST MESSAGE HANDLER ===
+function handleMultiHostMessage(data, senderConn) {
+    var senderId = senderConn.peer;
+    if (data.type === 'multi_join') {
+        multiPlayers.set(senderId, { conn: senderConn, name: data.name || ('P' + multiPlayers.size), lives: 20, score: 0, wave: 0, boardData: null, alive: true });
+        multiConns.push(senderConn);
+        updateMultiLobbyUI();
+        var roster = [];
+        multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
+        multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_lobby', players: roster }); });
+    } else if (data.type === 'my_status') {
+        var p = multiPlayers.get(senderId);
+        if (p) {
+            p.lives = data.lives; p.score = data.score; p.wave = data.wave;
+            if (data.tw) p.boardData = { towers: data.tw, enemies: data.en };
+            p.alive = data.lives > 0;
+        }
+    } else if (data.type === 'multi_game_over') {
+        var p2 = multiPlayers.get(senderId);
+        if (p2) p2.alive = false;
+        checkMultiEnd();
+    } else if (data.type === 'multi_game_complete') {
+        var p3 = multiPlayers.get(senderId);
+        if (p3) { p3.finished = true; p3.finalScore = data.score; p3.finalTime = data.time; }
+        checkMultiEnd();
+    }
+}
+
+// === MULTIPLAYER JOINER MESSAGE HANDLER ===
+function handleMultiJoinerMessage(data) {
+    if (data.type === 'multi_lobby') {
+        var el = document.getElementById('multi-lobby-players');
+        el.innerHTML = data.players.map(function(p) {
+            return '<div style="color:' + (p.id === myPlayerId ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + p.name + '</div>';
+        }).join('');
+    } else if (data.type === 'multi_init') {
+        setEntryGroups(data.entryGroups);
+        multiPlayers.clear();
+        data.players.forEach(function(p) {
+            if (p.id !== myPlayerId) {
+                multiPlayers.set(p.id, { conn: null, name: p.name, lives: 20, score: 0, wave: 0, boardData: null, alive: true });
+            }
+        });
+        startMultiGame(data.players);
+    } else if (data.type === 'multi_status') {
+        data.players.forEach(function(p) {
+            if (p.id === myPlayerId) return;
+            var ex = multiPlayers.get(p.id);
+            if (ex) {
+                ex.lives = p.lives; ex.score = p.score; ex.wave = p.wave; ex.alive = p.alive;
+                if (p.tw) ex.boardData = { towers: p.tw, enemies: p.en };
+            } else {
+                multiPlayers.set(p.id, { conn: null, name: p.name, lives: p.lives, score: p.score, wave: p.wave, boardData: p.tw ? { towers: p.tw, enemies: p.en } : null, alive: p.alive });
+            }
+        });
+        updateMultiPlayerListUI();
+        updateMultiOpponentView();
+    } else if (data.type === 'multi_wave_start') {
+        if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
+        waveActive = false; nextWaveTimer = 0; multiStartTimer = 0;
+        startWave(false);
+    } else if (data.type === 'multi_end') {
+        multiEnded = true;
+        var myRank = data.rankings.findIndex(function(r) { return r.id === myPlayerId; });
+        multiResultTitle = myRank === 0 ? 'VICTORY' : '#' + (myRank + 1);
+        multiResultSub = data.rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' ' + r.score; }).join('  ');
+        playSfx(myRank === 0 ? 'victory' : 'gameover');
+    }
+}
+
+// === START MULTI GAME ===
+function startMultiGame(playerRoster) {
+    isMulti = true;
+    isDuel = false;
+    multiEnded = false;
+    multiResultTitle = '';
+    multiResultSub = '';
+    multiStartTimer = 15;
+    for (var i = 0; i < playerRoster.length; i++) {
+        if (playerRoster[i].id !== myPlayerId) { selectedViewPlayer = playerRoster[i].id; break; }
+    }
+    document.getElementById('menu-overlay').style.display = 'none';
+    document.getElementById('opp-panel').classList.add('active');
+    document.getElementById('multi-player-list').style.display = '';
+    initOpponentCanvas();
+    resizeGame();
+    updateMultiPlayerListUI();
+}
+
+// === PLAYER LIST UI ===
+function updateMultiPlayerListUI() {
+    var listEl = document.getElementById('multi-player-list');
+    if (!listEl) return;
+    var arr = [];
+    multiPlayers.forEach(function(p, id) {
+        if (id === myPlayerId) {
+            arr.push({ id: id, name: p.name + ' (You)', lives: lives, score: score, wave: waveNum, alive: lives > 0 });
+        } else {
+            arr.push({ id: id, name: p.name, lives: p.lives, score: p.score, wave: p.wave, alive: p.alive });
+        }
+    });
+    // Add self if host (host is in multiPlayers) — already covered above
+    // Add self if joiner (joiner is NOT in multiPlayers)
+    if (!isHost && !multiPlayers.has(myPlayerId)) {
+        var myName = getMultiName();
+        arr.push({ id: myPlayerId, name: myName + ' (You)', lives: lives, score: score, wave: waveNum, alive: lives > 0 });
+    }
+    arr.sort(function(a, b) { return b.score - a.score || b.lives - a.lives; });
+    var html = '';
+    for (var i = 0; i < arr.length; i++) {
+        var p = arr[i];
+        var sel = p.id === selectedViewPlayer ? ' selected' : '';
+        var dead = !p.alive ? ' dead' : '';
+        html += '<div class="mp-row' + sel + dead + '" onclick="selectMultiPlayer(\'' + p.id + '\')">'
+              + '<span class="mp-rank">' + (i + 1) + '</span>'
+              + '<span class="mp-name">' + p.name + '</span>'
+              + '<span class="mp-score">' + p.score + '</span>'
+              + '<span class="mp-lives">' + p.lives + 'hp</span>'
+              + '<span class="mp-wave">W' + p.wave + '</span>'
+              + '</div>';
+    }
+    listEl.innerHTML = html;
+}
+
+function selectMultiPlayer(playerId) {
+    if (playerId === myPlayerId) return;
+    selectedViewPlayer = playerId;
+    updateMultiPlayerListUI();
+    updateMultiOpponentView();
+}
+
+function updateMultiOpponentView() {
+    if (!selectedViewPlayer) return;
+    var p = multiPlayers.get(selectedViewPlayer);
+    if (!p) return;
+    document.getElementById('opp-lives').textContent = p.lives;
+    document.getElementById('opp-score').textContent = p.score;
+    document.getElementById('opp-wave').textContent = p.wave;
+    var label = document.querySelector('.opp-label');
+    if (label) label.textContent = p.name;
+    if (p.boardData) { oppBoardData = p.boardData; drawOpponentBoard(); }
+}
+
+// === MULTI GAME END ===
+function checkMultiEnd() {
+    if (multiEnded || !isHost) return;
+    var allDone = true;
+    var aliveCount = 0;
+    multiPlayers.forEach(function(p) {
+        if (p.alive) aliveCount++;
+        if (p.alive && !p.finished) allDone = false;
+    });
+    if (!allDone && aliveCount > 0) return;
+    multiEnded = true;
+    var rankings = [];
+    multiPlayers.forEach(function(p, id) {
+        rankings.push({ id: id, name: p.name, score: p.finalScore || p.score, alive: p.alive, time: p.finalTime || 0 });
+    });
+    rankings.sort(function(a, b) {
+        if (a.alive !== b.alive) return a.alive ? -1 : 1;
+        return b.score - a.score;
+    });
+    multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_end', rankings: rankings }); });
+    var myRank = rankings.findIndex(function(r) { return r.id === myPlayerId; });
+    multiResultTitle = myRank === 0 ? 'VICTORY' : '#' + (myRank + 1);
+    multiResultSub = rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' ' + r.score; }).join('  ');
+    playSfx(myRank === 0 ? 'victory' : 'gameover');
+}
+
+function handleMultiDisconnect(peerId) {
+    var p = multiPlayers.get(peerId);
+    if (p) {
+        p.alive = false;
+        multiConns = multiConns.filter(function(c) { return c.peer !== peerId; });
+        if (isMulti) checkMultiEnd();
+    }
+}
+
 document.addEventListener('keydown', function(e) {
     // Enter to join room
     if (e.key === 'Enter' && document.getElementById('menu-join').style.display !== 'none') {
         menuJoinRoom();
+        return;
+    }
+    if (e.key === 'Enter' && document.getElementById('menu-multi-join').style.display !== 'none') {
+        menuMultiJoin();
         return;
     }
     // Ignore shortcuts if menu is open or typing in input

@@ -281,6 +281,17 @@
         #mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
+        /* ── MULTI PLAYER LIST ── */
+        #multi-player-list { display:none; max-height:180px; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; }
+        .mp-row { display:flex; align-items:center; gap:6px; padding:3px 10px; cursor:pointer; transition:background 0.15s; font-size:9px; letter-spacing:0.5px; text-transform:uppercase; color:#607888; border-bottom:1px solid #ff006610; }
+        .mp-row:hover { background:#1a0818; }
+        .mp-row.selected { background:#1a0818; border-left:2px solid #ff0066; }
+        .mp-row.dead { opacity:0.4; }
+        .mp-rank { color:#ff0066; font-weight:700; width:16px; text-align:center; }
+        .mp-name { color:#a0b8cc; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .mp-score { color:#00ff88; font-weight:700; }
+        .mp-lives { color:#ff6688; }
+        .mp-wave { color:#00f0ff; }
         /* ── REPLAY BUTTON ── */
         #replay-btn { position:fixed; left:50%; top:55%; transform:translate(-50%,-50%); z-index:200; display:none; padding:10px 30px; background:transparent; border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
         #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
@@ -299,6 +310,7 @@
             <div id="menu-main">
                 <button class="menu-btn" onclick="menuStartSolo()">SOLO</button>
                 <button class="menu-btn" onclick="menuShowDuel()">DUEL</button>
+                <button class="menu-btn" onclick="menuShowMulti()">MULTIPLAYER</button>
                 <button class="menu-btn" onclick="menuShowRules()">RULES</button>
             </div>
             <div id="menu-rules" style="display:none">
@@ -329,6 +341,31 @@
                 <button class="menu-btn" onclick="menuJoinRoom()">Join</button>
                 <div id="join-error"></div>
                 <button class="menu-btn-back" onclick="menuBackToDuel()">&#8592; Back</button>
+            </div>
+            <div id="menu-multi" style="display:none">
+                <input id="multi-name" maxlength="12" placeholder="YOUR NAME" autocomplete="off" spellcheck="false" style="display:block;width:180px;margin:8px auto;padding:8px;background:#0a0e18;border:1px solid #1a2840;color:#00f0ff;font-family:'JetBrains Mono',monospace;font-size:10px;text-align:center;letter-spacing:2px;text-transform:uppercase;border-radius:2px;outline:none">
+                <button class="menu-btn" onclick="menuMultiCreate()">Create Room</button>
+                <button class="menu-btn" onclick="menuMultiShowJoin()">Join</button>
+                <button class="menu-btn-back" onclick="menuMultiBack()">&#8592; Back</button>
+            </div>
+            <div id="menu-multi-host" style="display:none">
+                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Room Code</div>
+                <div id="multi-code" style="font-family:'Press Start 2P',monospace;font-size:28px;color:#00f0ff;text-shadow:0 0 15px #00f0ff60;letter-spacing:12px;margin-bottom:12px">----</div>
+                <div id="multi-lobby-list" style="color:#607888;font-size:10px;letter-spacing:0.5px;margin-bottom:12px;min-height:20px"></div>
+                <button class="menu-btn" id="multi-start-btn" onclick="menuMultiStart()" disabled>START GAME</button>
+                <button class="menu-btn-back" onclick="menuMultiCancel()">&#8592; Cancel</button>
+            </div>
+            <div id="menu-multi-join" style="display:none">
+                <input id="multi-join-code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" style="display:block;width:180px;margin:8px auto;padding:10px;background:#0a0e18;border:1px solid #1a2840;color:#00f0ff;font-family:'Press Start 2P',monospace;font-size:16px;text-align:center;letter-spacing:8px;text-transform:uppercase;border-radius:2px;outline:none">
+                <button class="menu-btn" onclick="menuMultiJoin()">Join</button>
+                <div id="multi-join-error" style="color:#ff0066;font-size:9px;letter-spacing:1px;text-transform:uppercase;display:none;margin-top:6px"></div>
+                <button class="menu-btn-back" onclick="menuMultiBackToMenu()">&#8592; Back</button>
+            </div>
+            <div id="menu-multi-lobby" style="display:none">
+                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Lobby</div>
+                <div id="multi-lobby-players" style="color:#607888;font-size:10px;letter-spacing:0.5px;margin-bottom:12px;min-height:20px"></div>
+                <div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase">Waiting for host to start...</div>
+                <button class="menu-btn-back" onclick="menuMultiLeave()">&#8592; Leave</button>
             </div>
         </div>
     </div>
@@ -427,10 +464,11 @@
             <span class="opp-stat">Wave <b id="opp-wave">0</b>/50</span>
         </div>
         <canvas id="opp-canvas"></canvas>
+        <div id="multi-player-list"></div>
     </div>
     </div>
     <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=111"></script>
+    <script src="game.js?v=112"></script>
 </body>
 </html>
