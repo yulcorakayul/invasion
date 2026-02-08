@@ -289,6 +289,8 @@ function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
 }
 
+function finalScore() { return score + lives * 10; }
+
 function killEnemy(e) {
     e.alive = false;
     gold += e.reward;
@@ -1547,7 +1549,7 @@ function gameLoop(time) {
             if (lives > 0) {
                 if (isDuel) {
                     gameEndTime = Date.now();
-                    if (conn) conn.send({ type: 'game_complete', score, time: gameEndTime - gameStartTime });
+                    if (conn) conn.send({ type: 'game_complete', score: finalScore(), time: gameEndTime - gameStartTime });
                     if (opponentFinished) checkDuelEnd();
                     else { showMessage('Done! Waiting...'); playSfx('victory'); }
                 } else {
@@ -1619,7 +1621,7 @@ function gameLoop(time) {
             ctx.shadowBlur = 0;
             ctx.fillStyle = '#506070';
             ctx.font = '10px "JetBrains Mono", monospace';
-            ctx.fillText('SCORE: ' + score, CANVAS_W / 2, CANVAS_H / 2 + 20);
+            ctx.fillText('SCORE: ' + finalScore(), CANVAS_W / 2, CANVAS_H / 2 + 20);
         }
         showReplayBtn();
         return;
@@ -1664,7 +1666,7 @@ function gameLoop(time) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
         ctx.font = '10px "JetBrains Mono", monospace';
-        ctx.fillText('SCORE: ' + score, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        ctx.fillText('SCORE: ' + finalScore() + ' (' + score + ' + ' + (lives * 10) + ' lives)', CANVAS_W / 2, CANVAS_H / 2 + 15);
         showReplayBtn();
         return;
     }
@@ -2571,11 +2573,8 @@ function startDuel() {
     opponentFinished = false;
     duelStartTimer = 15; // 15s countdown before wave 1
     document.getElementById('menu-overlay').style.display = 'none';
-    document.getElementById('opp-bar').style.display = 'flex';
+    document.getElementById('opp-panel').classList.add('active');
     initOpponentCanvas();
-    // Recalculate BARS_H with opponent bar visible
-    const wrapH = document.getElementById('wrap').offsetHeight;
-    BARS_H = wrapH - canvas.height;
     resizeGame();
 }
 
@@ -2630,12 +2629,13 @@ function checkDuelEnd() {
     const myTime = gameEndTime - gameStartTime;
     duelEnded = true;
 
-    if (score > opponentFinalScore) {
+    var myFinal = finalScore();
+    if (myFinal > opponentFinalScore) {
         duelResultTitle = 'VICTORY';
-        duelResultSub = 'Score: ' + score + ' vs ' + opponentFinalScore;
-    } else if (score < opponentFinalScore) {
+        duelResultSub = 'Score: ' + myFinal + ' vs ' + opponentFinalScore;
+    } else if (myFinal < opponentFinalScore) {
         duelResultTitle = 'DEFEAT';
-        duelResultSub = 'Score: ' + score + ' vs ' + opponentFinalScore;
+        duelResultSub = 'Score: ' + myFinal + ' vs ' + opponentFinalScore;
     } else if (myTime < opponentFinalTime) {
         duelResultTitle = 'VICTORY';
         duelResultSub = 'Faster! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
@@ -2685,7 +2685,6 @@ function initOpponentCanvas() {
     var oc = document.getElementById('opp-canvas');
     oc.width = Math.round(CANVAS_W * 0.75);
     oc.height = Math.round(CANVAS_H * 0.75);
-    oc.style.display = 'block';
 }
 
 function drawOpponentBoard() {

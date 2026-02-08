@@ -248,10 +248,14 @@
         #join-error { color:#ff0066; font-size:9px; letter-spacing:1px; text-transform:uppercase; display:none; margin-top:6px; }
         #join-code { display:block; width:180px; margin:8px auto; padding:10px; background:#0a0e18; border:1px solid #1a2840; color:#00f0ff; font-family:'Press Start 2P',monospace; font-size:16px; text-align:center; letter-spacing:8px; text-transform:uppercase; border-radius:2px; outline:none; }
         #join-code:focus { border-color:#00f0ff; box-shadow:0 0 10px #00f0ff30; }
-        /* ── OPPONENT BAR ── */
-        #opp-bar { display:none; align-items:center; gap:6px; padding:3px 10px; background:#0c0410; border-top:1px solid #ff006620; }
-        .opp-label { color:#ff0066; font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:9px; text-shadow:0 0 6px #ff006640; }
-        .opp-stat { display:flex; align-items:center; gap:4px; color:#405060; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:0 5px; }
+        /* ── DUEL LAYOUT ── */
+        #duel-layout { display:flex; align-items:flex-start; gap:12px; }
+        /* ── OPPONENT PANEL (right side in duel) ── */
+        #opp-panel { display:none; flex-direction:column; gap:0; border:1px solid #ff006630; border-radius:3px; overflow:hidden; }
+        #opp-panel.active { display:flex; }
+        #opp-bar { display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:8px 12px; background:#0c0410; border-bottom:1px solid #ff006620; }
+        .opp-label { color:#ff0066; font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:9px; text-shadow:0 0 6px #ff006640; margin-bottom:2px; }
+        .opp-stat { display:flex; align-items:center; gap:4px; color:#405060; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:1px 0; }
         .opp-stat b { color:#ff6688; font-weight:700; }
         /* ── MUTE BTN ── */
         #mute-btn {
@@ -276,7 +280,7 @@
         #mute-btn:hover { background: rgba(255, 0, 68, 0.2); box-shadow: 0 0 12px rgba(255, 0, 68, 0.25); }
         #mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
         /* ── OPPONENT CANVAS ── */
-        #opp-canvas { position:fixed; right:10px; top:50%; transform:translateY(-50%); opacity:0.25; border:1px solid #ff006630; border-radius:3px; z-index:100; display:none; }
+        #opp-canvas { display:block; opacity:0.35; }
         /* ── REPLAY BUTTON ── */
         #replay-btn { position:fixed; left:50%; top:55%; transform:translate(-50%,-50%); z-index:200; display:none; padding:10px 30px; background:transparent; border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
         #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
@@ -287,7 +291,7 @@
     </style>
 </head>
 <body>
-    <a href="https://temos.io" style="position:fixed;top:12px;left:12px;z-index:9999;display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:3px;color:#ef4444;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.background='rgba(239,68,68,0.2)';this.style.boxShadow='0 0 12px rgba(239,68,68,0.25)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)';this.style.boxShadow='none'">&#8592; BACK</a>
+    <a href="https://invasion.temos.io/" style="position:fixed;top:12px;left:12px;z-index:9999;display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:3px;color:#ef4444;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.background='rgba(239,68,68,0.2)';this.style.boxShadow='0 0 12px rgba(239,68,68,0.25)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)';this.style.boxShadow='none'">&#8592; BACK</a>
     <div id="menu-overlay">
         <div id="menu-box">
             <div id="menu-title">INVASION</div>
@@ -332,7 +336,7 @@
         <svg id="mute-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         <svg id="mute-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
     </button>
-    <canvas id="opp-canvas"></canvas>
+    <div id="duel-layout">
     <div id="wrap">
         <div id="bar">
             <div id="bar-top">
@@ -385,15 +389,6 @@
                     <span class="cost">30g</span>
                 </button>
             </div>
-            <div id="opp-bar">
-                <span class="opp-label">Opponent</span>
-                <div class="sep"></div>
-                <span class="opp-stat">Lives <b id="opp-lives">20</b></span>
-                <div class="sep"></div>
-                <span class="opp-stat">Score <b id="opp-score">0</b></span>
-                <div class="sep"></div>
-                <span class="opp-stat">Wave <b id="opp-wave">0</b>/50</span>
-            </div>
         </div>
         <div id="info">
             <div id="info-desc">
@@ -424,8 +419,18 @@
             <button id="wb-go" onclick="startWave()">Launch</button>
         </div>
     </div>
+    <div id="opp-panel">
+        <div id="opp-bar">
+            <span class="opp-label">Opponent</span>
+            <span class="opp-stat">Lives <b id="opp-lives">20</b></span>
+            <span class="opp-stat">Score <b id="opp-score">0</b></span>
+            <span class="opp-stat">Wave <b id="opp-wave">0</b>/50</span>
+        </div>
+        <canvas id="opp-canvas"></canvas>
+    </div>
+    </div>
     <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=103"></script>
+    <script src="game.js?v=105"></script>
 </body>
 </html>
