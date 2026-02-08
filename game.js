@@ -2613,6 +2613,7 @@ function handlePeerMessage(data) {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
         waveActive = false;
         nextWaveTimer = 0;
+        duelStartTimer = 0; // clear countdown so wave 1 guard doesn't block
         startWave(false); // don't echo back
     } else if (data.type === 'status') {
         opponentLives = data.lives;
