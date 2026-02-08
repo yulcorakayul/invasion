@@ -1300,8 +1300,11 @@ function startWave(sync) {
     // Duel: wave 1 only starts via countdown timer
     if (isDuel && waveNum === 0 && duelStartTimer > 0) return;
     if (isMulti && waveNum === 0 && multiStartTimer > 0) return;
-    // Multi: only host can manually launch waves; joiners must wait for sync
-    if (isMulti && !isHost && sync) return;
+    // Multi joiner: send request to host instead of starting locally
+    if (isMulti && !isHost && sync) {
+        if (conn && conn.open) conn.send({ type: 'multi_wave_request', waveNum: waveNum + 1 });
+        return;
+    }
     nextWaveTimer = 0;
     waveDuration = 0;
     if (getValidEntryRows().length === 0) { showMessage('Path blocked!'); return; }
@@ -1663,6 +1666,8 @@ function gameLoop(time) {
                 duelResultSub = 'You have been eliminated';
             }
             if (isMulti && !multiEnded) {
+                multiResultTitle = 'DEFEAT';
+                multiResultSub = 'You have been eliminated';
                 if (isHost) {
                     var me = multiPlayers.get(myPlayerId);
                     if (me) me.alive = false;
@@ -1672,38 +1677,43 @@ function gameLoop(time) {
                 }
             }
         }
-        updateUI();
-        drawScene();
-        for (const t of towers) t.draw();
-        for (const e of enemies) e.draw();
-        ctx.fillStyle = 'rgba(3,3,8,0.8)';
-        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        var rTitle = isDuel ? duelResultTitle : (isMulti ? multiResultTitle : '');
-        var rSub = isDuel ? duelResultSub : (isMulti ? multiResultSub : '');
-        if (rTitle) {
-            var isWin = rTitle === 'VICTORY';
-            ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
-            ctx.font = '700 14px "Press Start 2P", monospace';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
-            ctx.fillText(rTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#506070';
-            ctx.font = '10px "JetBrains Mono", monospace';
-            ctx.fillText(rSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        // Multi: dead players can still watch — don't return, just draw overlay
+        if (isMulti) {
+            // Continue game loop (status updates, player list, etc.) but draw defeat overlay at end
         } else {
-            ctx.fillStyle = '#ff0066';
-            ctx.font = '700 14px "Press Start 2P", monospace';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
-            ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 10);
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#506070';
-            ctx.font = '10px "JetBrains Mono", monospace';
-            ctx.fillText('SCORE: ' + finalScore(), CANVAS_W / 2, CANVAS_H / 2 + 20);
+            updateUI();
+            drawScene();
+            for (const t of towers) t.draw();
+            for (const e of enemies) e.draw();
+            ctx.fillStyle = 'rgba(3,3,8,0.8)';
+            ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+            var rTitle = isDuel ? duelResultTitle : '';
+            var rSub = isDuel ? duelResultSub : '';
+            if (rTitle) {
+                var isWin = rTitle === 'VICTORY';
+                ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
+                ctx.font = '700 14px "Press Start 2P", monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
+                ctx.fillText(rTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#506070';
+                ctx.font = '10px "JetBrains Mono", monospace';
+                ctx.fillText(rSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+            } else {
+                ctx.fillStyle = '#ff0066';
+                ctx.font = '700 14px "Press Start 2P", monospace';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
+                ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 10);
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#506070';
+                ctx.font = '10px "JetBrains Mono", monospace';
+                ctx.fillText('SCORE: ' + finalScore(), CANVAS_W / 2, CANVAS_H / 2 + 20);
+            }
+            showReplayBtn();
+            return;
         }
-        showReplayBtn();
-        return;
     }
 
     // Duel/Multi result overlay (when ended but I'm still alive)
@@ -1846,6 +1856,22 @@ function gameLoop(time) {
         ctx.fillText(ft.text, ft.x, ft.y);
         ctx.shadowBlur = 0;
         ctx.globalAlpha = 1;
+    }
+
+    // Multi: draw DEFEAT overlay for dead players (game loop continues for spectating)
+    if (isMulti && lives <= 0 && multiResultTitle) {
+        ctx.fillStyle = 'rgba(3,3,8,0.7)';
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = '#ff0066';
+        ctx.font = '700 14px "Press Start 2P", monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
+        ctx.fillText(multiResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#506070';
+        ctx.font = '10px "JetBrains Mono", monospace';
+        ctx.fillText(multiResultSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        if (multiEnded) showReplayBtn();
     }
 
     scheduleLoop();
@@ -2896,6 +2922,10 @@ function handleMultiHostMessage(data, senderConn) {
             if (data.tw) p.boardData = { towers: data.tw, enemies: data.en };
             p.alive = data.lives > 0;
         }
+    } else if (data.type === 'multi_wave_request') {
+        // A joiner requested to launch the next wave — host starts it for everyone
+        if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
+        startWave(true); // host starts + broadcasts multi_wave_start to all
     } else if (data.type === 'multi_game_over') {
         var p2 = multiPlayers.get(senderId);
         if (p2) p2.alive = false;
@@ -2995,9 +3025,8 @@ function updateMultiPlayerListUI() {
         html += '<div class="mp-row' + sel + dead + '" onclick="selectMultiPlayer(\'' + p.id + '\')">'
               + '<span class="mp-rank">' + (i + 1) + '</span>'
               + '<span class="mp-name">' + p.name + '</span>'
-              + '<span class="mp-score">' + p.score + '</span>'
+              + '<span class="mp-score">' + p.score + 'pts</span>'
               + '<span class="mp-lives">' + p.lives + 'hp</span>'
-              + '<span class="mp-wave">W' + p.wave + '</span>'
               + '</div>';
     }
     listEl.innerHTML = html;
@@ -3024,13 +3053,10 @@ function updateMultiOpponentView() {
 // === MULTI GAME END ===
 function checkMultiEnd() {
     if (multiEnded || !isHost) return;
-    var allDone = true;
     var aliveCount = 0;
-    multiPlayers.forEach(function(p) {
-        if (p.alive) aliveCount++;
-        if (p.alive && !p.finished) allDone = false;
-    });
-    if (!allDone && aliveCount > 0) return;
+    multiPlayers.forEach(function(p) { if (p.alive) aliveCount++; });
+    // Game ends when 1 or 0 players alive
+    if (aliveCount > 1) return;
     multiEnded = true;
     var rankings = [];
     multiPlayers.forEach(function(p, id) {

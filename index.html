@@ -283,7 +283,7 @@
         #opp-canvas { display:block; opacity:0.35; }
         /* ── MULTI PLAYER LIST ── */
         #multi-player-list { display:none; max-height:180px; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; }
-        .mp-row { display:flex; align-items:center; gap:6px; padding:3px 10px; cursor:pointer; transition:background 0.15s; font-size:9px; letter-spacing:0.5px; text-transform:uppercase; color:#607888; border-bottom:1px solid #ff006610; }
+        .mp-row { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; transition:background 0.15s; font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color:#607888; border-bottom:1px solid #ff006610; }
         .mp-row:hover { background:#1a0818; }
         .mp-row.selected { background:#1a0818; border-left:2px solid #ff0066; }
         .mp-row.dead { opacity:0.4; }
@@ -291,7 +291,6 @@
         .mp-name { color:#a0b8cc; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .mp-score { color:#00ff88; font-weight:700; }
         .mp-lives { color:#ff6688; }
-        .mp-wave { color:#00f0ff; }
         /* ── REPLAY BUTTON ── */
         #replay-btn { position:fixed; left:50%; top:55%; transform:translate(-50%,-50%); z-index:200; display:none; padding:10px 30px; background:transparent; border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
         #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
@@ -468,6 +467,6 @@
     </div>
     <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=115"></script>
+    <script src="game.js?v=116"></script>
 </body>
 </html>
