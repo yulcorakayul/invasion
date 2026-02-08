@@ -2724,7 +2724,6 @@ function handlePeerMessage(data) {
 function updateOpponentUI() {
     document.getElementById('opp-lives').textContent = opponentLives;
     document.getElementById('opp-score').textContent = opponentScore;
-    document.getElementById('opp-wave').textContent = opponentWave;
 }
 
 function checkDuelEnd() {
@@ -3014,7 +3013,6 @@ function updateMultiOpponentView() {
     if (!p) return;
     document.getElementById('opp-lives').textContent = p.lives;
     document.getElementById('opp-score').textContent = p.score;
-    document.getElementById('opp-wave').textContent = p.wave;
     var label = document.querySelector('.opp-label');
     if (label) label.textContent = p.name;
     if (p.boardData) { oppBoardData = p.boardData; drawOpponentBoard(); }
