@@ -165,12 +165,14 @@ const ENEMY_TYPES = {
     fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 4,  label: 'Fast', scale: 0.8, pts: 1 },
     swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 2,  label: 'Swarm', scale: 0.85, spawnInt: 0.15, pts: 1 },
     shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 7, label: 'Shield', shield: 10, pts: 2 },
-    boss_normal:   { speed: 1.0, color: '#c40', stroke: '#e62', reward: 20,  label: 'Boss',       scale: 1.6, pts: 5 },
-    boss_ghost:    { speed: 0.9, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Gho',  scale: 1.5, ghost: true, pts: 6 },
-    boss_splitter: { speed: 0.8, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Spl',   scale: 1.5, splits: 2, splitHpRatio: 0.4, pts: 6 },
-    boss_fast:     { speed: 2.2, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Fst',   scale: 1.3, pts: 6 },
-    boss_swarm:    { speed: 1.0, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.5, spawnInt: 0.5, pts: 5 },
-    boss_shield:   { speed: 0.8, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.5, shield: 20, pts: 7 },
+    stealth:  { speed: 2.2, color: '#446', stroke: '#668', reward: 5, label: 'Stealth', stealth: true, scale: 0.85, pts: 2 },
+    regen:    { speed: 1.6, color: '#2a4', stroke: '#4e6', reward: 6, label: 'Regen', regenRate: 0.08, pts: 2 },
+    boss_normal:   { speed: 0.7, color: '#c40', stroke: '#e62', reward: 20,  label: 'Boss',       scale: 1.7, pts: 5 },
+    boss_ghost:    { speed: 0.6, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Gho',  scale: 1.6, ghost: true, pts: 6 },
+    boss_splitter: { speed: 0.5, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Spl',   scale: 1.6, splits: 2, splitHpRatio: 0.4, pts: 6 },
+    boss_fast:     { speed: 1.5, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Fst',   scale: 1.4, pts: 6 },
+    boss_swarm:    { speed: 0.7, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.6, spawnInt: 0.5, pts: 5 },
+    boss_shield:   { speed: 0.5, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.7, shield: 30, pts: 7 },
 };
 
 const WAVES = [
@@ -183,50 +185,50 @@ const WAVES = [
     { count: 6,  hp: 55,    type: 'splitter' },      // 6   totalHP: 330+splits
     { count: 5,  hp: 85,    type: 'shield' },        // 7   totalHP: 425
     { count: 8,  hp: 100,   type: 'normal' },        // 8   totalHP: 800
-    { count: 2,  hp: 600,   type: 'boss_normal' },   // 9   BOSS  totalHP: 1200
-    { count: 10, hp: 65,    type: 'fast' },          // 10  totalHP: 650
+    { count: 2,  hp: 800,   type: 'boss_normal' },   // 9   BOSS  totalHP: 1600
+    { count: 10, hp: 50,    type: 'stealth' },        // 10  totalHP: 500
     // --- Mid-early (11-20) ---
     { count: 7,  hp: 130,   type: 'ghost' },         // 11  totalHP: 910
     { count: 20, hp: 70,    type: 'swarm' },         // 12  totalHP: 1400
     { count: 8,  hp: 150,   type: 'splitter' },      // 13  totalHP: 1200+splits
     { count: 8,  hp: 180,   type: 'shield' },        // 14  totalHP: 1440
-    { count: 10, hp: 200,   type: 'normal' },        // 15  totalHP: 2000
+    { count: 8,  hp: 180,   type: 'regen' },          // 15  totalHP: 1440 (+regen)
     { count: 14, hp: 120,   type: 'fast' },          // 16  totalHP: 1680
-    { count: 2,  hp: 1400,  type: 'boss_ghost' },    // 17  BOSS  totalHP: 2800
+    { count: 2,  hp: 2000,  type: 'boss_ghost' },    // 17  BOSS  totalHP: 4000
     { count: 25, hp: 100,   type: 'swarm' },         // 18  totalHP: 2500
     { count: 8,  hp: 220,   type: 'ghost' },         // 19  totalHP: 1760
     { count: 10, hp: 200,   type: 'splitter' },      // 20  totalHP: 2000+splits
     // --- Mid (21-30) ---
     { count: 12, hp: 300,   type: 'normal' },        // 21  totalHP: 3600
     { count: 10, hp: 320,   type: 'shield' },        // 22  totalHP: 3200
-    { count: 16, hp: 200,   type: 'fast' },          // 23  totalHP: 3200
+    { count: 14, hp: 120,   type: 'stealth' },        // 23  totalHP: 1680
     { count: 28, hp: 150,   type: 'swarm' },         // 24  totalHP: 4200
-    { count: 3,  hp: 2500,  type: 'boss_fast' },     // 25  BOSS  totalHP: 7500
+    { count: 3,  hp: 3500,  type: 'boss_fast' },     // 25  BOSS  totalHP: 10500
     { count: 10, hp: 280,   type: 'splitter' },      // 26  totalHP: 2800+splits
-    { count: 10, hp: 300,   type: 'ghost' },         // 27  totalHP: 3000
+    { count: 10, hp: 350,   type: 'regen' },          // 27  totalHP: 3500 (+regen)
     { count: 14, hp: 400,   type: 'normal' },        // 28  totalHP: 5600
     { count: 12, hp: 380,   type: 'shield' },        // 29  totalHP: 4560
     { count: 30, hp: 200,   type: 'swarm' },         // 30  totalHP: 6000
     // --- Mid-late (31-40) ---
     { count: 18, hp: 280,   type: 'fast' },          // 31  totalHP: 5040
     { count: 12, hp: 400,   type: 'ghost' },         // 32  totalHP: 4800
-    { count: 3,  hp: 4500,  type: 'boss_splitter' }, // 33  BOSS  totalHP: 13500+splits
+    { count: 3,  hp: 6000,  type: 'boss_splitter' }, // 33  BOSS  totalHP: 18000+splits
     { count: 12, hp: 400,   type: 'splitter' },      // 34  totalHP: 4800+splits
-    { count: 16, hp: 550,   type: 'normal' },        // 35  totalHP: 8800
+    { count: 12, hp: 500,   type: 'regen' },          // 35  totalHP: 6000 (+regen)
     { count: 14, hp: 500,   type: 'shield' },        // 36  totalHP: 7000
     { count: 35, hp: 280,   type: 'swarm' },         // 37  totalHP: 9800
-    { count: 20, hp: 340,   type: 'fast' },          // 38  totalHP: 6800
+    { count: 18, hp: 200,   type: 'stealth' },        // 38  totalHP: 3600
     { count: 14, hp: 480,   type: 'ghost' },         // 39  totalHP: 6720
-    { count: 3,  hp: 6500,  type: 'boss_swarm' },    // 40  BOSS  totalHP: 19500
+    { count: 3,  hp: 8500,  type: 'boss_swarm' },    // 40  BOSS  totalHP: 25500
     // --- Late (41-50) ---
     { count: 16, hp: 700,   type: 'normal' },        // 41  totalHP: 11200
     { count: 14, hp: 500,   type: 'splitter' },      // 42  totalHP: 7000+splits
     { count: 16, hp: 650,   type: 'shield' },        // 43  totalHP: 10400
     { count: 38, hp: 380,   type: 'swarm' },         // 44  totalHP: 14440
-    { count: 22, hp: 420,   type: 'fast' },          // 45  totalHP: 9240
-    { count: 14, hp: 650,   type: 'ghost' },         // 46  totalHP: 9100
+    { count: 20, hp: 250,   type: 'stealth' },        // 45  totalHP: 5000
+    { count: 14, hp: 700,   type: 'regen' },          // 46  totalHP: 9800 (+regen)
     { count: 18, hp: 850,   type: 'normal' },        // 47  totalHP: 15300
-    { count: 4,  hp: 10000, type: 'boss_shield' },   // 48  BOSS  totalHP: 40000
+    { count: 4,  hp: 14000, type: 'boss_shield' },   // 48  BOSS  totalHP: 56000
     { count: 18, hp: 800,   type: 'shield' },        // 49  totalHP: 14400
     { count: 20, hp: 1000,  type: 'normal' },        // 50  totalHP: 20000
 ];
@@ -437,6 +439,7 @@ class Tower {
             const dmg = Math.round(st.damage * this.getBoostMultiplier());
             for (const e of enemies) {
                 if (e.hp <= 0 || !e.alive) continue;
+                if (e.stealth && st.range > 3) continue;
                 const d = Math.hypot(e.x - this.x, e.y - this.y);
                 if (d < st.range * CS) {
                     for (const e2 of enemies) {
@@ -476,6 +479,7 @@ class Tower {
                     const cx = cellX(cc), cy = cellY(cr);
                     for (const e of enemies) {
                         if (e.hp <= 0 || !e.alive) continue;
+                        if (e.stealth && st.range > 3) continue;
                         if (Math.hypot(e.x - cx, e.y - cy) < CS * 0.6 && s < bestStep) {
                             bestDir = dir; bestStep = s;
                         }
@@ -513,6 +517,7 @@ class Tower {
             let hit = false;
             for (const e of enemies) {
                 if (e.hp <= 0 || !e.alive) continue;
+                if (e.stealth && st.range > 3) continue;
                 const d = Math.hypot(e.x - this.x, e.y - this.y);
                 if (d < st.range * CS) {
                     applyDamage(e, Math.round(st.damage * this.getBoostMultiplier()));
@@ -529,6 +534,7 @@ class Tower {
         for (const e of enemies) {
             if (e.hp <= 0) continue;
             if (td.ghostOnly && !e.ghost) continue;
+            if (e.stealth && st.range > 3) continue;
             const d = Math.hypot(e.x - this.x, e.y - this.y);
             if (d < st.range * CS && d < bestD) { best = e; bestD = d; }
         }
@@ -650,25 +656,7 @@ class Tower {
             ctx.restore();
         }
 
-        // Booster glow on adjacent towers
-        if (td.booster && this.upgradeTimer <= 0) {
-            const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
-            const t = performance.now() * 0.003;
-            const pulse = 0.5 + 0.5 * Math.sin(t);
-            for (const [dr, dc] of dirs) {
-                const nr = this.row + dr, nc = this.col + dc;
-                if (nr < 0 || nr >= GRID || nc < 0 || nc >= GRID) continue;
-                const adj = getTowerAt(nr, nc);
-                if (adj && !adj.typeDef.booster) {
-                    const ax = GX + nc * CS, ay = nr * CS;
-                    ctx.fillStyle = 'rgba(0, 255, 136, ' + (0.08 + 0.06 * pulse).toFixed(3) + ')';
-                    ctx.fillRect(ax, ay, CS, CS);
-                    ctx.strokeStyle = 'rgba(0, 255, 136, ' + (0.3 + 0.2 * pulse).toFixed(2) + ')';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(ax + 1, ay + 1, CS - 2, CS - 2);
-                }
-            }
-        }
+        // Booster glow drawn in separate pass (drawBoosterGlows) after all towers
     }
 
     // shared base: dark outer, color ring, dark inner, color center
@@ -851,6 +839,26 @@ class Tower {
     }
 }
 
+// Draw booster glow overlay on all adjacent cells (after all towers so it's always visible)
+function drawBoosterGlows() {
+    const t = performance.now() * 0.003;
+    const pulse = 0.5 + 0.5 * Math.sin(t);
+    for (const b of towers) {
+        if (!b.typeDef.booster || b.upgradeTimer > 0) continue;
+        const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+        for (const [dr, dc] of dirs) {
+            const nr = b.row + dr, nc = b.col + dc;
+            if (nr < 0 || nr >= GRID || nc < 0 || nc >= GRID) continue;
+            const ax = GX + nc * CS, ay = nr * CS;
+            ctx.fillStyle = 'rgba(0, 255, 136, ' + (0.08 + 0.06 * pulse).toFixed(3) + ')';
+            ctx.fillRect(ax, ay, CS, CS);
+            ctx.strokeStyle = 'rgba(0, 255, 136, ' + (0.3 + 0.2 * pulse).toFixed(2) + ')';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(ax + 1, ay + 1, CS - 2, CS - 2);
+        }
+    }
+}
+
 // === ENEMIES ===
 class Enemy {
     constructor(row, hp, typeName, spawnPos) {
@@ -868,6 +876,8 @@ class Enemy {
         this.color = et.color;
         this.strokeColor = et.stroke;
         this.shield = et.shield || 0;
+        this.stealth = !!et.stealth;
+        this.regenRate = et.regenRate || 0;
         this.slowTimer = 0;
         this.slowMult = 1;
         this.waypoints = [];
@@ -911,6 +921,10 @@ class Enemy {
     update(dt) {
         if (!this.alive) return;
         if (this.slowTimer > 0) this.slowTimer -= dt;
+        // Regen: heal percentage of maxHp per second
+        if (this.regenRate > 0 && this.hp < this.maxHp) {
+            this.hp = Math.min(this.maxHp, this.hp + this.maxHp * this.regenRate * dt);
+        }
         const spd = this.baseSpeed * (this.slowTimer > 0 ? this.slowMult : 1);
         if (this.wpIdx >= this.waypoints.length) {
             this.alive = false;
@@ -930,6 +944,10 @@ class Enemy {
     draw() {
         if (!this.alive) return;
         const r = CS * 0.32 * this.scale;
+        if (this.stealth) {
+            const flicker = 0.15 + 0.15 * Math.sin(performance.now() * 0.008);
+            ctx.globalAlpha = flicker;
+        }
         if (this.ghost) ctx.globalAlpha = 0.65;
 
         ctx.beginPath();
@@ -953,7 +971,7 @@ class Enemy {
         ctx.arc(this.x + 4 * s, this.y - 2 * s, 1.2 * s, 0, Math.PI * 2);
         ctx.fill();
 
-        if (this.ghost) ctx.globalAlpha = 1;
+        if (this.ghost || this.stealth) ctx.globalAlpha = 1;
 
         // slow ring
         if (this.slowTimer > 0) {
@@ -962,6 +980,27 @@ class Enemy {
             ctx.strokeStyle = '#0cf';
             ctx.lineWidth = 1.5;
             ctx.stroke();
+        }
+
+        // regen aura — green pulsing particles
+        if (this.regenRate > 0 && this.hp < this.maxHp) {
+            const pulse = 0.4 + 0.6 * Math.abs(Math.sin(performance.now() * 0.005));
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, r + 5, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(0, 255, 100, ' + (pulse * 0.7).toFixed(2) + ')';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#00ff66'; ctx.shadowBlur = 8 * pulse;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+            // green + particles rising
+            const t = performance.now() * 0.003;
+            for (let p = 0; p < 3; p++) {
+                const angle = t + p * 2.1;
+                const py = this.y - r - 3 - (performance.now() * 0.02 + p * 7) % 12;
+                const px = this.x + Math.sin(angle) * (r * 0.6);
+                ctx.fillStyle = 'rgba(0, 255, 100, ' + (0.8 - ((performance.now() * 0.02 + p * 7) % 12) / 15).toFixed(2) + ')';
+                ctx.fillRect(px - 1, py - 1, 2, 2);
+            }
         }
 
         // shield ring
@@ -1418,14 +1457,15 @@ function gameLoop(time) {
     for (const e of enemies) e.update(dt);
     for (const p of projectiles) p.update(dt);
 
-    // Handle splitter deaths
+    // Handle splitter deaths — children jump 1 cell forward + spread vertically
     const newEnemies = [];
     for (const e of enemies) {
         if (!e.alive && e.canSplit && e.splits > 0) {
             for (let i = 0; i < e.splits; i++) {
                 const childHp = Math.floor(e.maxHp * e.splitHpRatio);
-                const offset = (i === 0 ? -1 : 1) * CS * 0.3;
-                newEnemies.push(new Enemy(0, childHp, e.typeName, { x: e.x, y: e.y + offset }));
+                const spreadY = (i === 0 ? -1 : 1) * CS * 0.4;
+                const jumpX = CS * 1.0; // jump 1 cell forward
+                newEnemies.push(new Enemy(0, childHp, e.typeName, { x: e.x + jumpX, y: e.y + spreadY }));
             }
         }
     }
@@ -1597,6 +1637,7 @@ function gameLoop(time) {
     if (document.hidden) { scheduleLoop(); return; }
     drawScene();
     for (const t of towers) t.draw();
+    drawBoosterGlows();
     for (const p of projectiles) p.draw();
     for (const e of enemies) e.draw();
 
@@ -1840,16 +1881,19 @@ function drawTowerIcons() {
 // === WAVE BAR ===
 const WAVE_LABELS = {
     normal: 'Normal', ghost: 'Ghost', splitter: 'Splitter', fast: 'Fast', swarm: 'Swarm', shield: 'Shield',
+    stealth: 'Stealth', regen: 'Regen',
     boss_normal: 'Boss Normal', boss_ghost: 'Boss Ghost', boss_splitter: 'Boss Splitter',
     boss_fast: 'Boss Fast', boss_swarm: 'Boss Swarm', boss_shield: 'Boss Shield',
 };
 const WAVE_SHORT = {
     normal: 'Norm', ghost: 'Ghst', splitter: 'Spl', fast: 'Fast', swarm: 'Swrm', shield: 'Shld',
+    stealth: 'Stlh', regen: 'Regn',
     boss_normal: 'B.Nrm', boss_ghost: 'B.Gho', boss_splitter: 'B.Spl',
     boss_fast: 'B.Fst', boss_swarm: 'B.Swm', boss_shield: 'B.Shd',
 };
 const WAVE_BG = {
     normal: '#3a1828', ghost: '#281840', splitter: '#183a20', fast: '#383810', swarm: '#103838', shield: '#182838',
+    stealth: '#202030', regen: '#183818',
     boss_normal: '#3a2010', boss_ghost: '#301848', boss_splitter: '#204020',
     boss_fast: '#404010', boss_swarm: '#104040', boss_shield: '#203040',
 };
