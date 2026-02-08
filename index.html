@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -280,7 +280,7 @@
     </style>
 </head>
 <body>
-    <a href="https://temos.io" style="position:fixed;top:12px;left:12px;z-index:9999;display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:3px;color:#ef4444;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.background='rgba(239,68,68,0.2)';this.style.boxShadow='0 0 12px rgba(239,68,68,0.25)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)';this.style.boxShadow='none'">&#8592; RETOUR</a>
+    <a href="https://temos.io" style="position:fixed;top:12px;left:12px;z-index:9999;display:flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.35);border-radius:3px;color:#ef4444;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.05em;cursor:pointer;transition:all 0.2s" onmouseenter="this.style.background='rgba(239,68,68,0.2)';this.style.boxShadow='0 0 12px rgba(239,68,68,0.25)'" onmouseleave="this.style.background='rgba(239,68,68,0.1)';this.style.boxShadow='none'">&#8592; BACK</a>
     <div id="menu-overlay">
         <div id="menu-box">
             <div id="menu-title">INVASION</div>
@@ -288,28 +288,40 @@
             <div id="menu-main">
                 <button class="menu-btn" onclick="menuStartSolo()">SOLO</button>
                 <button class="menu-btn" onclick="menuShowDuel()">DUEL</button>
+                <button class="menu-btn" onclick="menuShowRules()">RULES</button>
+            </div>
+            <div id="menu-rules" style="display:none">
+                <p style="color:#607888;font-size:10px;line-height:1.6;letter-spacing:0.5px;margin-bottom:18px;max-width:320px;text-align:left">Place towers to eliminate enemies before they reach the exit. Each enemy that gets through costs you a life. Survive all 50 waves to win.</p>
+                <div style="text-align:left;margin:0 auto;max-width:260px">
+                    <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Shortcuts</div>
+                    <div style="display:flex;justify-content:space-between;color:#607888;font-size:10px;padding:3px 0"><span style="color:#00f0ff;font-weight:700">SPACE</span><span>Launch wave</span></div>
+                    <div style="display:flex;justify-content:space-between;color:#607888;font-size:10px;padding:3px 0"><span style="color:#00f0ff;font-weight:700">U</span><span>Upgrade tower</span></div>
+                    <div style="display:flex;justify-content:space-between;color:#607888;font-size:10px;padding:3px 0"><span style="color:#00f0ff;font-weight:700">S</span><span>Sell tower</span></div>
+                    <div style="display:flex;justify-content:space-between;color:#607888;font-size:10px;padding:3px 0"><span style="color:#00f0ff;font-weight:700">1-9</span><span>Select tower</span></div>
+                </div>
+                <button class="menu-btn-back" onclick="menuBackFromRules()">&#8592; Back</button>
             </div>
             <div id="menu-duel" style="display:none">
-                <button class="menu-btn" onclick="menuCreateRoom()">Creer une partie</button>
-                <button class="menu-btn" onclick="menuShowJoin()">Rejoindre</button>
-                <button class="menu-btn-back" onclick="menuBack()">&#8592; Retour</button>
+                <button class="menu-btn" onclick="menuCreateRoom()">Create Room</button>
+                <button class="menu-btn" onclick="menuShowJoin()">Join</button>
+                <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
             </div>
             <div id="menu-host" style="display:none">
-                <div id="menu-code-label">Code de la partie</div>
+                <div id="menu-code-label">Room Code</div>
                 <div id="menu-code">----</div>
-                <div id="menu-wait">En attente d'un adversaire...</div>
+                <div id="menu-wait">Waiting for opponent...</div>
                 <div id="menu-status"></div>
-                <button class="menu-btn-back" onclick="menuCancelHost()">&#8592; Annuler</button>
+                <button class="menu-btn-back" onclick="menuCancelHost()">&#8592; Cancel</button>
             </div>
             <div id="menu-join" style="display:none">
                 <input id="join-code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false">
-                <button class="menu-btn" onclick="menuJoinRoom()">Rejoindre</button>
+                <button class="menu-btn" onclick="menuJoinRoom()">Join</button>
                 <div id="join-error"></div>
-                <button class="menu-btn-back" onclick="menuBackToDuel()">&#8592; Retour</button>
+                <button class="menu-btn-back" onclick="menuBackToDuel()">&#8592; Back</button>
             </div>
         </div>
     </div>
-    <button id="mute-btn" onclick="toggleMute()" title="Son ON/OFF">
+    <button id="mute-btn" onclick="toggleMute()" title="Sound ON/OFF">
         <svg id="mute-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         <svg id="mute-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
     </button>
@@ -317,14 +329,14 @@
     <div id="wrap">
         <div id="bar">
             <div id="bar-top">
-                <div class="s" id="v-gold">Or <b id="gold">80</b></div>
+                <div class="s" id="v-gold">Gold <b id="gold">80</b></div>
                 <div class="sep"></div>
-                <div class="s" id="v-lives">Vies <b id="lives">20</b></div>
+                <div class="s" id="v-lives">Lives <b id="lives">20</b></div>
                 <div class="sep"></div>
-                <div class="s" id="v-wave">Vague <b id="wave">0/50</b></div>
+                <div class="s" id="v-wave">Wave <b id="wave">0/50</b></div>
                 <span id="v-wtype"></span>
                 <div class="sep"></div>
-                <div class="s" id="v-enemies">Restants <b id="enemies-left">0</b></div>
+                <div class="s" id="v-enemies">Left <b id="enemies-left">0</b></div>
                 <div class="sep"></div>
                 <div class="s" id="v-score" style="margin-left:auto">Score <b id="score">0</b></div>
             </div>
@@ -367,13 +379,13 @@
                 </button>
             </div>
             <div id="opp-bar">
-                <span class="opp-label">Adversaire</span>
+                <span class="opp-label">Opponent</span>
                 <div class="sep"></div>
-                <span class="opp-stat">Vie <b id="opp-lives">20</b></span>
+                <span class="opp-stat">Lives <b id="opp-lives">20</b></span>
                 <div class="sep"></div>
                 <span class="opp-stat">Score <b id="opp-score">0</b></span>
                 <div class="sep"></div>
-                <span class="opp-stat">Vague <b id="opp-wave">0</b>/50</span>
+                <span class="opp-stat">Wave <b id="opp-wave">0</b>/50</span>
             </div>
         </div>
         <div id="info">
@@ -393,18 +405,18 @@
                 <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ff0066" stroke-width="2.5" stroke-linecap="round"><path d="M14.5 3l6.5 6.5-11 11L3 13.5z"/><path d="M14.5 3L21 9.5"/><path d="M3 13.5L10.5 21"/></svg><span class="iv" id="tow-damage">-</span></span>
                 <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="#00f0ff"/></svg><span class="iv" id="tow-range">-</span></span>
                 <span class="stat"><svg viewBox="0 0 24 24" fill="none" stroke="#ff6600" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg><span class="iv" id="tow-rate">-</span></span>
-                <button id="up-btn" onclick="upgradeSelected()">Niv.2</button>
-                <button id="sell-btn" onclick="sellSelected()">Vendre</button>
+                <button id="up-btn" onclick="upgradeSelected()">Lv.2</button>
+                <button id="sell-btn" onclick="sellSelected()">Sell</button>
             </div>
             <span id="msg"></span>
         </div>
         <canvas id="game"></canvas>
         <div id="wave-bar">
             <div id="wb-waves"></div>
-            <button id="wb-go" onclick="startWave()">Lancer</button>
+            <button id="wb-go" onclick="startWave()">Launch</button>
         </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=93"></script>
+    <script src="game.js?v=95"></script>
 </body>
 </html>

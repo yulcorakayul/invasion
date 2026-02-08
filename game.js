@@ -58,7 +58,7 @@ function pickEntryRow(validRows) {
 
 const TOWER_TYPES = [
     {
-        name: 'Canon', desc: 'Tourelle polyvalente, tir rapide.', bg: '#0a1020',
+        name: 'Cannon', desc: 'Versatile turret, fast fire rate.', bg: '#0a1020',
         levels: [null,
             { cost: 15, damage: 10, range: 3,   fireRate: 0.8,  color: '#5cf' },
             { cost: 20, damage: 16, range: 3.2, fireRate: 0.7,  color: '#5df' },
@@ -68,7 +68,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Sniper', desc: 'Longue portee, degats eleves, tir lent.', bg: '#100a08',
+        name: 'Sniper', desc: 'Long range, high damage, slow fire.', bg: '#100a08',
         levels: [null,
             { cost: 25, damage: 35,  range: 6,   fireRate: 1.8, color: '#f90' },
             { cost: 35, damage: 55,  range: 6.5, fireRate: 1.6, color: '#fa0' },
@@ -78,7 +78,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Gel', desc: 'Ralentit les ennemis touches.', bg: '#081018', slow: true,
+        name: 'Freeze', desc: 'Slows down hit enemies.', bg: '#081018', slow: true,
         levels: [null,
             { cost: 10, damage: 2,  range: 2.5, fireRate: 0.5,  color: '#0cf', slowFactor: 0.5,  slowDur: 1.5 },
             { cost: 15, damage: 4,  range: 2.8, fireRate: 0.45, color: '#0df', slowFactor: 0.45, slowDur: 1.8 },
@@ -88,7 +88,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Splash', desc: 'Degats de zone, longue portee.', bg: '#140810', splash: true,
+        name: 'Splash', desc: 'Area damage, long range.', bg: '#140810', splash: true,
         levels: [null,
             { cost: 20, damage: 8,  range: 5,   fireRate: 1.2, color: '#f66', splashR: 1.5 },
             { cost: 30, damage: 14, range: 5.5, fireRate: 1.1, color: '#f77', splashR: 1.8 },
@@ -98,7 +98,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Exorciste', desc: 'Tres puissant, cible uniquement les fantomes.', bg: '#0c0a18', ghostOnly: true,
+        name: 'Exorcist', desc: 'Very powerful, targets ghosts only.', bg: '#0c0a18', ghostOnly: true,
         levels: [null,
             { cost: 20, damage: 40,  range: 3.5, fireRate: 1.0, color: '#af0' },
             { cost: 30, damage: 65,  range: 4,   fireRate: 0.9, color: '#bf0' },
@@ -108,7 +108,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Tesla', desc: 'Aura electrique, touche tous les ennemis proches.', bg: '#101008', aura: true,
+        name: 'Tesla', desc: 'Electric aura, hits all nearby enemies.', bg: '#101008', aura: true,
         levels: [null,
             { cost: 15, damage: 5,  range: 1.5, fireRate: 0.3,  color: '#ff0' },
             { cost: 25, damage: 9,  range: 1.8, fireRate: 0.28, color: '#ff2' },
@@ -118,7 +118,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Booster', desc: 'Boost les armes adjacentes.', bg: '#101810', booster: true,
+        name: 'Booster', desc: 'Boosts adjacent towers.', bg: '#101810', booster: true,
         levels: [null,
             { cost: 20, damage: 0, range: 1.5, fireRate: 1, color: '#0f8', boostPct: 0.25 },
             { cost: 25, damage: 0, range: 1.5, fireRate: 1, color: '#0fa', boostPct: 0.35 },
@@ -128,7 +128,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Grenade', desc: 'Explosion unique, puis se detruit.', bg: '#181008', grenade: true,
+        name: 'Grenade', desc: 'Single explosion, then self-destructs.', bg: '#181008', grenade: true,
         levels: [null,
             { cost: 10, damage: 80,  range: 2.5, fireRate: 1, color: '#f80', splashR: 2.5 },
             { cost: 15, damage: 130, range: 3,   fireRate: 1, color: '#f90', splashR: 3 },
@@ -138,7 +138,7 @@ const TOWER_TYPES = [
         ],
     },
     {
-        name: 'Laser', desc: 'Rayon sur une ligne de 3 cases.', bg: '#100818', laser: true,
+        name: 'Laser', desc: 'Beam across 3 tiles in a line.', bg: '#100818', laser: true,
         levels: [null,
             { cost: 25, damage: 15, range: 3, fireRate: 1.2, color: '#f0f' },
             { cost: 35, damage: 25, range: 3, fireRate: 1.0, color: '#f2f' },
@@ -151,17 +151,17 @@ const TOWER_TYPES = [
 
 const ENEMY_TYPES = {
     normal:   { speed: 1.8, color: '#d33', stroke: '#f66', reward: 5,  label: 'Normal', pts: 1 },
-    ghost:    { speed: 2.0, color: '#88f', stroke: '#aaf', reward: 6, label: 'Fantome', ghost: true, pts: 2 },
-    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 3,  label: 'Division', splits: 2, splitHpRatio: 0.4, pts: 1 },
-    fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 4,  label: 'Rapide', scale: 0.8, pts: 1 },
-    swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 2,  label: 'Groupe', scale: 0.85, spawnInt: 0.15, pts: 1 },
-    shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 7, label: 'Bouclier', shield: 10, pts: 2 },
+    ghost:    { speed: 2.0, color: '#88f', stroke: '#aaf', reward: 6, label: 'Ghost', ghost: true, pts: 2 },
+    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 3,  label: 'Splitter', splits: 2, splitHpRatio: 0.4, pts: 1 },
+    fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 4,  label: 'Fast', scale: 0.8, pts: 1 },
+    swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 2,  label: 'Swarm', scale: 0.85, spawnInt: 0.15, pts: 1 },
+    shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 7, label: 'Shield', shield: 10, pts: 2 },
     boss_normal:   { speed: 1.0, color: '#c40', stroke: '#e62', reward: 20,  label: 'Boss',       scale: 1.6, pts: 5 },
-    boss_ghost:    { speed: 0.9, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Fant',  scale: 1.5, ghost: true, pts: 6 },
-    boss_splitter: { speed: 0.8, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Div',   scale: 1.5, splits: 2, splitHpRatio: 0.4, pts: 6 },
-    boss_fast:     { speed: 2.2, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Rap',   scale: 1.3, pts: 6 },
-    boss_swarm:    { speed: 1.0, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Grp',   scale: 1.5, spawnInt: 0.5, pts: 5 },
-    boss_shield:   { speed: 0.8, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Bou',   scale: 1.5, shield: 20, pts: 7 },
+    boss_ghost:    { speed: 0.9, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Gho',  scale: 1.5, ghost: true, pts: 6 },
+    boss_splitter: { speed: 0.8, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Spl',   scale: 1.5, splits: 2, splitHpRatio: 0.4, pts: 6 },
+    boss_fast:     { speed: 2.2, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Fst',   scale: 1.3, pts: 6 },
+    boss_swarm:    { speed: 1.0, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.5, spawnInt: 0.5, pts: 5 },
+    boss_shield:   { speed: 0.8, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.5, shield: 20, pts: 7 },
 };
 
 const WAVES = [
@@ -1073,18 +1073,18 @@ function updateUI() {
         const lvls = selectedTower.typeDef.levels;
         if (selectedTower.upgradeTimer > 0) {
             const pct = Math.floor((1 - selectedTower.upgradeTimer / selectedTower.upgradeDuration) * 100);
-            btn.textContent = 'En cours ' + pct + '%';
+            btn.textContent = 'Upgrading ' + pct + '%';
             btn.disabled = true;
         } else if (selectedTower.level >= lvls.length - 1) {
             btn.textContent = 'MAX';
             btn.disabled = true;
         } else {
             const c = lvls[selectedTower.level + 1].cost;
-            btn.textContent = 'Niv.' + (selectedTower.level + 1) + ' (' + c + 'g)';
+            btn.textContent = 'Lv.' + (selectedTower.level + 1) + ' (' + c + 'g)';
             btn.disabled = gold < c;
         }
         const refund = Math.floor(selectedTower.totalCost * 0.6);
-        document.getElementById('sell-btn').textContent = 'Vendre (' + refund + 'g)';
+        document.getElementById('sell-btn').textContent = 'Sell (' + refund + 'g)';
     } else if (placingType >= 0) {
         infoTower.style.display = 'none';
         infoDesc.style.display = 'flex';
@@ -1124,9 +1124,9 @@ function toggleTowerMode(typeIdx) {
 
 function upgradeSelected() {
     if (!selectedTower) return;
-    if (selectedTower.upgradeTimer > 0) { showMessage('Amelioration en cours...'); return; }
-    if (selectedTower.upgrade()) { showMessage('Amelioration lancee'); playSfx('upgrade'); updateUI(); }
-    else showMessage('Pas assez d\'or');
+    if (selectedTower.upgradeTimer > 0) { showMessage('Upgrade in progress...'); return; }
+    if (selectedTower.upgrade()) { showMessage('Upgrade started'); playSfx('upgrade'); updateUI(); }
+    else showMessage('Not enough gold');
 }
 
 function sellSelected() {
@@ -1139,7 +1139,7 @@ function sellSelected() {
     selectedTower = null;
     playSfx('sell');
     updateUI();
-    showMessage('Vendu +' + refund + 'g');
+    showMessage('Sold +' + refund + 'g');
     for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
 }
 
@@ -1172,7 +1172,7 @@ function startWave(sync) {
     if (isDuel && waveNum === 0 && duelStartTimer > 0) return;
     nextWaveTimer = 0;
     waveDuration = 0;
-    if (getValidEntryRows().length === 0) { showMessage('Chemin bloque !'); return; }
+    if (getValidEntryRows().length === 0) { showMessage('Path blocked!'); return; }
     waveNum++;
     waveActive = true;
     const w = WAVES[waveNum - 1];
@@ -1184,7 +1184,7 @@ function startWave(sync) {
     const maxTrav = computeMaxTraversal(et.speed, !!et.ghost);
     waveDuration = (w.count - 1) * si + maxTrav;
     nextWaveTimer = waveDuration;
-    showMessage('Vague ' + waveNum + ' lancee');
+    showMessage('Wave ' + waveNum + ' launched');
     playSfx('wave');
     // Duel sync: send wave_start to opponent (only if I initiated manually)
     if (isDuel && sync && conn && conn.open) {
@@ -1222,11 +1222,11 @@ canvas.addEventListener('click', () => {
     if (placingType < 0) return;
     const ttype = TOWER_TYPES[placingType];
     const cost = ttype.levels[1].cost;
-    if (grid[row][col] !== 0) { showMessage('Occupe'); return; }
-    if (gold < cost) { showMessage('Pas assez d\'or'); return; }
+    if (grid[row][col] !== 0) { showMessage('Occupied'); return; }
+    if (gold < cost) { showMessage('Not enough gold'); return; }
     const test = grid.map(r => [...r]);
     test[row][col] = 1;
-    if (!pathExists(test)) { showMessage('Chemin bloque'); return; }
+    if (!pathExists(test)) { showMessage('Path blocked'); return; }
     grid[row][col] = 1;
     towers.push(new Tower(row, col, placingType));
     gold -= cost;
@@ -1248,7 +1248,7 @@ canvas.addEventListener('contextmenu', (e) => {
     if (selectedTower === tower) selectedTower = null;
     playSfx('sell');
     updateUI();
-    showMessage('Vendu +' + refund + 'g');
+    showMessage('Sold +' + refund + 'g');
     for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
 });
 
@@ -1431,13 +1431,13 @@ function gameLoop(time) {
                     gameEndTime = Date.now();
                     if (conn) conn.send({ type: 'game_complete', score, time: gameEndTime - gameStartTime });
                     if (opponentFinished) checkDuelEnd();
-                    else { showMessage('Termine ! En attente...'); playSfx('victory'); }
+                    else { showMessage('Done! Waiting...'); playSfx('victory'); }
                 } else {
-                    showMessage('Victoire !'); playSfx('victory');
+                    showMessage('Victory!'); playSfx('victory');
                 }
             }
         } else {
-            if (lives > 0) showMessage('Vague ' + waveNum + ' terminee');
+            if (lives > 0) showMessage('Wave ' + waveNum + ' complete');
             if (waveNum >= 1 && nextWaveTimer <= 0) {
                 nextWaveTimer = 1;
             }
@@ -1471,8 +1471,8 @@ function gameLoop(time) {
             if (isDuel && !duelEnded) {
                 duelEnded = true;
                 if (conn) conn.send({ type: 'game_over' });
-                duelResultTitle = 'DEFAITE';
-                duelResultSub = 'Vous avez ete elimine';
+                duelResultTitle = 'DEFEAT';
+                duelResultSub = 'You have been eliminated';
             }
         }
         updateUI();
@@ -1482,7 +1482,7 @@ function gameLoop(time) {
         ctx.fillStyle = 'rgba(3,3,8,0.8)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
         if (isDuel && duelResultTitle) {
-            const isWin = duelResultTitle === 'VICTOIRE';
+            const isWin = duelResultTitle === 'VICTORY';
             ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
             ctx.font = '700 14px "Press Start 2P", monospace';
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1515,7 +1515,7 @@ function gameLoop(time) {
         for (const e of enemies) e.draw();
         ctx.fillStyle = 'rgba(3,3,8,0.8)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        const isWin = duelResultTitle === 'VICTOIRE';
+        const isWin = duelResultTitle === 'VICTORY';
         ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
         ctx.font = '700 14px "Press Start 2P", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1807,14 +1807,14 @@ function drawTowerIcons() {
 
 // === WAVE BAR ===
 const WAVE_LABELS = {
-    normal: 'Normal', ghost: 'Fantome', splitter: 'Division', fast: 'Rapide', swarm: 'Groupe', shield: 'Bouclier',
-    boss_normal: 'Boss Normal', boss_ghost: 'Boss Fantome', boss_splitter: 'Boss Division',
-    boss_fast: 'Boss Rapide', boss_swarm: 'Boss Groupe', boss_shield: 'Boss Bouclier',
+    normal: 'Normal', ghost: 'Ghost', splitter: 'Splitter', fast: 'Fast', swarm: 'Swarm', shield: 'Shield',
+    boss_normal: 'Boss Normal', boss_ghost: 'Boss Ghost', boss_splitter: 'Boss Splitter',
+    boss_fast: 'Boss Fast', boss_swarm: 'Boss Swarm', boss_shield: 'Boss Shield',
 };
 const WAVE_SHORT = {
-    normal: 'Norm', ghost: 'Fant', splitter: 'Div', fast: 'Rap', swarm: 'Grp', shield: 'Bou',
-    boss_normal: 'B.Nrm', boss_ghost: 'B.Fan', boss_splitter: 'B.Div',
-    boss_fast: 'B.Rap', boss_swarm: 'B.Grp', boss_shield: 'B.Bou',
+    normal: 'Norm', ghost: 'Ghst', splitter: 'Spl', fast: 'Fast', swarm: 'Swrm', shield: 'Shld',
+    boss_normal: 'B.Nrm', boss_ghost: 'B.Gho', boss_splitter: 'B.Spl',
+    boss_fast: 'B.Fst', boss_swarm: 'B.Swm', boss_shield: 'B.Shd',
 };
 const WAVE_BG = {
     normal: '#3a1828', ghost: '#281840', splitter: '#183a20', fast: '#383810', swarm: '#103838', shield: '#182838',
@@ -1854,7 +1854,7 @@ function buildWaveBar() {
         const hpSpan = document.createElement('span'); hpSpan.className = 'wc-hp';
         hpSpan.textContent = w.count + 'x ' + w.hp + 'hp';
         el.appendChild(nSpan); el.appendChild(tSpan); el.appendChild(hpSpan);
-        el.title = 'Vague ' + (i + 1) + ' — ' + w.count + 'x ' + WAVE_LABELS[w.type] + ' (HP: ' + w.hp + ')';
+        el.title = 'Wave ' + (i + 1) + ' — ' + w.count + 'x ' + WAVE_LABELS[w.type] + ' (HP: ' + w.hp + ')';
         inner.appendChild(el);
         _wbEls.push({ el, idx: i, nSpan, hpSpan });
     }
@@ -1904,7 +1904,7 @@ function updateWaveBar() {
         item.el.style.opacity = isDone ? '0.5' : '1';
         if (isActive) {
             item.el.classList.add('active');
-            item.hpSpan.textContent = alive + '/' + w.count + ' restants';
+            item.hpSpan.textContent = alive + '/' + w.count + ' left';
         } else {
             item.el.classList.remove('active');
             item.hpSpan.textContent = w.count + 'x ' + w.hp + 'hp';
@@ -1916,22 +1916,22 @@ function updateWaveBar() {
         goBtn.textContent = 'GG';
         goBtn.disabled = true;
     } else if (isDuel && duelStartTimer > 0 && waveNum === 0) {
-        goBtn.textContent = 'Debut ' + Math.ceil(duelStartTimer) + 's';
+        goBtn.textContent = 'Start ' + Math.ceil(duelStartTimer) + 's';
         goBtn.disabled = true;
     } else if (waveNum === 0) {
-        goBtn.textContent = 'Lancer 1';
+        goBtn.textContent = 'Launch 1';
         goBtn.disabled = lives <= 0;
     } else if (waveActive && alive > 0) {
-        goBtn.textContent = alive + ' restants';
+        goBtn.textContent = alive + ' left';
         goBtn.disabled = true;
     } else if (isDuel && duelEnded) {
-        goBtn.textContent = 'Termine';
+        goBtn.textContent = 'Done';
         goBtn.disabled = true;
     } else if (nextWaveTimer > 0) {
-        goBtn.textContent = 'Lancer ' + (waveNum + 1) + ' (' + Math.ceil(nextWaveTimer) + 's)';
+        goBtn.textContent = 'Launch ' + (waveNum + 1) + ' (' + Math.ceil(nextWaveTimer) + 's)';
         goBtn.disabled = lives <= 0;
     } else {
-        goBtn.textContent = 'Lancer ' + (waveNum + 1);
+        goBtn.textContent = 'Launch ' + (waveNum + 1);
         goBtn.disabled = lives <= 0;
     }
 }
@@ -2310,13 +2310,23 @@ function menuBack() {
     document.getElementById('menu-main').style.display = '';
 }
 
+function menuShowRules() {
+    document.getElementById('menu-main').style.display = 'none';
+    document.getElementById('menu-rules').style.display = '';
+}
+
+function menuBackFromRules() {
+    document.getElementById('menu-rules').style.display = 'none';
+    document.getElementById('menu-main').style.display = '';
+}
+
 function menuCreateRoom() {
     if (typeof Peer === 'undefined') { alert('PeerJS non charge'); return; }
     document.getElementById('menu-duel').style.display = 'none';
     document.getElementById('menu-host').style.display = '';
     const code = generateRoomCode();
     document.getElementById('menu-code').textContent = code;
-    document.getElementById('menu-wait').textContent = 'En attente d\'un adversaire...';
+    document.getElementById('menu-wait').textContent = 'Waiting for opponent...';
     document.getElementById('menu-status').style.display = 'none';
 
     peer = new Peer('tdpro-' + code);
@@ -2331,13 +2341,13 @@ function menuCreateRoom() {
             // Send game config (entry groups) so both boards match
             conn.send({ type: 'init', entryGroups: ENTRY_GROUPS });
             document.getElementById('menu-wait').textContent = '';
-            document.getElementById('menu-status').textContent = 'Adversaire connecte !';
+            document.getElementById('menu-status').textContent = 'Opponent connected!';
             document.getElementById('menu-status').style.display = '';
             setTimeout(startDuel, 800);
         });
     });
     peer.on('error', function(err) {
-        document.getElementById('menu-wait').textContent = 'Erreur: ' + err.type;
+        document.getElementById('menu-wait').textContent = 'Error: ' + err.type;
     });
 }
 
@@ -2362,12 +2372,12 @@ function menuJoinRoom() {
             // Don't startDuel yet — wait for 'init' message from host
         });
         conn.on('error', function() {
-            document.getElementById('join-error').textContent = 'Connexion impossible';
+            document.getElementById('join-error').textContent = 'Connection failed';
             document.getElementById('join-error').style.display = '';
         });
     });
     peer.on('error', function(err) {
-        document.getElementById('join-error').textContent = 'Erreur: ' + err.type;
+        document.getElementById('join-error').textContent = 'Error: ' + err.type;
         document.getElementById('join-error').style.display = '';
     });
 }
@@ -2388,9 +2398,9 @@ function setupConnection() {
     conn.on('close', function() {
         if (!duelEnded) {
             duelEnded = true;
-            duelResultTitle = 'VICTOIRE';
-            duelResultSub = 'Adversaire deconnecte';
-            showMessage('Adversaire deconnecte');
+            duelResultTitle = 'VICTORY';
+            duelResultSub = 'Opponent disconnected';
+            showMessage('Opponent disconnected');
             playSfx('victory');
         }
     });
@@ -2434,8 +2444,8 @@ function handlePeerMessage(data) {
         // Opponent died -> I win
         if (!duelEnded) {
             duelEnded = true;
-            duelResultTitle = 'VICTOIRE';
-            duelResultSub = 'L\'adversaire a ete elimine';
+            duelResultTitle = 'VICTORY';
+            duelResultSub = 'Opponent has been eliminated';
             playSfx('victory');
         }
     } else if (data.type === 'game_complete') {
@@ -2464,22 +2474,22 @@ function checkDuelEnd() {
     duelEnded = true;
 
     if (score > opponentFinalScore) {
-        duelResultTitle = 'VICTOIRE';
+        duelResultTitle = 'VICTORY';
         duelResultSub = 'Score: ' + score + ' vs ' + opponentFinalScore;
     } else if (score < opponentFinalScore) {
-        duelResultTitle = 'DEFAITE';
+        duelResultTitle = 'DEFEAT';
         duelResultSub = 'Score: ' + score + ' vs ' + opponentFinalScore;
     } else if (myTime < opponentFinalTime) {
-        duelResultTitle = 'VICTOIRE';
-        duelResultSub = 'Plus rapide ! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
+        duelResultTitle = 'VICTORY';
+        duelResultSub = 'Faster! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
     } else if (myTime > opponentFinalTime) {
-        duelResultTitle = 'DEFAITE';
-        duelResultSub = 'Trop lent ! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
+        duelResultTitle = 'DEFEAT';
+        duelResultSub = 'Too slow! (' + (myTime / 1000).toFixed(1) + 's vs ' + (opponentFinalTime / 1000).toFixed(1) + 's)';
     } else {
-        duelResultTitle = 'EGALITE';
-        duelResultSub = 'Scores et temps identiques !';
+        duelResultTitle = 'DRAW';
+        duelResultSub = 'Scores and times are equal!';
     }
-    playSfx(duelResultTitle === 'VICTOIRE' ? 'victory' : 'gameover');
+    playSfx(duelResultTitle === 'VICTORY' ? 'victory' : 'gameover');
 }
 
 document.addEventListener('keydown', function(e) {
@@ -2503,6 +2513,11 @@ document.addEventListener('keydown', function(e) {
     // S = sell selected tower
     if (e.key === 's' || e.key === 'S') {
         if (selectedTower) sellSelected();
+    }
+    // 1-9 = select tower type
+    var num = parseInt(e.key);
+    if (num >= 1 && num <= TOWER_TYPES.length) {
+        toggleTowerMode(num - 1);
     }
 });
 
