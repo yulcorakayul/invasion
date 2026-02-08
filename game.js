@@ -1275,6 +1275,14 @@ canvas.addEventListener('click', () => {
     const ttype = TOWER_TYPES[placingType];
     const cost = ttype.levels[1].cost;
     if (grid[row][col] !== 0) { showMessage('Occupied'); return; }
+    // Block placement if an enemy is on this cell
+    const cx = cellX(col), cy = cellY(row);
+    for (const e of enemies) {
+        if (!e.alive) continue;
+        if (Math.abs(e.x - cx) < CS * 0.5 && Math.abs(e.y - cy) < CS * 0.5) {
+            showMessage('Enemy on cell'); return;
+        }
+    }
     if (gold < cost) { showMessage('Not enough gold'); return; }
     const test = grid.map(r => [...r]);
     test[row][col] = 1;
@@ -1364,7 +1372,12 @@ function drawScene() {
     if (hoveredCell && placingType >= 0) {
         const hx = GX + hoveredCell.col * CS, hy = hoveredCell.row * CS;
         const tt = TOWER_TYPES[placingType].levels[1];
-        const ok = grid[hoveredCell.row][hoveredCell.col] === 0 && gold >= tt.cost;
+        const hcx = cellX(hoveredCell.col), hcy = cellY(hoveredCell.row);
+        let enemyOnCell = false;
+        for (const e of enemies) {
+            if (e.alive && Math.abs(e.x - hcx) < CS * 0.5 && Math.abs(e.y - hcy) < CS * 0.5) { enemyOnCell = true; break; }
+        }
+        const ok = grid[hoveredCell.row][hoveredCell.col] === 0 && gold >= tt.cost && !enemyOnCell;
         ctx.fillStyle = ok ? '#00ff8818' : '#ff006618';
         ctx.fillRect(hx, hy, CS, CS);
         ctx.strokeStyle = ok ? '#00ff88' : '#ff0066';
