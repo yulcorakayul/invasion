@@ -1570,7 +1570,7 @@ function gameLoop(time) {
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
             if (waveNum < WAVES.length && lives > 0) {
-                startWave(false); // auto-launch: don't sync
+                startWave(isDuel); // auto-launch: sync in duel
             }
         }
     }
@@ -1580,7 +1580,7 @@ function gameLoop(time) {
         duelStartTimer -= dt;
         if (duelStartTimer <= 0) {
             duelStartTimer = 0;
-            startWave(false); // both timers fire independently
+            startWave(isDuel); // sync in duel
         }
     }
 
@@ -2583,7 +2583,8 @@ function handlePeerMessage(data) {
         setEntryGroups(data.entryGroups);
         startDuel();
     } else if (data.type === 'wave_start') {
-        // Force start even if current wave still active
+        // Ignore if we already started this wave (both timers fired)
+        if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
         waveActive = false;
         nextWaveTimer = 0;
         startWave(false); // don't echo back
