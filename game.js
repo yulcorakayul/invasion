@@ -165,7 +165,7 @@ const ENEMY_TYPES = {
 };
 
 const WAVES = [
-    // --- Early (1-10): intro de chaque type ---
+    // --- Early (1-10): tranquille ---
     { count: 5,  hp: 55,    type: 'normal' },        // 1
     { count: 6,  hp: 75,    type: 'normal' },        // 2
     { count: 4,  hp: 55,    type: 'ghost' },         // 3
@@ -173,53 +173,53 @@ const WAVES = [
     { count: 12, hp: 35,    type: 'swarm' },         // 5
     { count: 6,  hp: 70,    type: 'splitter' },      // 6
     { count: 5,  hp: 100,   type: 'shield' },        // 7
-    { count: 7,  hp: 110,   type: 'normal' },        // 8
-    { count: 2,  hp: 600,   type: 'boss_normal' },   // 9  BOSS
-    { count: 10, hp: 65,    type: 'fast' },          // 10
-    // --- Mid-early (11-20): montee en puissance ---
-    { count: 6,  hp: 110,   type: 'ghost' },         // 11
-    { count: 18, hp: 75,    type: 'swarm' },         // 12
-    { count: 8,  hp: 130,   type: 'splitter' },      // 13
-    { count: 8,  hp: 160,   type: 'shield' },        // 14
-    { count: 9,  hp: 180,   type: 'normal' },        // 15
-    { count: 12, hp: 100,   type: 'fast' },          // 16
-    { count: 2,  hp: 1200,  type: 'boss_ghost' },    // 17  BOSS
-    { count: 22, hp: 100,   type: 'swarm' },         // 18
-    { count: 7,  hp: 150,   type: 'ghost' },         // 19
-    { count: 9,  hp: 140,   type: 'splitter' },      // 20
-    // --- Mid (21-30): difficulte moyenne ---
-    { count: 10, hp: 250,   type: 'normal' },        // 21
-    { count: 10, hp: 220,   type: 'shield' },        // 22
-    { count: 14, hp: 140,   type: 'fast' },          // 23
-    { count: 25, hp: 150,   type: 'swarm' },         // 24
-    { count: 3,  hp: 1800,  type: 'boss_fast' },     // 25  BOSS
-    { count: 10, hp: 200,   type: 'splitter' },      // 26
-    { count: 8,  hp: 220,   type: 'ghost' },         // 27
-    { count: 12, hp: 300,   type: 'normal' },        // 28
-    { count: 12, hp: 270,   type: 'shield' },        // 29
-    { count: 28, hp: 180,   type: 'swarm' },         // 30
-    // --- Mid-late (31-40): serieux ---
-    { count: 16, hp: 180,   type: 'fast' },          // 31
-    { count: 9,  hp: 280,   type: 'ghost' },         // 32
-    { count: 2,  hp: 2800,  type: 'boss_splitter' }, // 33  BOSS
-    { count: 12, hp: 280,   type: 'splitter' },      // 34
-    { count: 14, hp: 400,   type: 'normal' },        // 35
-    { count: 14, hp: 350,   type: 'shield' },        // 36
-    { count: 30, hp: 230,   type: 'swarm' },         // 37
-    { count: 18, hp: 210,   type: 'fast' },          // 38
-    { count: 10, hp: 340,   type: 'ghost' },         // 39
-    { count: 3,  hp: 4000,  type: 'boss_swarm' },    // 40  BOSS
+    { count: 8,  hp: 120,   type: 'normal' },        // 8
+    { count: 2,  hp: 650,   type: 'boss_normal' },   // 9  BOSS
+    { count: 10, hp: 70,    type: 'fast' },          // 10
+    // --- Mid-early (11-20): ca chauffe ---
+    { count: 7,  hp: 140,   type: 'ghost' },         // 11
+    { count: 20, hp: 95,    type: 'swarm' },         // 12
+    { count: 9,  hp: 160,   type: 'splitter' },      // 13
+    { count: 9,  hp: 200,   type: 'shield' },        // 14
+    { count: 10, hp: 220,   type: 'normal' },        // 15
+    { count: 14, hp: 130,   type: 'fast' },          // 16
+    { count: 2,  hp: 1500,  type: 'boss_ghost' },    // 17  BOSS
+    { count: 25, hp: 130,   type: 'swarm' },         // 18
+    { count: 8,  hp: 200,   type: 'ghost' },         // 19
+    { count: 10, hp: 180,   type: 'splitter' },      // 20
+    // --- Mid (21-30): brutal ---
+    { count: 12, hp: 350,   type: 'normal' },        // 21
+    { count: 12, hp: 320,   type: 'shield' },        // 22
+    { count: 16, hp: 220,   type: 'fast' },          // 23
+    { count: 28, hp: 200,   type: 'swarm' },         // 24
+    { count: 3,  hp: 2500,  type: 'boss_fast' },     // 25  BOSS
+    { count: 12, hp: 300,   type: 'splitter' },      // 26
+    { count: 10, hp: 320,   type: 'ghost' },         // 27
+    { count: 14, hp: 450,   type: 'normal' },        // 28
+    { count: 14, hp: 400,   type: 'shield' },        // 29
+    { count: 32, hp: 260,   type: 'swarm' },         // 30
+    // --- Mid-late (31-40): cauchemar ---
+    { count: 20, hp: 300,   type: 'fast' },          // 31
+    { count: 12, hp: 420,   type: 'ghost' },         // 32
+    { count: 3,  hp: 4500,  type: 'boss_splitter' }, // 33  BOSS
+    { count: 14, hp: 420,   type: 'splitter' },      // 34
+    { count: 16, hp: 600,   type: 'normal' },        // 35
+    { count: 16, hp: 550,   type: 'shield' },        // 36
+    { count: 35, hp: 350,   type: 'swarm' },         // 37
+    { count: 22, hp: 360,   type: 'fast' },          // 38
+    { count: 14, hp: 520,   type: 'ghost' },         // 39
+    { count: 3,  hp: 6500,  type: 'boss_swarm' },    // 40  BOSS
     // --- Late (41-50): enfer ---
-    { count: 15, hp: 500,   type: 'normal' },        // 41
-    { count: 14, hp: 320,   type: 'splitter' },      // 42
-    { count: 16, hp: 450,   type: 'shield' },        // 43
-    { count: 35, hp: 280,   type: 'swarm' },         // 44
-    { count: 20, hp: 260,   type: 'fast' },          // 45
-    { count: 12, hp: 440,   type: 'ghost' },         // 46
-    { count: 16, hp: 550,   type: 'normal' },        // 47
-    { count: 3,  hp: 6000,  type: 'boss_shield' },   // 48  BOSS
-    { count: 18, hp: 480,   type: 'shield' },        // 49
-    { count: 18, hp: 600,   type: 'normal' },        // 50
+    { count: 18, hp: 800,   type: 'normal' },        // 41
+    { count: 16, hp: 550,   type: 'splitter' },      // 42
+    { count: 18, hp: 750,   type: 'shield' },        // 43
+    { count: 40, hp: 450,   type: 'swarm' },         // 44
+    { count: 24, hp: 450,   type: 'fast' },          // 45
+    { count: 16, hp: 700,   type: 'ghost' },         // 46
+    { count: 20, hp: 900,   type: 'normal' },        // 47
+    { count: 4,  hp: 10000, type: 'boss_shield' },   // 48  BOSS
+    { count: 20, hp: 850,   type: 'shield' },        // 49
+    { count: 22, hp: 1000,  type: 'normal' },        // 50
 ];
 const SPAWN_INT = 0.7;
 
@@ -265,8 +265,7 @@ let duelEnded = false;
 let opponentFinished = false;
 let opponentFinalScore = 0;
 let opponentFinalTime = 0;
-let _fromSync = false;
-let _pendingWaveSync = false;
+// _fromSync removed — replaced by startWave(sync) parameter
 let _lastStatusSend = 0;
 let duelResultTitle = '';
 let duelResultSub = '';
@@ -1061,7 +1060,12 @@ function updateUI() {
         if (selectedTower.typeDef.booster) {
             document.getElementById('tow-damage').textContent = '+' + Math.round(st.boostPct * 100) + '%';
         } else {
-            document.getElementById('tow-damage').textContent = st.damage;
+            var boostMul = selectedTower.getBoostMultiplier();
+            if (boostMul > 1) {
+                document.getElementById('tow-damage').textContent = Math.round(st.damage * boostMul) + ' (' + st.damage + '+' + Math.round((boostMul - 1) * 100) + '%)';
+            } else {
+                document.getElementById('tow-damage').textContent = st.damage;
+            }
         }
         document.getElementById('tow-range').textContent = st.range;
         document.getElementById('tow-rate').textContent = st.fireRate.toFixed(2) + 's';
@@ -1159,9 +1163,9 @@ function computeMaxTraversal(speed, ghost) {
     return maxT;
 }
 
-function startWave() {
-    var wasFromSync = _fromSync;
-    _fromSync = false;
+function startWave(sync) {
+    // sync: true = send to opponent (manual click), false = don't send (auto-timer / received sync)
+    if (sync === undefined) sync = true;
     if (waveActive) return;
     if (waveNum >= WAVES.length) return;
     // Duel: wave 1 only starts via countdown timer
@@ -1182,9 +1186,9 @@ function startWave() {
     nextWaveTimer = waveDuration;
     showMessage('Vague ' + waveNum + ' lancee');
     playSfx('wave');
-    // Duel sync: send wave_start to opponent (only if I initiated)
-    if (isDuel && conn && !wasFromSync) {
-        conn.send({ type: 'wave_start' });
+    // Duel sync: send wave_start to opponent (only if I initiated manually)
+    if (isDuel && sync && conn && conn.open) {
+        conn.send({ type: 'wave_start', waveNum: waveNum });
     }
     // Track game start time for tiebreaker
     if (isDuel && waveNum === 1) gameStartTime = Date.now();
@@ -1315,7 +1319,22 @@ function drawScene() {
         ctx.lineWidth = 1;
         ctx.strokeRect(hx + 1, hy + 1, CS - 2, CS - 2);
         if (ok) {
-            if (TOWER_TYPES[placingType].laser) {
+            if (TOWER_TYPES[placingType].booster) {
+                // Show boost zone (adjacent cells)
+                const bdirs = [[-1,0],[1,0],[0,-1],[0,1]];
+                const t = performance.now() * 0.003;
+                const pulse = 0.5 + 0.5 * Math.sin(t);
+                for (const [dr, dc] of bdirs) {
+                    const br = hoveredCell.row + dr, bc = hoveredCell.col + dc;
+                    if (br < 0 || br >= GRID || bc < 0 || bc >= GRID) continue;
+                    const bx = GX + bc * CS, by = br * CS;
+                    ctx.fillStyle = 'rgba(0, 255, 136, ' + (0.1 + 0.08 * pulse).toFixed(3) + ')';
+                    ctx.fillRect(bx, by, CS, CS);
+                    ctx.strokeStyle = 'rgba(0, 255, 136, ' + (0.35 + 0.2 * pulse).toFixed(2) + ')';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(bx + 1, by + 1, CS - 2, CS - 2);
+                }
+            } else if (TOWER_TYPES[placingType].laser) {
                 const ldirs = [[-1,0],[1,0],[0,-1],[0,1]];
                 for (const [dr, dc] of ldirs) {
                     for (let s = 1; s <= 3; s++) {
@@ -1431,8 +1450,7 @@ function gameLoop(time) {
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
             if (waveNum < WAVES.length && lives > 0) {
-                if (isDuel) _fromSync = true; // auto-launch: don't sync (opponent has own timer)
-                startWave();
+                startWave(false); // auto-launch: don't sync
             }
         }
     }
@@ -1442,8 +1460,7 @@ function gameLoop(time) {
         duelStartTimer -= dt;
         if (duelStartTimer <= 0) {
             duelStartTimer = 0;
-            _fromSync = true; // don't send sync, both timers fire independently
-            startWave();
+            startWave(false); // both timers fire independently
         }
     }
 
@@ -2400,9 +2417,10 @@ function handlePeerMessage(data) {
         setEntryGroups(data.entryGroups);
         startDuel();
     } else if (data.type === 'wave_start') {
-        _fromSync = true;
+        // Force start even if current wave still active
         waveActive = false;
-        startWave();
+        nextWaveTimer = 0;
+        startWave(false); // don't echo back
     } else if (data.type === 'status') {
         opponentLives = data.lives;
         opponentScore = data.score;
@@ -2464,10 +2482,27 @@ function checkDuelEnd() {
     playSfx(duelResultTitle === 'VICTOIRE' ? 'victory' : 'gameover');
 }
 
-// Enter key to join room
 document.addEventListener('keydown', function(e) {
+    // Enter to join room
     if (e.key === 'Enter' && document.getElementById('menu-join').style.display !== 'none') {
         menuJoinRoom();
+        return;
+    }
+    // Ignore shortcuts if menu is open or typing in input
+    if (document.getElementById('menu-overlay').style.display !== 'none') return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    // Space = launch next wave
+    if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        startWave();
+    }
+    // U = upgrade selected tower
+    if (e.key === 'u' || e.key === 'U') {
+        if (selectedTower) upgradeSelected();
+    }
+    // S = sell selected tower
+    if (e.key === 's' || e.key === 'S') {
+        if (selectedTower) sellSelected();
     }
 });
 
