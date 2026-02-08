@@ -2959,7 +2959,7 @@ function startMultiGame(playerRoster) {
     }
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
-    document.getElementById('multi-player-list').style.display = '';
+    document.getElementById('multi-player-list').style.display = 'block';
     initOpponentCanvas();
     resizeGame();
     updateMultiPlayerListUI();
