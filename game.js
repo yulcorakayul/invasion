@@ -318,6 +318,7 @@ function finalScore() { return score + lives * 10; }
 
 function killEnemy(e) {
     e.alive = false;
+    if (isMulti && lives <= 0) return; // Dead multi players: no more rewards
     gold += e.reward;
     score += (ENEMY_TYPES[e.typeName] || {}).pts || 1;
     spawnGoldText(e.x, e.y, e.reward);
@@ -1732,11 +1733,14 @@ function gameLoop(time) {
         ctx.font = '700 14px "Press Start 2P", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
-        ctx.fillText(endTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+        ctx.fillText(endTitle, CANVAS_W / 2, CANVAS_H / 2 - 30);
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
-        ctx.font = '10px "JetBrains Mono", monospace';
-        ctx.fillText(endSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        ctx.font = '9px "JetBrains Mono", monospace';
+        var subLines = endSub.split('\n');
+        for (var si = 0; si < subLines.length; si++) {
+            ctx.fillText(subLines[si], CANVAS_W / 2, CANVAS_H / 2 + si * 14);
+        }
         showReplayBtn();
         scheduleLoop();
         return;
@@ -1866,11 +1870,14 @@ function gameLoop(time) {
         ctx.font = '700 14px "Press Start 2P", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
-        ctx.fillText(multiResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 15);
+        ctx.fillText(multiResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 30);
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
-        ctx.font = '10px "JetBrains Mono", monospace';
-        ctx.fillText(multiResultSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+        ctx.font = '9px "JetBrains Mono", monospace';
+        var mSubLines = multiResultSub.split('\n');
+        for (var mi = 0; mi < mSubLines.length; mi++) {
+            ctx.fillText(mSubLines[mi], CANVAS_W / 2, CANVAS_H / 2 + mi * 14);
+        }
         if (multiEnded) showReplayBtn();
     }
 
@@ -2974,7 +2981,7 @@ function handleMultiJoinerMessage(data) {
         multiEnded = true;
         var myRank = data.rankings.findIndex(function(r) { return r.id === myPlayerId; });
         multiResultTitle = myRank === 0 ? 'VICTORY' : '#' + (myRank + 1);
-        multiResultSub = data.rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' ' + r.score; }).join('  ');
+        multiResultSub = data.rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
         playSfx(myRank === 0 ? 'victory' : 'gameover');
     }
 }
@@ -3058,9 +3065,13 @@ function checkMultiEnd() {
     // Game ends when 1 or 0 players alive
     if (aliveCount > 1) return;
     multiEnded = true;
+    // Update host's own data before building rankings
+    var me = multiPlayers.get(myPlayerId);
+    if (me) { me.score = score; me.lives = lives; me.alive = lives > 0; }
     var rankings = [];
     multiPlayers.forEach(function(p, id) {
-        rankings.push({ id: id, name: p.name, score: p.finalScore || p.score, alive: p.alive, time: p.finalTime || 0 });
+        var fs = p.finalScore || (p.score + (p.alive ? p.lives * 10 : 0));
+        rankings.push({ id: id, name: p.name, score: fs, alive: p.alive, time: p.finalTime || 0 });
     });
     rankings.sort(function(a, b) {
         if (a.alive !== b.alive) return a.alive ? -1 : 1;
@@ -3069,7 +3080,7 @@ function checkMultiEnd() {
     multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_end', rankings: rankings }); });
     var myRank = rankings.findIndex(function(r) { return r.id === myPlayerId; });
     multiResultTitle = myRank === 0 ? 'VICTORY' : '#' + (myRank + 1);
-    multiResultSub = rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' ' + r.score; }).join('  ');
+    multiResultSub = rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
     playSfx(myRank === 0 ? 'victory' : 'gameover');
 }
 
