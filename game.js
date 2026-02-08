@@ -76,7 +76,7 @@ const TOWER_TYPES = [
             { cost: 20, damage: 16, range: 3.2, fireRate: 0.7,  color: '#5df' },
             { cost: 30, damage: 24, range: 3.5, fireRate: 0.6,  color: '#6ef' },
             { cost: 45, damage: 34, range: 3.8, fireRate: 0.5,  color: '#7ff' },
-            { cost: 65, damage: 48, range: 4,   fireRate: 0.4,  color: '#8ff' },
+            { cost: 65, damage: 60, range: 4.5, fireRate: 0.3,  color: '#8ff' }, // L5: machine gun
         ],
     },
     // ── Tier 3 (expensive 30g) ──
@@ -87,7 +87,7 @@ const TOWER_TYPES = [
             { cost: 40, damage: 65,  range: 6.5, fireRate: 1.6, color: '#fa0' },
             { cost: 55, damage: 95,  range: 7,   fireRate: 1.4, color: '#fb0' },
             { cost: 75, damage: 130, range: 7.5, fireRate: 1.2, color: '#fc0' },
-            { cost: 100,damage: 175, range: 8,   fireRate: 1.0, color: '#fd0' },
+            { cost: 100,damage: 250, range: 9,   fireRate: 0.8, color: '#fd0' }, // L5: one-shot sniper
         ],
     },
     // ── Tier 1 (cheap 10g) ──
@@ -98,7 +98,7 @@ const TOWER_TYPES = [
             { cost: 15, damage: 4,  range: 2.8, fireRate: 0.45, color: '#0df', slowFactor: 0.45, slowDur: 1.8 },
             { cost: 25, damage: 6,  range: 3,   fireRate: 0.4,  color: '#0ef', slowFactor: 0.4,  slowDur: 2.0 },
             { cost: 35, damage: 9,  range: 3.3, fireRate: 0.35, color: '#0ff', slowFactor: 0.35, slowDur: 2.3 },
-            { cost: 50, damage: 12, range: 3.5, fireRate: 0.3,  color: '#2ff', slowFactor: 0.3,  slowDur: 2.5 },
+            { cost: 50, damage: 18, range: 4,   fireRate: 0.25, color: '#2ff', slowFactor: 0.2,  slowDur: 3.5 }, // L5: deep freeze
         ],
     },
     // ── Tier 2 (mid 25g) ──
@@ -109,7 +109,7 @@ const TOWER_TYPES = [
             { cost: 35, damage: 15, range: 5.5, fireRate: 1.1, color: '#f77', splashR: 1.8 },
             { cost: 50, damage: 24, range: 6,   fireRate: 1.0, color: '#f88', splashR: 2.0 },
             { cost: 70, damage: 35, range: 6.5, fireRate: 0.9, color: '#f99', splashR: 2.2 },
-            { cost: 95, damage: 50, range: 7,   fireRate: 0.8, color: '#faa', splashR: 2.5 },
+            { cost: 95, damage: 75, range: 8,   fireRate: 0.7, color: '#faa', splashR: 3.5 }, // L5: mega splash
         ],
     },
     // ── Tier 2 (mid 25g, ghost only) ──
@@ -120,7 +120,7 @@ const TOWER_TYPES = [
             { cost: 35, damage: 70,  range: 4,   fireRate: 0.9, color: '#bf0' },
             { cost: 50, damage: 100, range: 4.5, fireRate: 0.8, color: '#cf0' },
             { cost: 70, damage: 140, range: 5,   fireRate: 0.7, color: '#df0' },
-            { cost: 95, damage: 190, range: 5.5, fireRate: 0.6, color: '#ef0' },
+            { cost: 95, damage: 300, range: 6,   fireRate: 0.45,color: '#ef0' }, // L5: ghost annihilator
         ],
     },
     // ── Tier 2 (mid 20g) ──
@@ -131,7 +131,7 @@ const TOWER_TYPES = [
             { cost: 30, damage: 9,  range: 1.8, fireRate: 0.28, color: '#ff2' },
             { cost: 45, damage: 14, range: 2.0, fireRate: 0.25, color: '#ff4' },
             { cost: 60, damage: 20, range: 2.2, fireRate: 0.22, color: '#ff6' },
-            { cost: 80, damage: 28, range: 2.5, fireRate: 0.2,  color: '#ff8' },
+            { cost: 80, damage: 45, range: 3.0, fireRate: 0.15, color: '#ff8' }, // L5: lightning storm
         ],
     },
     // ── Tier 2 (mid 20g, support) ──
@@ -142,7 +142,7 @@ const TOWER_TYPES = [
             { cost: 25, damage: 0, range: 1.5, fireRate: 1, color: '#0fa', boostPct: 0.35 },
             { cost: 35, damage: 0, range: 1.5, fireRate: 1, color: '#0fc', boostPct: 0.45 },
             { cost: 50, damage: 0, range: 1.5, fireRate: 1, color: '#2ff', boostPct: 0.55 },
-            { cost: 70, damage: 0, range: 1.5, fireRate: 1, color: '#4ff', boostPct: 0.65 },
+            { cost: 70, damage: 0, range: 1.5, fireRate: 1, color: '#4ff', boostPct: 0.85 }, // L5: overcharge
         ],
     },
     // ── Tier 1 (cheap 12g, one-shot) ──
@@ -153,7 +153,7 @@ const TOWER_TYPES = [
             { cost: 18, damage: 130, range: 3,   fireRate: 1, color: '#f90', splashR: 3 },
             { cost: 28, damage: 200, range: 3.5, fireRate: 1, color: '#fa0', splashR: 3.5 },
             { cost: 40, damage: 300, range: 4,   fireRate: 1, color: '#fb0', splashR: 4 },
-            { cost: 55, damage: 450, range: 4.5, fireRate: 1, color: '#fc0', splashR: 4.5 },
+            { cost: 55, damage: 700, range: 5,   fireRate: 1, color: '#fc0', splashR: 5.5 }, // L5: mega bomb
         ],
     },
     // ── Tier 3 (expensive 30g) ──
@@ -164,7 +164,7 @@ const TOWER_TYPES = [
             { cost: 40, damage: 30, range: 3, fireRate: 1.0, color: '#f2f' },
             { cost: 55, damage: 45, range: 3, fireRate: 0.8, color: '#f4f' },
             { cost: 75, damage: 65, range: 3, fireRate: 0.6, color: '#f6f' },
-            { cost: 100,damage: 90, range: 3, fireRate: 0.5, color: '#f8f' },
+            { cost: 100,damage: 140,range: 4, fireRate: 0.4, color: '#f8f' }, // L5: death beam
         ],
     },
 ];
