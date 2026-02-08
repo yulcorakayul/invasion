@@ -928,9 +928,12 @@ class Enemy {
         const spd = this.baseSpeed * (this.slowTimer > 0 ? this.slowMult : 1);
         if (this.wpIdx >= this.waypoints.length) {
             this.alive = false;
-            lives--;
-            playSfx('hit');
-            updateUI();
+            if (this.waypoints.length > 0) {
+                // Enemy legitimately reached the exit
+                lives--;
+                playSfx('hit');
+                updateUI();
+            }
             return;
         }
         const [tx, ty] = this.waypoints[this.wpIdx];
@@ -1459,13 +1462,15 @@ function gameLoop(time) {
 
     // Handle splitter deaths — children jump 1 cell forward + spread vertically
     const newEnemies = [];
+    const maxX = GX + GRID * CS - CS * 0.5; // don't spawn past the grid
     for (const e of enemies) {
         if (!e.alive && e.canSplit && e.splits > 0) {
             for (let i = 0; i < e.splits; i++) {
                 const childHp = Math.floor(e.maxHp * e.splitHpRatio);
                 const spreadY = (i === 0 ? -1 : 1) * CS * 0.4;
-                const jumpX = CS * 1.0; // jump 1 cell forward
-                newEnemies.push(new Enemy(0, childHp, e.typeName, { x: e.x + jumpX, y: e.y + spreadY }));
+                const childY = Math.max(CS * 0.5, Math.min(GRID * CS - CS * 0.5, e.y + spreadY));
+                const childX = Math.min(e.x + CS, maxX); // jump 1 cell forward, clamped
+                newEnemies.push(new Enemy(0, childHp, e.typeName, { x: childX, y: childY }));
             }
         }
     }
