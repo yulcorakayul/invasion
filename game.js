@@ -1626,7 +1626,9 @@ function gameLoop(time) {
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
             if (waveNum < WAVES.length && lives > 0) {
-                startWave(isDuel || (isMulti && isHost)); // auto-launch: sync in duel/multi
+                // Multi joiners: don't auto-launch, wait for host's multi_wave_start
+                if (isMulti && !isHost) { /* wait for host sync */ }
+                else startWave(isDuel || (isMulti && isHost));
             }
         }
     }
@@ -1645,7 +1647,8 @@ function gameLoop(time) {
         multiStartTimer -= dt;
         if (multiStartTimer <= 0) {
             multiStartTimer = 0;
-            startWave(isHost); // only host syncs
+            // Only host initiates wave 1; joiners wait for multi_wave_start
+            if (isHost) startWave(true);
         }
     }
 
