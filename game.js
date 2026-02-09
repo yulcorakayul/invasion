@@ -2952,6 +2952,18 @@ function handleMultiHostMessage(data, senderConn) {
     } else if (data.type === 'multi_wave_request') {
         // A joiner requested to launch the next wave — host starts it for everyone
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
+        // Flush host's remaining unspawned enemies if wave still active
+        if (waveActive && enemiesToSpawn > 0) {
+            var wd = WAVES[waveNum - 1];
+            while (enemiesToSpawn > 0) {
+                var sr;
+                if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
+                else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, wd.type));
+                enemiesToSpawn--;
+            }
+        }
+        waveActive = false;
         startWave(true); // host starts + broadcasts multi_wave_start to all
     } else if (data.type === 'multi_game_over') {
         var p2 = multiPlayers.get(senderId);
