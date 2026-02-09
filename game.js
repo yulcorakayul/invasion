@@ -1314,13 +1314,15 @@ function startWave(sync) {
     const w = WAVES[waveNum - 1];
     enemiesToSpawn = w.count;
     spawnTimer = 0;
-    // Duel: pre-generate deterministic spawn rows (same seed = same sequence for both players)
+    // Duel/Multi: pre-generate deterministic spawn rows using valid entry rows
     if (isDuel || isMulti) {
         const rng = seededRandom(waveNum);
+        const validRows = getValidEntryRows();
+        const rowPool = validRows.length > 0 ? validRows : ENTRY_ROWS;
         waveSpawnRows = [];
         waveSpawnIdx = 0;
         for (let i = 0; i < w.count; i++) {
-            waveSpawnRows.push(pickEntryRow(ENTRY_ROWS, rng));
+            waveSpawnRows.push(pickEntryRow(rowPool, rng));
         }
     }
     // Timer = durée totale de la vague (spawns + traversée max)
@@ -1548,6 +1550,11 @@ function gameLoop(time) {
             let spawnRow;
             if ((isDuel || isMulti) && waveSpawnIdx < waveSpawnRows.length) {
                 spawnRow = waveSpawnRows[waveSpawnIdx++];
+                // Fallback if row became blocked mid-wave (tower placed after wave start)
+                if (!et.ghost && !findPath(spawnRow, ENTRY_COL, EXIT_COL)) {
+                    const valid = getValidEntryRows();
+                    if (valid.length > 0) spawnRow = valid[Math.floor(Math.random() * valid.length)];
+                }
             } else if (et.ghost) {
                 spawnRow = pickEntryRow(ENTRY_ROWS);
             } else {
@@ -2728,6 +2735,17 @@ function handlePeerMessage(data) {
     } else if (data.type === 'wave_start') {
         // Ignore if we already started this wave (both timers fired)
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
+        // Flush remaining unspawned enemies from current wave
+        if (waveActive && enemiesToSpawn > 0) {
+            const wd = WAVES[waveNum - 1];
+            while (enemiesToSpawn > 0) {
+                let sr;
+                if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
+                else { const v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, wd.type));
+                enemiesToSpawn--;
+            }
+        }
         waveActive = false;
         nextWaveTimer = 0;
         duelStartTimer = 0; // clear countdown so wave 1 guard doesn't block
@@ -2975,6 +2993,17 @@ function handleMultiJoinerMessage(data) {
         updateMultiOpponentView();
     } else if (data.type === 'multi_wave_start') {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
+        // Flush remaining unspawned enemies from current wave
+        if (waveActive && enemiesToSpawn > 0) {
+            const wd = WAVES[waveNum - 1];
+            while (enemiesToSpawn > 0) {
+                let sr;
+                if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
+                else { const v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, wd.type));
+                enemiesToSpawn--;
+            }
+        }
         waveActive = false; nextWaveTimer = 0; multiStartTimer = 0;
         startWave(false);
     } else if (data.type === 'multi_end') {
