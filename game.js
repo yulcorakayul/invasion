@@ -1629,7 +1629,16 @@ function gameLoop(time) {
             }
         } else {
             if (lives > 0) showMessage('Wave ' + waveNum + ' complete');
-            if (waveNum >= 1 && nextWaveTimer <= 0) {
+            // Multi: auto-advance immediately when wave clears
+            if ((isMulti || isDuel) && lives > 0 && waveNum < WAVES.length) {
+                if (isMulti && isHost) {
+                    startWave(true); // host broadcasts to all
+                } else if (isMulti && !isHost) {
+                    if (conn && conn.open) conn.send({ type: 'multi_wave_request', waveNum: waveNum + 1 });
+                } else if (isDuel) {
+                    startWave(true);
+                }
+            } else if (waveNum >= 1 && nextWaveTimer <= 0) {
                 nextWaveTimer = 1;
             }
         }

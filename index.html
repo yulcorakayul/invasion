@@ -249,7 +249,7 @@
         #join-code { display:block; width:180px; margin:8px auto; padding:10px; background:#0a0e18; border:1px solid #1a2840; color:#00f0ff; font-family:'Press Start 2P',monospace; font-size:16px; text-align:center; letter-spacing:8px; text-transform:uppercase; border-radius:2px; outline:none; }
         #join-code:focus { border-color:#00f0ff; box-shadow:0 0 10px #00f0ff30; }
         /* ── DUEL LAYOUT ── */
-        #duel-layout { display:flex; align-items:flex-start; gap:12px; }
+        #duel-layout { display:flex; align-items:stretch; gap:12px; }
         /* ── OPPONENT PANEL (right side in duel) ── */
         #opp-panel { display:none; flex-direction:column; gap:0; border:1px solid #ff006630; border-radius:3px; overflow:hidden; }
         #opp-panel.active { display:flex; }
@@ -282,7 +282,8 @@
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
         /* ── MULTI PLAYER LIST ── */
-        #multi-player-list { display:none; max-height:180px; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; }
+        #multi-player-list { display:none; flex:1; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; scrollbar-width:none; -ms-overflow-style:none; }
+        #multi-player-list::-webkit-scrollbar { display:none; }
         .mp-row { display:flex; align-items:center; gap:8px; padding:8px 12px; cursor:pointer; transition:background 0.15s; font-size:10px; letter-spacing:0.5px; text-transform:uppercase; color:#607888; border-bottom:1px solid #ff006610; }
         .mp-row:hover { background:#1a0818; }
         .mp-row.selected { background:#1a0818; border-left:2px solid #ff0066; }
@@ -467,6 +468,6 @@
     </div>
     <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=126"></script>
+    <script src="game.js?v=127"></script>
 </body>
 </html>
