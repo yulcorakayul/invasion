@@ -231,17 +231,18 @@ const WAVES = [
     { count: 18, hp: 320,   type: 'stealth' },        // 38  totalHP: 5760
     { count: 14, hp: 700,   type: 'ghost' },         // 39  totalHP: 9800
     { count: 3,  hp: 12000, type: 'boss_swarm' },    // 40  BOSS  totalHP: 36000
-    // --- Late (41-50) ---
+    // --- Late (41-45) --- ramping up
     { count: 16, hp: 1000,  type: 'normal' },        // 41  totalHP: 16000
-    { count: 14, hp: 750,   type: 'splitter' },      // 42  totalHP: 10500+splits
-    { count: 16, hp: 950,   type: 'shield' },        // 43  totalHP: 15200
-    { count: 40, hp: 550,   type: 'swarm' },         // 44  totalHP: 22000
-    { count: 20, hp: 400,   type: 'stealth' },        // 45  totalHP: 8000
-    { count: 14, hp: 1000,  type: 'regen' },          // 46  totalHP: 14000 (+regen)
-    { count: 18, hp: 1300,  type: 'normal' },        // 47  totalHP: 23400
-    { count: 4,  hp: 22000, type: 'boss_shield' },   // 48  BOSS  totalHP: 88000
-    { count: 18, hp: 1200,  type: 'shield' },        // 49  totalHP: 21600
-    { count: 22, hp: 1600,  type: 'normal' },        // 50  totalHP: 35200
+    { count: 14, hp: 800,   type: 'splitter' },      // 42  totalHP: 11200+splits
+    { count: 16, hp: 1100,  type: 'shield' },        // 43  totalHP: 17600
+    { count: 42, hp: 600,   type: 'swarm' },         // 44  totalHP: 25200
+    { count: 22, hp: 500,   type: 'stealth' },        // 45  totalHP: 11000
+    // --- Endgame (46-50) --- brutal
+    { count: 16, hp: 1400,  type: 'regen' },          // 46  totalHP: 22400 (+regen)
+    { count: 20, hp: 1800,  type: 'normal' },        // 47  totalHP: 36000
+    { count: 4,  hp: 28000, type: 'boss_shield' },   // 48  BOSS  totalHP: 112000
+    { count: 20, hp: 1800,  type: 'shield' },        // 49  totalHP: 36000
+    { count: 24, hp: 2200,  type: 'normal' },        // 50  totalHP: 52800
 ];
 const SPAWN_INT = 0.7;
 
@@ -256,7 +257,7 @@ let grid = [];
 let towers = [];
 let enemies = [];
 let projectiles = [];
-let gold = 80;
+let gold = 160;
 let lives = 20;
 let waveActive = false;
 let waveNum = 0;
