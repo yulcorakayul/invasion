@@ -3188,7 +3188,7 @@ document.addEventListener('keydown', function(e) {
 
 // === OPPONENT MINI-BOARD ===
 // Tower colors matching L1: Cannon, Sniper, Freeze, Splash, Exorcist, Tesla, Booster, Grenade(skip), Laser
-const OPP_TOWER_COLORS = ['#5cf','#f90','#8ef','#f6a','#b6f','#ee0','#5fa',null,'#f2f'];
+const OPP_TOWER_COLORS = ['#5cf','#f90','#cfefff','#f6a','#b6f','#ee0','#5fa',null,'#f2f'];
 
 function initOpponentCanvas() {
     var oc = document.getElementById('opp-canvas');
