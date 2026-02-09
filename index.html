@@ -100,7 +100,6 @@
             font-size: 10px;
             letter-spacing: 0.5px;
         }
-        #info .il { color: #405060; display: none; }
         #info .iv { color: #a0c0d0; margin-right: 8px; }
         #info .stat { display: inline-flex; align-items: center; gap: 3px; }
         #info .stat svg { width: 13px; height: 13px; flex-shrink: 0; }
@@ -253,7 +252,7 @@
         .auth-input:focus { border-color:#00f0ff; box-shadow:0 0 10px #00f0ff30; }
         #auth-error { color:#ff0066; font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-top:8px; min-height:14px; }
         #logged-user { color:#00f0ff; font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:4px; }
-        #logged-elo { }
+        #logged-elo { color: #ff0066; }
         #ranked-status { color:#405060; font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; min-height:14px; }
         #ranked-timer { color:#00f0ff; font-size:11px; letter-spacing:2px; margin-top:4px; }
         /* ── DUEL LAYOUT ── */
@@ -269,7 +268,7 @@
         #profile-btn {
             position: fixed;
             top: 12px;
-            right: 56px;
+            right: 96px;
             z-index: 9999;
             height: 36px;
             display: none;
@@ -306,10 +305,9 @@
         .profile-stat-row:last-child { border-bottom: none; }
         .profile-stat-label { color: #405060; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
         .profile-stat-val { color: #a0c0d0; font-size: 10px; font-weight: 700; }
-        #mute-btn {
+        .mute-btn {
             position: fixed;
             top: 12px;
-            right: 12px;
             z-index: 9999;
             width: 36px;
             height: 36px;
@@ -324,9 +322,11 @@
             transition: all 0.2s;
             padding: 0;
         }
-        #mute-btn svg { width: 18px; height: 18px; }
-        #mute-btn:hover { background: rgba(255, 0, 68, 0.2); box-shadow: 0 0 12px rgba(255, 0, 68, 0.25); }
-        #mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
+        #mute-sfx { right: 12px; }
+        #mute-music { right: 52px; }
+        .mute-btn svg { width: 18px; height: 18px; }
+        .mute-btn:hover { background: rgba(255, 0, 68, 0.2); box-shadow: 0 0 12px rgba(255, 0, 68, 0.25); }
+        .mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
         /* ── MULTI PLAYER LIST ── */
@@ -466,9 +466,12 @@
             <button class="menu-btn-back" onclick="hideProfile()" style="margin-top:16px">&#8592; Close</button>
         </div>
     </div>
-    <button id="mute-btn" onclick="toggleMute()" title="Sound ON/OFF">
-        <svg id="mute-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-        <svg id="mute-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+    <button id="mute-music" class="mute-btn" onclick="toggleMusic()" title="Music ON/OFF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </button>
+    <button id="mute-sfx" class="mute-btn" onclick="toggleSfx()" title="SFX ON/OFF">
+        <svg id="sfx-icon-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <svg id="sfx-icon-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
     </button>
     <div id="duel-layout">
     <div id="wrap">
@@ -478,7 +481,7 @@
                 <div class="sep"></div>
                 <div class="s" id="v-lives">Lives <b id="lives">20</b></div>
                 <div class="sep"></div>
-                <div class="s" id="v-wave">Wave <b id="wave">0/50</b></div>
+                <div class="s" id="v-wave">Wave <b id="wave">0/100</b></div>
                 <span id="v-wtype"></span>
                 <div class="sep"></div>
                 <div class="s" id="v-enemies">Left <b id="enemies-left">0</b></div>
@@ -565,6 +568,6 @@
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=135"></script>
+    <script src="game.js?v=136"></script>
 </body>
 </html>

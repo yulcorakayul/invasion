@@ -188,64 +188,93 @@ const ENEMY_TYPES = {
     boss_regen:    { speed: 0.5, color: '#1a3', stroke: '#3c5', reward: 24,  label: 'Boss Rgn',   scale: 1.7, regenRate: 0.05, pts: 7 },
 };
 
-const WAVES = [
+const WAVES_RANKED = [
     // --- Early (1-10) ---
-    { count: 6,  hp: 60,    type: 'normal' },        // 1   totalHP: 360
-    { count: 8,  hp: 80,    type: 'normal' },        // 2   totalHP: 640
-    { count: 5,  hp: 80,    type: 'ghost' },         // 3   totalHP: 400
-    { count: 10, hp: 55,    type: 'fast' },          // 4   totalHP: 550
-    { count: 15, hp: 40,    type: 'swarm' },         // 5   totalHP: 600
-    { count: 8,  hp: 100,   type: 'splitter' },      // 6   totalHP: 800+splits
-    { count: 6,  hp: 160,   type: 'shield' },        // 7   totalHP: 960
-    { count: 10, hp: 180,   type: 'normal' },        // 8   totalHP: 1800
-    { count: 2,  hp: 1600,  type: 'boss_normal' },   // 9   BOSS  totalHP: 3200
-    { count: 12, hp: 90,    type: 'stealth' },        // 10  totalHP: 1080
+    { count: 6,  hp: 60,    type: 'normal' },
+    { count: 8,  hp: 80,    type: 'normal' },
+    { count: 5,  hp: 80,    type: 'ghost' },
+    { count: 10, hp: 55,    type: 'fast' },
+    { count: 15, hp: 40,    type: 'swarm' },
+    { count: 8,  hp: 100,   type: 'splitter' },
+    { count: 6,  hp: 160,   type: 'shield' },
+    { count: 10, hp: 180,   type: 'normal' },
+    { count: 2,  hp: 1600,  type: 'boss_normal' },
+    { count: 12, hp: 90,    type: 'stealth' },
     // --- Mid-early (11-20) ---
-    { count: 8,  hp: 250,   type: 'ghost' },         // 11  totalHP: 2000
-    { count: 25, hp: 130,   type: 'swarm' },         // 12  totalHP: 3250
-    { count: 10, hp: 280,   type: 'splitter' },      // 13  totalHP: 2800+splits
-    { count: 10, hp: 340,   type: 'shield' },        // 14  totalHP: 3400
-    { count: 10, hp: 340,   type: 'regen' },          // 15  totalHP: 3400 (+regen)
-    { count: 16, hp: 220,   type: 'fast' },          // 16  totalHP: 3520
-    { count: 2,  hp: 4000,  type: 'boss_ghost' },    // 17  BOSS  totalHP: 8000
-    { count: 30, hp: 180,   type: 'swarm' },         // 18  totalHP: 5400
-    { count: 10, hp: 420,   type: 'ghost' },         // 19  totalHP: 4200
-    { count: 12, hp: 380,   type: 'splitter' },      // 20  totalHP: 4560+splits
+    { count: 8,  hp: 250,   type: 'ghost' },
+    { count: 25, hp: 130,   type: 'swarm' },
+    { count: 10, hp: 280,   type: 'splitter' },
+    { count: 10, hp: 340,   type: 'shield' },
+    { count: 10, hp: 340,   type: 'regen' },
+    { count: 16, hp: 220,   type: 'fast' },
+    { count: 2,  hp: 4000,  type: 'boss_ghost' },
+    { count: 30, hp: 180,   type: 'swarm' },
+    { count: 10, hp: 420,   type: 'ghost' },
+    { count: 12, hp: 380,   type: 'splitter' },
     // --- Mid (21-30) ---
-    { count: 14, hp: 550,   type: 'normal' },        // 21  totalHP: 7700
-    { count: 12, hp: 600,   type: 'shield' },        // 22  totalHP: 7200
-    { count: 16, hp: 220,   type: 'stealth' },        // 23  totalHP: 3520
-    { count: 32, hp: 280,   type: 'swarm' },         // 24  totalHP: 8960
-    { count: 3,  hp: 7000,  type: 'boss_fast' },     // 25  BOSS  totalHP: 21000
-    { count: 12, hp: 520,   type: 'splitter' },      // 26  totalHP: 6240+splits
-    { count: 12, hp: 650,   type: 'regen' },          // 27  totalHP: 7800 (+regen)
-    { count: 16, hp: 750,   type: 'normal' },        // 28  totalHP: 12000
-    { count: 14, hp: 720,   type: 'shield' },        // 29  totalHP: 10080
-    { count: 35, hp: 380,   type: 'swarm' },         // 30  totalHP: 13300
+    { count: 14, hp: 550,   type: 'normal' },
+    { count: 12, hp: 600,   type: 'shield' },
+    { count: 16, hp: 220,   type: 'stealth' },
+    { count: 32, hp: 280,   type: 'swarm' },
+    { count: 3,  hp: 7000,  type: 'boss_fast' },
+    { count: 12, hp: 520,   type: 'splitter' },
+    { count: 12, hp: 650,   type: 'regen' },
+    { count: 16, hp: 750,   type: 'normal' },
+    { count: 14, hp: 720,   type: 'shield' },
+    { count: 35, hp: 380,   type: 'swarm' },
     // --- Mid-late (31-40) ---
-    { count: 20, hp: 650,   type: 'fast' },          // 31  totalHP: 13000
-    { count: 14, hp: 950,   type: 'ghost' },         // 32  totalHP: 13300
-    { count: 3,  hp: 16000, type: 'boss_splitter' }, // 33  BOSS  totalHP: 48000+splits
-    { count: 14, hp: 950,   type: 'splitter' },      // 34  totalHP: 13300+splits
-    { count: 14, hp: 1200,  type: 'regen' },          // 35  totalHP: 16800 (+regen)
-    { count: 16, hp: 1300,  type: 'shield' },        // 36  totalHP: 20800
-    { count: 40, hp: 750,   type: 'swarm' },         // 37  totalHP: 30000
-    { count: 20, hp: 600,   type: 'stealth' },        // 38  totalHP: 12000
-    { count: 16, hp: 1300,  type: 'ghost' },         // 39  totalHP: 20800
-    { count: 3,  hp: 24000, type: 'boss_swarm' },    // 40  BOSS  totalHP: 72000
-    // --- Late (41-45) --- ramping up
-    { count: 18, hp: 1900,  type: 'normal' },        // 41  totalHP: 34200
-    { count: 16, hp: 1500,  type: 'splitter' },      // 42  totalHP: 24000+splits
-    { count: 18, hp: 2100,  type: 'shield' },        // 43  totalHP: 37800
-    { count: 45, hp: 1100,  type: 'swarm' },         // 44  totalHP: 49500
-    { count: 24, hp: 900,   type: 'stealth' },        // 45  totalHP: 21600
-    // --- Endgame (46-50) --- brutal
-    { count: 18, hp: 2600,  type: 'regen' },          // 46  totalHP: 46800 (+regen)
-    { count: 22, hp: 3400,  type: 'normal' },        // 47  totalHP: 74800
-    { count: 4,  hp: 55000, type: 'boss_shield' },   // 48  BOSS  totalHP: 220000
-    { count: 22, hp: 3400,  type: 'shield' },        // 49  totalHP: 74800
-    { count: 8,  hp: 50000, type: 'boss_normal', types: ['boss_normal','boss_ghost','boss_splitter','boss_fast','boss_swarm','boss_shield','boss_stealth','boss_regen'] }, // 50 ALL BOSSES
+    { count: 20, hp: 650,   type: 'fast' },
+    { count: 14, hp: 950,   type: 'ghost' },
+    { count: 3,  hp: 16000, type: 'boss_splitter' },
+    { count: 14, hp: 950,   type: 'splitter' },
+    { count: 14, hp: 1200,  type: 'regen' },
+    { count: 16, hp: 1300,  type: 'shield' },
+    { count: 40, hp: 750,   type: 'swarm' },
+    { count: 20, hp: 600,   type: 'stealth' },
+    { count: 16, hp: 1300,  type: 'ghost' },
+    { count: 3,  hp: 24000, type: 'boss_swarm' },
+    // --- Late (41-45) ---
+    { count: 18, hp: 1900,  type: 'normal' },
+    { count: 16, hp: 1500,  type: 'splitter' },
+    { count: 18, hp: 2100,  type: 'shield' },
+    { count: 45, hp: 1100,  type: 'swarm' },
+    { count: 24, hp: 900,   type: 'stealth' },
+    // --- Endgame (46-50) ---
+    { count: 18, hp: 2600,  type: 'regen' },
+    { count: 22, hp: 3400,  type: 'normal' },
+    { count: 4,  hp: 55000, type: 'boss_shield' },
+    { count: 22, hp: 3400,  type: 'shield' },
+    { count: 8,  hp: 50000, type: 'boss_normal', types: ['boss_normal','boss_ghost','boss_splitter','boss_fast','boss_swarm','boss_shield','boss_stealth','boss_regen'] },
 ];
+
+const WAVES_SOLO = (function() {
+    const regularTypes = ['normal','ghost','fast','swarm','splitter','shield','stealth','regen'];
+    const bossTypes = ['boss_normal','boss_ghost','boss_fast','boss_swarm','boss_splitter','boss_shield','boss_stealth','boss_regen'];
+    const waves = [];
+    for (let i = 1; i <= 100; i++) {
+        const isBoss = (i % 10 === 0);
+        if (isBoss) {
+            const bossIdx = Math.floor((i / 10 - 1) % bossTypes.length);
+            const bossCount = Math.min(2 + Math.floor(i / 20), 10);
+            const bossHp = Math.round(1200 * Math.pow(1.12, i));
+            if (i === 100) {
+                waves.push({ count: 10, hp: Math.round(5000 * Math.pow(1.12, 100)), type: 'boss_normal', types: bossTypes });
+            } else {
+                waves.push({ count: bossCount, hp: bossHp, type: bossTypes[bossIdx] });
+            }
+        } else {
+            const typeIdx = (i - 1) % regularTypes.length;
+            const type = regularTypes[typeIdx];
+            const isSwarm = (type === 'swarm');
+            const count = isSwarm ? Math.round(12 + i * 0.6) : Math.round(6 + i * 0.25);
+            const hp = Math.round((isSwarm ? 30 : 50) * Math.pow(1.1, i));
+            waves.push({ count, hp, type });
+        }
+    }
+    return waves;
+})();
+
+let WAVES = WAVES_SOLO;
 const SPAWN_INT = 0.7;
 
 // === STATE ===
@@ -1168,9 +1197,11 @@ function updateUI() {
 
     const wtEl = document.getElementById('v-wtype');
     if (waveActive && waveNum > 0) {
-        wtEl.textContent = '(' + ENEMY_TYPES[WAVES[waveNum - 1].type].label + ')';
+        const cw = WAVES[waveNum - 1];
+        wtEl.textContent = cw.types ? '(Mixed)' : '(' + ENEMY_TYPES[cw.type].label + ')';
     } else if (waveNum < WAVES.length) {
-        wtEl.textContent = '\u2192 ' + ENEMY_TYPES[WAVES[waveNum].type].label;
+        const nw = WAVES[waveNum];
+        wtEl.textContent = nw.types ? '\u2192 Mixed' : '\u2192 ' + ENEMY_TYPES[nw.type].label;
     } else {
         wtEl.textContent = '';
     }
@@ -2341,7 +2372,8 @@ let audioCtx = null;
 let masterGain = null;
 let musicGain = null;
 let sfxGain = null;
-let isMuted = false;
+let isMusicMuted = false;
+let isSfxMuted = false;
 let musicStarted = false;
 
 function initAudio() {
@@ -2358,13 +2390,21 @@ function initAudio() {
     sfxGain.connect(masterGain);
 }
 
-function toggleMute() {
+function toggleMusic() {
     initAudio();
-    isMuted = !isMuted;
-    masterGain.gain.setTargetAtTime(isMuted ? 0 : 1, audioCtx.currentTime, 0.05);
-    document.getElementById('mute-btn').classList.toggle('muted', isMuted);
-    document.getElementById('mute-icon-on').style.display = isMuted ? 'none' : '';
-    document.getElementById('mute-icon-off').style.display = isMuted ? '' : 'none';
+    isMusicMuted = !isMusicMuted;
+    musicGain.gain.setTargetAtTime(isMusicMuted ? 0 : 0.25, audioCtx.currentTime, 0.05);
+    document.getElementById('mute-music').classList.toggle('muted', isMusicMuted);
+    if (!musicStarted) { startMusic(); musicStarted = true; }
+}
+
+function toggleSfx() {
+    initAudio();
+    isSfxMuted = !isSfxMuted;
+    sfxGain.gain.setTargetAtTime(isSfxMuted ? 0 : 0.5, audioCtx.currentTime, 0.05);
+    document.getElementById('mute-sfx').classList.toggle('muted', isSfxMuted);
+    document.getElementById('sfx-icon-on').style.display = isSfxMuted ? 'none' : '';
+    document.getElementById('sfx-icon-off').style.display = isSfxMuted ? '' : 'none';
     if (!musicStarted) { startMusic(); musicStarted = true; }
 }
 
@@ -2654,6 +2694,8 @@ function toggleSpeed() {
 function menuStartSolo() {
     isDuel = false;
     isMulti = false;
+    WAVES = WAVES_SOLO;
+    document.getElementById('wave').textContent = '0/' + WAVES.length;
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('speed-btn').style.display = '';
 }
@@ -3014,6 +3056,8 @@ function setupConnection() {
 
 function startDuel() {
     isDuel = true;
+    WAVES = WAVES_RANKED;
+    document.getElementById('wave').textContent = '0/' + WAVES.length;
     duelEnded = false;
     duelResultTitle = '';
     duelResultSub = '';
@@ -3339,6 +3383,8 @@ function handleMultiJoinerMessage(data) {
 function startMultiGame(playerRoster) {
     isMulti = true;
     isDuel = false;
+    WAVES = WAVES_RANKED;
+    document.getElementById('wave').textContent = '0/' + WAVES.length;
     multiEnded = false;
     multiResultTitle = '';
     multiResultSub = '';
