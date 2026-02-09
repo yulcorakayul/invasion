@@ -293,7 +293,7 @@
         .mp-score { color:#00ff88; font-weight:700; }
         .mp-lives { color:#ff6688; }
         /* ── REPLAY BUTTON ── */
-        #replay-btn { position:fixed; left:50%; top:55%; transform:translate(-50%,-50%); z-index:200; display:none; padding:10px 30px; background:transparent; border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
+        #replay-btn { position:absolute; left:50%; bottom:30%; transform:translateX(-50%); z-index:200; display:none; padding:10px 30px; background:rgba(3,3,8,0.8); border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
         #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
         /* ── SPEED BUTTON ── */
         #speed-btn { padding:4px 10px; background:transparent; border:1px solid #405060; color:#607888; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; cursor:pointer; border-radius:2px; transition:all .2s; }
@@ -450,6 +450,7 @@
             <span id="msg"></span>
         </div>
         <canvas id="game"></canvas>
+        <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
         <div id="wave-bar">
             <div id="wb-waves"></div>
             <button id="speed-btn" onclick="toggleSpeed()" style="display:none">x1</button>
@@ -466,8 +467,7 @@
         <div id="multi-player-list"></div>
     </div>
     </div>
-    <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=127"></script>
+    <script src="game.js?v=132"></script>
 </body>
 </html>
