@@ -184,6 +184,8 @@ const ENEMY_TYPES = {
     boss_fast:     { speed: 1.5, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Fst',   scale: 1.4, pts: 6 },
     boss_swarm:    { speed: 0.7, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.6, spawnInt: 0.5, pts: 5 },
     boss_shield:   { speed: 0.5, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.7, shield: 30, pts: 7 },
+    boss_stealth:  { speed: 0.8, color: '#334', stroke: '#556', reward: 22,  label: 'Boss Stl',   scale: 1.5, stealth: true, pts: 6 },
+    boss_regen:    { speed: 0.5, color: '#1a3', stroke: '#3c5', reward: 24,  label: 'Boss Rgn',   scale: 1.7, regenRate: 0.05, pts: 7 },
 };
 
 const WAVES = [
@@ -242,7 +244,7 @@ const WAVES = [
     { count: 22, hp: 3400,  type: 'normal' },        // 47  totalHP: 74800
     { count: 4,  hp: 55000, type: 'boss_shield' },   // 48  BOSS  totalHP: 220000
     { count: 22, hp: 3400,  type: 'shield' },        // 49  totalHP: 74800
-    { count: 26, hp: 4200,  type: 'normal' },        // 50  totalHP: 109200
+    { count: 8,  hp: 50000, type: 'boss_normal', types: ['boss_normal','boss_ghost','boss_splitter','boss_fast','boss_swarm','boss_shield','boss_stealth','boss_regen'] }, // 50 ALL BOSSES
 ];
 const SPAWN_INT = 0.7;
 
@@ -1549,7 +1551,10 @@ function gameLoop(time) {
         spawnTimer -= dt;
         if (spawnTimer <= 0) {
             const waveData = WAVES[waveNum - 1];
-            const et = ENEMY_TYPES[waveData.type];
+            // Mixed wave support: cycle through types array
+            const spawnIdx = waveData.count - enemiesToSpawn;
+            const spawnType = waveData.types ? waveData.types[spawnIdx % waveData.types.length] : waveData.type;
+            const et = ENEMY_TYPES[spawnType];
             // Pick entry row: duel uses pre-generated deterministic sequence
             let spawnRow;
             if ((isDuel || isMulti) && waveSpawnIdx < waveSpawnRows.length) {
@@ -1567,7 +1572,7 @@ function gameLoop(time) {
                 else spawnRow = pickEntryRow(valid);
             }
             if (spawnRow !== undefined) {
-                enemies.push(new Enemy(spawnRow, waveData.hp, waveData.type));
+                enemies.push(new Enemy(spawnRow, waveData.hp, spawnType));
                 enemiesToSpawn--;
                 spawnTimer = et.spawnInt || SPAWN_INT;
                 updateUI();
@@ -2113,23 +2118,27 @@ const WAVE_LABELS = {
     stealth: 'Stealth', regen: 'Regen',
     boss_normal: 'Boss Normal', boss_ghost: 'Boss Ghost', boss_splitter: 'Boss Splitter',
     boss_fast: 'Boss Fast', boss_swarm: 'Boss Swarm', boss_shield: 'Boss Shield',
+    boss_stealth: 'Boss Stealth', boss_regen: 'Boss Regen',
 };
 const WAVE_SHORT = {
     normal: 'Norm', ghost: 'Ghst', splitter: 'Spl', fast: 'Fast', swarm: 'Swrm', shield: 'Shld',
     stealth: 'Stlh', regen: 'Regn',
     boss_normal: 'B.Nrm', boss_ghost: 'B.Gho', boss_splitter: 'B.Spl',
     boss_fast: 'B.Fst', boss_swarm: 'B.Swm', boss_shield: 'B.Shd',
+    boss_stealth: 'B.Stl', boss_regen: 'B.Rgn',
 };
 const WAVE_BG = {
     normal: '#3a1828', ghost: '#281840', splitter: '#183a20', fast: '#383810', swarm: '#103838', shield: '#182838',
     stealth: '#202030', regen: '#183818',
     boss_normal: '#3a2010', boss_ghost: '#301848', boss_splitter: '#204020',
     boss_fast: '#404010', boss_swarm: '#104040', boss_shield: '#203040',
+    boss_stealth: '#252530', boss_regen: '#1a3818',
 };
 const WAVE_BG_ACTIVE = {
     normal: '#602040', ghost: '#402060', splitter: '#206040', fast: '#606020', swarm: '#206060', shield: '#204060',
     boss_normal: '#604020', boss_ghost: '#502068', boss_splitter: '#306030',
     boss_fast: '#606030', boss_swarm: '#306060', boss_shield: '#305060',
+    boss_stealth: '#404050', boss_regen: '#2a5828',
 };
 
 let _wbBuilt = false;
@@ -2151,15 +2160,15 @@ function buildWaveBar() {
         const w = WAVES[i];
         const el = document.createElement('div');
         el.className = 'wc type-' + w.type;
-        el.style.background = WAVE_BG[w.type];
+        el.style.background = w.types ? '#2a0a2a' : WAVE_BG[w.type];
         const nSpan = document.createElement('span'); nSpan.className = 'wn';
         nSpan.textContent = (i + 1) + '/' + WAVES.length;
         const tSpan = document.createElement('span'); tSpan.className = 'wt';
-        tSpan.textContent = WAVE_SHORT[w.type];
+        tSpan.textContent = w.types ? 'ALL' : WAVE_SHORT[w.type];
         const hpSpan = document.createElement('span'); hpSpan.className = 'wc-hp';
         hpSpan.textContent = w.count + 'x ' + w.hp + 'hp';
         el.appendChild(nSpan); el.appendChild(tSpan); el.appendChild(hpSpan);
-        el.title = 'Wave ' + (i + 1) + ' — ' + w.count + 'x ' + WAVE_LABELS[w.type] + ' (HP: ' + w.hp + ')';
+        el.title = w.types ? 'Wave ' + (i + 1) + ' — ALL BOSSES (HP: ' + w.hp + ')' : 'Wave ' + (i + 1) + ' — ' + w.count + 'x ' + WAVE_LABELS[w.type] + ' (HP: ' + w.hp + ')';
         inner.appendChild(el);
         _wbEls.push({ el, idx: i, nSpan, hpSpan });
     }
@@ -2755,7 +2764,9 @@ function handlePeerMessage(data) {
                 let sr;
                 if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
                 else { const v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, wd.type));
+                const _fi = wd.count - enemiesToSpawn;
+                const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
                 enemiesToSpawn--;
             }
         }
@@ -2972,7 +2983,9 @@ function handleMultiHostMessage(data, senderConn) {
                 var sr;
                 if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
                 else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, wd.type));
+                const _fi = wd.count - enemiesToSpawn;
+                const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
                 enemiesToSpawn--;
             }
         }
@@ -3027,7 +3040,9 @@ function handleMultiJoinerMessage(data) {
                 let sr;
                 if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
                 else { const v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, wd.type));
+                const _fi = wd.count - enemiesToSpawn;
+                const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
                 enemiesToSpawn--;
             }
         }
