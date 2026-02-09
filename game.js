@@ -188,61 +188,61 @@ const ENEMY_TYPES = {
 
 const WAVES = [
     // --- Early (1-10) ---
-    { count: 5,  hp: 30,    type: 'normal' },        // 1   totalHP: 150
-    { count: 6,  hp: 45,    type: 'normal' },        // 2   totalHP: 270
-    { count: 4,  hp: 40,    type: 'ghost' },         // 3   totalHP: 160
-    { count: 8,  hp: 30,    type: 'fast' },          // 4   totalHP: 240
-    { count: 12, hp: 22,    type: 'swarm' },         // 5   totalHP: 264
-    { count: 6,  hp: 55,    type: 'splitter' },      // 6   totalHP: 330+splits
-    { count: 5,  hp: 85,    type: 'shield' },        // 7   totalHP: 425
-    { count: 8,  hp: 100,   type: 'normal' },        // 8   totalHP: 800
-    { count: 2,  hp: 800,   type: 'boss_normal' },   // 9   BOSS  totalHP: 1600
-    { count: 10, hp: 50,    type: 'stealth' },        // 10  totalHP: 500
+    { count: 6,  hp: 60,    type: 'normal' },        // 1   totalHP: 360
+    { count: 8,  hp: 80,    type: 'normal' },        // 2   totalHP: 640
+    { count: 5,  hp: 80,    type: 'ghost' },         // 3   totalHP: 400
+    { count: 10, hp: 55,    type: 'fast' },          // 4   totalHP: 550
+    { count: 15, hp: 40,    type: 'swarm' },         // 5   totalHP: 600
+    { count: 8,  hp: 100,   type: 'splitter' },      // 6   totalHP: 800+splits
+    { count: 6,  hp: 160,   type: 'shield' },        // 7   totalHP: 960
+    { count: 10, hp: 180,   type: 'normal' },        // 8   totalHP: 1800
+    { count: 2,  hp: 1600,  type: 'boss_normal' },   // 9   BOSS  totalHP: 3200
+    { count: 12, hp: 90,    type: 'stealth' },        // 10  totalHP: 1080
     // --- Mid-early (11-20) ---
-    { count: 7,  hp: 130,   type: 'ghost' },         // 11  totalHP: 910
-    { count: 20, hp: 70,    type: 'swarm' },         // 12  totalHP: 1400
-    { count: 8,  hp: 150,   type: 'splitter' },      // 13  totalHP: 1200+splits
-    { count: 8,  hp: 180,   type: 'shield' },        // 14  totalHP: 1440
-    { count: 8,  hp: 180,   type: 'regen' },          // 15  totalHP: 1440 (+regen)
-    { count: 14, hp: 120,   type: 'fast' },          // 16  totalHP: 1680
-    { count: 2,  hp: 2000,  type: 'boss_ghost' },    // 17  BOSS  totalHP: 4000
-    { count: 25, hp: 100,   type: 'swarm' },         // 18  totalHP: 2500
-    { count: 8,  hp: 220,   type: 'ghost' },         // 19  totalHP: 1760
-    { count: 10, hp: 200,   type: 'splitter' },      // 20  totalHP: 2000+splits
+    { count: 8,  hp: 250,   type: 'ghost' },         // 11  totalHP: 2000
+    { count: 25, hp: 130,   type: 'swarm' },         // 12  totalHP: 3250
+    { count: 10, hp: 280,   type: 'splitter' },      // 13  totalHP: 2800+splits
+    { count: 10, hp: 340,   type: 'shield' },        // 14  totalHP: 3400
+    { count: 10, hp: 340,   type: 'regen' },          // 15  totalHP: 3400 (+regen)
+    { count: 16, hp: 220,   type: 'fast' },          // 16  totalHP: 3520
+    { count: 2,  hp: 4000,  type: 'boss_ghost' },    // 17  BOSS  totalHP: 8000
+    { count: 30, hp: 180,   type: 'swarm' },         // 18  totalHP: 5400
+    { count: 10, hp: 420,   type: 'ghost' },         // 19  totalHP: 4200
+    { count: 12, hp: 380,   type: 'splitter' },      // 20  totalHP: 4560+splits
     // --- Mid (21-30) ---
-    { count: 12, hp: 300,   type: 'normal' },        // 21  totalHP: 3600
-    { count: 10, hp: 320,   type: 'shield' },        // 22  totalHP: 3200
-    { count: 14, hp: 120,   type: 'stealth' },        // 23  totalHP: 1680
-    { count: 28, hp: 150,   type: 'swarm' },         // 24  totalHP: 4200
-    { count: 3,  hp: 3500,  type: 'boss_fast' },     // 25  BOSS  totalHP: 10500
-    { count: 10, hp: 280,   type: 'splitter' },      // 26  totalHP: 2800+splits
-    { count: 10, hp: 350,   type: 'regen' },          // 27  totalHP: 3500 (+regen)
-    { count: 14, hp: 400,   type: 'normal' },        // 28  totalHP: 5600
-    { count: 12, hp: 380,   type: 'shield' },        // 29  totalHP: 4560
-    { count: 30, hp: 200,   type: 'swarm' },         // 30  totalHP: 6000
+    { count: 14, hp: 550,   type: 'normal' },        // 21  totalHP: 7700
+    { count: 12, hp: 600,   type: 'shield' },        // 22  totalHP: 7200
+    { count: 16, hp: 220,   type: 'stealth' },        // 23  totalHP: 3520
+    { count: 32, hp: 280,   type: 'swarm' },         // 24  totalHP: 8960
+    { count: 3,  hp: 7000,  type: 'boss_fast' },     // 25  BOSS  totalHP: 21000
+    { count: 12, hp: 520,   type: 'splitter' },      // 26  totalHP: 6240+splits
+    { count: 12, hp: 650,   type: 'regen' },          // 27  totalHP: 7800 (+regen)
+    { count: 16, hp: 750,   type: 'normal' },        // 28  totalHP: 12000
+    { count: 14, hp: 720,   type: 'shield' },        // 29  totalHP: 10080
+    { count: 35, hp: 380,   type: 'swarm' },         // 30  totalHP: 13300
     // --- Mid-late (31-40) ---
-    { count: 18, hp: 350,   type: 'fast' },          // 31  totalHP: 6300
-    { count: 12, hp: 500,   type: 'ghost' },         // 32  totalHP: 6000
-    { count: 3,  hp: 8000,  type: 'boss_splitter' }, // 33  BOSS  totalHP: 24000+splits
-    { count: 12, hp: 500,   type: 'splitter' },      // 34  totalHP: 6000+splits
-    { count: 12, hp: 650,   type: 'regen' },          // 35  totalHP: 7800 (+regen)
-    { count: 14, hp: 700,   type: 'shield' },        // 36  totalHP: 9800
-    { count: 35, hp: 400,   type: 'swarm' },         // 37  totalHP: 14000
-    { count: 18, hp: 320,   type: 'stealth' },        // 38  totalHP: 5760
-    { count: 14, hp: 700,   type: 'ghost' },         // 39  totalHP: 9800
-    { count: 3,  hp: 12000, type: 'boss_swarm' },    // 40  BOSS  totalHP: 36000
+    { count: 20, hp: 650,   type: 'fast' },          // 31  totalHP: 13000
+    { count: 14, hp: 950,   type: 'ghost' },         // 32  totalHP: 13300
+    { count: 3,  hp: 16000, type: 'boss_splitter' }, // 33  BOSS  totalHP: 48000+splits
+    { count: 14, hp: 950,   type: 'splitter' },      // 34  totalHP: 13300+splits
+    { count: 14, hp: 1200,  type: 'regen' },          // 35  totalHP: 16800 (+regen)
+    { count: 16, hp: 1300,  type: 'shield' },        // 36  totalHP: 20800
+    { count: 40, hp: 750,   type: 'swarm' },         // 37  totalHP: 30000
+    { count: 20, hp: 600,   type: 'stealth' },        // 38  totalHP: 12000
+    { count: 16, hp: 1300,  type: 'ghost' },         // 39  totalHP: 20800
+    { count: 3,  hp: 24000, type: 'boss_swarm' },    // 40  BOSS  totalHP: 72000
     // --- Late (41-45) --- ramping up
-    { count: 16, hp: 1000,  type: 'normal' },        // 41  totalHP: 16000
-    { count: 14, hp: 800,   type: 'splitter' },      // 42  totalHP: 11200+splits
-    { count: 16, hp: 1100,  type: 'shield' },        // 43  totalHP: 17600
-    { count: 42, hp: 600,   type: 'swarm' },         // 44  totalHP: 25200
-    { count: 22, hp: 500,   type: 'stealth' },        // 45  totalHP: 11000
+    { count: 18, hp: 1900,  type: 'normal' },        // 41  totalHP: 34200
+    { count: 16, hp: 1500,  type: 'splitter' },      // 42  totalHP: 24000+splits
+    { count: 18, hp: 2100,  type: 'shield' },        // 43  totalHP: 37800
+    { count: 45, hp: 1100,  type: 'swarm' },         // 44  totalHP: 49500
+    { count: 24, hp: 900,   type: 'stealth' },        // 45  totalHP: 21600
     // --- Endgame (46-50) --- brutal
-    { count: 16, hp: 1400,  type: 'regen' },          // 46  totalHP: 22400 (+regen)
-    { count: 20, hp: 1800,  type: 'normal' },        // 47  totalHP: 36000
-    { count: 4,  hp: 28000, type: 'boss_shield' },   // 48  BOSS  totalHP: 112000
-    { count: 20, hp: 1800,  type: 'shield' },        // 49  totalHP: 36000
-    { count: 24, hp: 2200,  type: 'normal' },        // 50  totalHP: 52800
+    { count: 18, hp: 2600,  type: 'regen' },          // 46  totalHP: 46800 (+regen)
+    { count: 22, hp: 3400,  type: 'normal' },        // 47  totalHP: 74800
+    { count: 4,  hp: 55000, type: 'boss_shield' },   // 48  BOSS  totalHP: 220000
+    { count: 22, hp: 3400,  type: 'shield' },        // 49  totalHP: 74800
+    { count: 26, hp: 4200,  type: 'normal' },        // 50  totalHP: 109200
 ];
 const SPAWN_INT = 0.7;
 
