@@ -3174,7 +3174,8 @@ document.addEventListener('keydown', function(e) {
 });
 
 // === OPPONENT MINI-BOARD ===
-const OPP_TOWER_COLORS = ['#ff0066','#00f0ff','#88ccff','#ff8800','#aa44ff','#5588ff','#00ff88','#ff4400','#ff00ff'];
+// Tower colors matching L1: Cannon, Sniper, Freeze, Splash, Exorcist, Tesla, Booster, Grenade(skip), Laser
+const OPP_TOWER_COLORS = ['#5cf','#f90','#8ef','#f6a','#b6f','#ee0','#5fa',null,'#f2f'];
 
 function initOpponentCanvas() {
     var oc = document.getElementById('opp-canvas');
@@ -3241,10 +3242,12 @@ function drawOpponentBoard() {
     ox.font = '600 11px "JetBrains Mono", monospace';
     ox.fillText('OUT', outX + CS / 2, EXIT_ROWS[2] * CS + CS / 2);
 
-    // Towers
+    // Towers (skip grenade index 7)
     for (var ti = 0; ti < oppBoardData.towers.length; ti++) {
         var tw = oppBoardData.towers[ti];
-        ox.fillStyle = OPP_TOWER_COLORS[tw.i] || '#00f0ff';
+        var tc = OPP_TOWER_COLORS[tw.i];
+        if (!tc) continue; // skip grenade
+        ox.fillStyle = tc;
         ox.fillRect(GX + tw.c * CS + 2, tw.r * CS + 2, CS - 4, CS - 4);
     }
 
