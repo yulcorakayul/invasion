@@ -2820,9 +2820,11 @@ function menuMultiBack() {
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-main').style.display = '';
 }
+var _rndNames = ['Shadow','Phantom','Blaze','Vortex','Neon','Cipher','Nova','Pulse','Flux','Drift','Spark','Glitch','Echo','Byte','Hexa','Pixel','Turbo','Zinc','Onyx','Razor','Storm','Frost','Volt','Chaos','Omega'];
+var _myRndName = _rndNames[Math.floor(Math.random() * _rndNames.length)] + Math.floor(Math.random() * 100);
 function getMultiName() {
     var n = (document.getElementById('multi-name').value || '').trim();
-    return n || 'Player';
+    return n || _myRndName;
 }
 function menuMultiCreate() {
     if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
