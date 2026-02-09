@@ -347,7 +347,7 @@ function getTowerAt(r, c) { return towers.find(t => t.row === r && t.col === c) 
 
 // === PATHFINDING ===
 function findPath(startR, startC, endC, ghost) {
-    if (!ghost && grid[startR][startC] !== 0) return null;
+    if (!ghost && grid[startR][startC] === 1) return null;
     const vis = Array.from({ length: GRID }, () => Array(GRID).fill(false));
     const par = Array.from({ length: GRID }, () => Array(GRID).fill(null));
     const q = [[startR, startC]];
@@ -363,7 +363,7 @@ function findPath(startR, startC, endC, ghost) {
         }
         for (const [dr, dc] of dirs) {
             const nr = r + dr, nc = c + dc;
-            if (nr >= 0 && nr < GRID && nc >= 0 && nc < GRID && !vis[nr][nc] && (ghost || grid[nr][nc] === 0)) {
+            if (nr >= 0 && nr < GRID && nc >= 0 && nc < GRID && !vis[nr][nc] && (ghost || grid[nr][nc] !== 1)) {
                 vis[nr][nc] = true;
                 par[nr][nc] = [r, c];
                 q.push([nr, nc]);
@@ -1385,15 +1385,18 @@ canvas.addEventListener('click', () => {
         }
     }
     if (gold < cost) { showMessage('Not enough gold'); return; }
-    const test = grid.map(r => [...r]);
-    test[row][col] = 1;
-    if (!pathExists(test)) { showMessage('Path blocked'); return; }
-    grid[row][col] = 1;
+    const isGrenade = !!ttype.grenade;
+    if (!isGrenade) {
+        const test = grid.map(r => [...r]);
+        test[row][col] = 1;
+        if (!pathExists(test)) { showMessage('Path blocked'); return; }
+    }
+    grid[row][col] = isGrenade ? 2 : 1;
     towers.push(new Tower(row, col, placingType));
     gold -= cost;
     playSfx('place');
     updateUI();
-    for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
+    if (!isGrenade) { for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); } }
 });
 
 canvas.addEventListener('contextmenu', (e) => {
