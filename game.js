@@ -172,7 +172,7 @@ const TOWER_TYPES = [
 const ENEMY_TYPES = {
     normal:   { speed: 1.8, color: '#d33', stroke: '#f66', reward: 5,  label: 'Normal', pts: 1 },
     ghost:    { speed: 2.0, color: '#88f', stroke: '#aaf', reward: 6, label: 'Ghost', ghost: true, pts: 2 },
-    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 4,  label: 'Splitter', splits: 2, splitHpRatio: 0.4, pts: 1 },
+    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 4,  label: 'Splitter', splits: 3, splitHpRatio: 0.35, pts: 1 },
     fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 4,  label: 'Fast', scale: 0.8, pts: 1 },
     swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 2,  label: 'Swarm', scale: 0.85, spawnInt: 0.15, pts: 1 },
     shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 7, label: 'Shield', shield: 10, pts: 2 },
@@ -180,7 +180,7 @@ const ENEMY_TYPES = {
     regen:    { speed: 1.6, color: '#2a4', stroke: '#4e6', reward: 6, label: 'Regen', regenRate: 0.08, pts: 2 },
     boss_normal:   { speed: 0.7, color: '#c40', stroke: '#e62', reward: 20,  label: 'Boss',       scale: 1.7, pts: 5 },
     boss_ghost:    { speed: 0.6, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Gho',  scale: 1.6, ghost: true, pts: 6 },
-    boss_splitter: { speed: 0.5, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Spl',   scale: 1.6, splits: 2, splitHpRatio: 0.4, pts: 6 },
+    boss_splitter: { speed: 0.5, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Spl',   scale: 1.6, splits: 4, splitHpRatio: 0.3, pts: 6 },
     boss_fast:     { speed: 1.5, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Fst',   scale: 1.4, pts: 6 },
     boss_swarm:    { speed: 0.7, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.6, spawnInt: 0.5, pts: 5 },
     boss_shield:   { speed: 0.5, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.7, shield: 30, pts: 7 },
@@ -1593,7 +1593,7 @@ function gameLoop(time) {
         if (!e.alive && e.canSplit && e.splits > 0) {
             for (let i = 0; i < e.splits; i++) {
                 const childHp = Math.floor(e.maxHp * e.splitHpRatio);
-                const spreadY = (i === 0 ? -1 : 1) * CS * 0.4;
+                const spreadY = (i - (e.splits - 1) / 2) * CS * 0.35;
                 const childY = Math.max(CS * 0.5, Math.min(GRID * CS - CS * 0.5, e.y + spreadY));
                 const childX = Math.min(e.x + CS, maxX); // jump 1 cell forward, clamped
                 newEnemies.push(new Enemy(0, childHp, e.typeName, { x: childX, y: childY }));
