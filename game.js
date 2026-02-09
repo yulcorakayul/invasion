@@ -1793,7 +1793,7 @@ function gameLoop(time) {
             _lastStatusSend = 0;
             conn.send({
                 type: 'status', lives, score, wave: waveNum,
-                tw: towers.map(function(t) { return { r: t.row, c: t.col, i: t.typeIdx }; }),
+                tw: towers.map(function(t) { return { r: t.row, c: t.col, i: t.type }; }),
                 en: enemies.filter(function(e) { return e.alive; }).map(function(e) {
                     return { gx: (e.x - GX) / CS, gy: e.y / CS, t: e.typeName, s: ENEMY_TYPES[e.typeName].scale || 1 };
                 })
@@ -1806,7 +1806,7 @@ function gameLoop(time) {
         _lastMultiStatusSend += dt;
         if (_lastMultiStatusSend >= 0.5) {
             _lastMultiStatusSend = 0;
-            var myTw = towers.map(function(t) { return { r: t.row, c: t.col, i: t.typeIdx }; });
+            var myTw = towers.map(function(t) { return { r: t.row, c: t.col, i: t.type }; });
             var myEn = enemies.filter(function(e) { return e.alive; }).map(function(e) {
                 return { gx: (e.x - GX) / CS, gy: e.y / CS, t: e.typeName, s: ENEMY_TYPES[e.typeName].scale || 1 };
             });
