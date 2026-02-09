@@ -248,6 +248,14 @@
         #join-error { color:#ff0066; font-size:9px; letter-spacing:1px; text-transform:uppercase; display:none; margin-top:6px; }
         #join-code { display:block; width:180px; margin:8px auto; padding:10px; background:#0a0e18; border:1px solid #1a2840; color:#00f0ff; font-family:'Press Start 2P',monospace; font-size:16px; text-align:center; letter-spacing:8px; text-transform:uppercase; border-radius:2px; outline:none; }
         #join-code:focus { border-color:#00f0ff; box-shadow:0 0 10px #00f0ff30; }
+        /* ── ACCOUNT / RANKED ── */
+        .auth-input { display:block; width:200px; margin:6px auto; padding:8px; background:#0a0e18; border:1px solid #1a2840; color:#00f0ff; font-family:'JetBrains Mono',monospace; font-size:10px; text-align:center; letter-spacing:1px; border-radius:2px; outline:none; }
+        .auth-input:focus { border-color:#00f0ff; box-shadow:0 0 10px #00f0ff30; }
+        #auth-error { color:#ff0066; font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-top:8px; min-height:14px; }
+        #logged-user { color:#00f0ff; font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:4px; }
+        #logged-elo { }
+        #ranked-status { color:#405060; font-size:9px; letter-spacing:1px; text-transform:uppercase; margin-top:10px; min-height:14px; }
+        #ranked-timer { color:#00f0ff; font-size:11px; letter-spacing:2px; margin-top:4px; }
         /* ── DUEL LAYOUT ── */
         #duel-layout { display:flex; align-items:stretch; gap:12px; }
         /* ── OPPONENT PANEL (right side in duel) ── */
@@ -258,6 +266,46 @@
         .opp-stat { display:flex; align-items:center; gap:4px; color:#405060; font-size:10px; letter-spacing:1px; text-transform:uppercase; padding:1px 0; }
         .opp-stat b { color:#ff6688; font-weight:700; }
         /* ── MUTE BTN ── */
+        #profile-btn {
+            position: fixed;
+            top: 12px;
+            right: 56px;
+            z-index: 9999;
+            height: 36px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 0 10px;
+            background: rgba(255, 0, 68, 0.1);
+            border: 1px solid rgba(255, 0, 68, 0.35);
+            border-radius: 3px;
+            color: #ff0044;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        #profile-btn:hover { background: rgba(255, 0, 68, 0.2); box-shadow: 0 0 12px rgba(255, 0, 68, 0.25); }
+        #profile-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        #profile-overlay {
+            position: fixed; inset: 0; z-index: 10001; background: rgba(3,3,8,0.92);
+            display: none; align-items: center; justify-content: center;
+        }
+        #profile-box {
+            text-align: center;
+            min-width: 240px;
+        }
+        .profile-label { color: #405060; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+        .profile-value { color: #a0c0d0; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-bottom: 16px; }
+        .profile-value.elo { color: #ff0066; font-size: 16px; font-family: 'Press Start 2P', monospace; }
+        .profile-value.name { color: #00f0ff; font-size: 14px; font-family: 'Press Start 2P', monospace; text-shadow: 0 0 10px #00f0ff40; margin-bottom: 20px; }
+        .profile-stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #0a1828; }
+        .profile-stat-row:last-child { border-bottom: none; }
+        .profile-stat-label { color: #405060; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+        .profile-stat-val { color: #a0c0d0; font-size: 10px; font-weight: 700; }
         #mute-btn {
             position: fixed;
             top: 12px;
@@ -309,7 +357,7 @@
             <div id="menu-sub">Tower Defense</div>
             <div id="menu-main">
                 <button class="menu-btn" onclick="menuStartSolo()">SOLO</button>
-                <button class="menu-btn" onclick="menuShowDuel()">DUEL</button>
+                <button class="menu-btn" onclick="menuShowDuel()">RANKED</button>
                 <button class="menu-btn" onclick="menuShowMulti()">MULTIPLAYER</button>
                 <button class="menu-btn" onclick="menuShowRules()">RULES</button>
             </div>
@@ -325,9 +373,42 @@
                 <button class="menu-btn-back" onclick="menuBackFromRules()">&#8592; Back</button>
             </div>
             <div id="menu-duel" style="display:none">
-                <button class="menu-btn" onclick="menuCreateRoom()">Create Room</button>
-                <button class="menu-btn" onclick="menuShowJoin()">Join</button>
-                <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                <div id="menu-duel-logged" style="display:none">
+                    <div class="profile-value name" id="logged-user" style="margin-bottom:12px">-</div>
+                    <div style="max-width:220px;margin:0 auto 16px">
+                        <div class="profile-stat-row"><span class="profile-stat-label">ELO</span><span class="profile-stat-val" id="logged-elo" style="color:#ff0066">---</span></div>
+                        <div class="profile-stat-row"><span class="profile-stat-label">Games Played</span><span class="profile-stat-val" id="logged-played">0</span></div>
+                    </div>
+                    <button class="menu-btn" onclick="startRankedQueue()">FIND OPPONENT</button>
+                    <button class="menu-btn" style="border-color:#405060;color:#607888" onclick="authLogout()">LOGOUT</button>
+                    <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                </div>
+                <div id="menu-duel-auth" style="display:none">
+                    <div id="auth-login-view">
+                        <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Login</div>
+                        <input class="auth-input" id="login-email" placeholder="USERNAME OR EMAIL" autocomplete="off" spellcheck="false">
+                        <input class="auth-input" id="login-pass" type="password" placeholder="PASSWORD" maxlength="50">
+                        <button class="menu-btn" onclick="authLogin()">LOGIN</button>
+                        <div id="auth-error"></div>
+                        <button class="menu-btn-back" onclick="showRegisterView()">No account? Register</button>
+                        <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                    </div>
+                    <div id="auth-register-view" style="display:none">
+                        <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Register</div>
+                        <input class="auth-input" id="reg-user" placeholder="USERNAME" maxlength="20" autocomplete="off" spellcheck="false">
+                        <input class="auth-input" id="reg-email" placeholder="EMAIL" autocomplete="off" spellcheck="false">
+                        <input class="auth-input" id="reg-pass" type="password" placeholder="PASSWORD" maxlength="50">
+                        <button class="menu-btn" onclick="authRegister()">REGISTER</button>
+                        <div id="auth-error-reg"></div>
+                        <button class="menu-btn-back" onclick="showLoginView()">Already have an account? Login</button>
+                        <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                    </div>
+                </div>
+            </div>
+            <div id="menu-ranked-queue" style="display:none">
+                <div id="ranked-status">Searching for opponent...</div>
+                <div id="ranked-timer"></div>
+                <button class="menu-btn-back" onclick="cancelRankedQueue()">&#8592; Cancel</button>
             </div>
             <div id="menu-host" style="display:none">
                 <div id="menu-code-label">Room Code</div>
@@ -367,6 +448,22 @@
                 <div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase">Waiting for host to start...</div>
                 <button class="menu-btn-back" onclick="menuMultiLeave()">&#8592; Leave</button>
             </div>
+        </div>
+    </div>
+    <button id="profile-btn" onclick="showProfile()" title="Profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span id="profile-btn-name">---</span>
+    </button>
+    <div id="profile-overlay">
+        <div id="profile-box">
+            <div class="profile-value name" id="prof-name">---</div>
+            <div style="max-width:220px;margin:0 auto">
+                <div class="profile-stat-row"><span class="profile-stat-label">ELO</span><span class="profile-stat-val" id="prof-elo" style="color:#ff0066">---</span></div>
+                <div class="profile-stat-row"><span class="profile-stat-label">Games Played</span><span class="profile-stat-val" id="prof-played">0</span></div>
+                <div class="profile-stat-row"><span class="profile-stat-label">Solo Best Wave</span><span class="profile-stat-val" id="prof-wave" style="color:#00f0ff">0</span></div>
+                <div class="profile-stat-row"><span class="profile-stat-label">Solo Best Score</span><span class="profile-stat-val" id="prof-score" style="color:#00ff88">0</span></div>
+            </div>
+            <button class="menu-btn-back" onclick="hideProfile()" style="margin-top:16px">&#8592; Close</button>
         </div>
     </div>
     <button id="mute-btn" onclick="toggleMute()" title="Sound ON/OFF">
@@ -468,6 +565,6 @@
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-    <script src="game.js?v=132"></script>
+    <script src="game.js?v=135"></script>
 </body>
 </html>

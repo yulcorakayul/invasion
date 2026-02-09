@@ -1690,6 +1690,7 @@ function gameLoop(time) {
                 if (conn) conn.send({ type: 'game_over' });
                 duelResultTitle = 'DEFEAT';
                 duelResultSub = 'You have been eliminated';
+                submitRankedResult('loss');
             }
             if (isMulti && !multiEnded) {
                 multiResultTitle = 'DEFEAT';
@@ -1726,7 +1727,20 @@ function gameLoop(time) {
                 ctx.fillStyle = '#506070';
                 ctx.font = '10px "JetBrains Mono", monospace';
                 ctx.fillText(rSub, CANVAS_W / 2, CANVAS_H / 2 + 15);
+                if (rankedEloChange !== null) {
+                    ctx.fillStyle = rankedEloChange >= 0 ? '#00ff88' : '#ff0066';
+                    ctx.font = '700 11px "Press Start 2P", monospace';
+                    ctx.fillText('ELO: ' + (rankedEloChange >= 0 ? '+' : '') + rankedEloChange, CANVAS_W / 2, CANVAS_H / 2 + 40);
+                }
             } else {
+                if (!_soloSaved && authToken && !isDuel) {
+                    _soloSaved = true;
+                    fetch(SERVER_URL + '/api/solo/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                        body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
+                    }).catch(function() {});
+                }
                 ctx.fillStyle = '#ff0066';
                 ctx.font = '700 14px "Press Start 2P", monospace';
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1766,6 +1780,11 @@ function gameLoop(time) {
         for (var si = 0; si < subLines.length; si++) {
             ctx.fillText(subLines[si], CANVAS_W / 2, CANVAS_H / 2 + si * 14);
         }
+        if (rankedEloChange !== null && duelEnded) {
+            ctx.fillStyle = rankedEloChange >= 0 ? '#00ff88' : '#ff0066';
+            ctx.font = '700 11px "Press Start 2P", monospace';
+            ctx.fillText('ELO: ' + (rankedEloChange >= 0 ? '+' : '') + rankedEloChange, CANVAS_W / 2, CANVAS_H / 2 + subLines.length * 14 + 15);
+        }
         showReplayBtn();
         scheduleLoop();
         return;
@@ -1773,6 +1792,14 @@ function gameLoop(time) {
 
     // Solo victory overlay
     if (!isDuel && !isMulti && waveNum >= WAVES.length && !waveActive && enemies.length === 0 && lives > 0) {
+        if (!_soloSaved && authToken) {
+            _soloSaved = true;
+            fetch(SERVER_URL + '/api/solo/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
+            }).catch(function() {});
+        }
         updateUI();
         drawScene();
         for (const t of towers) t.draw();
@@ -2631,9 +2658,256 @@ function menuStartSolo() {
     document.getElementById('speed-btn').style.display = '';
 }
 
-function menuShowDuel() {
+// === AUTH & RANKED ===
+var SERVER_URL = 'https://invasion-server-production.up.railway.app';
+var authToken = localStorage.getItem('tdpro_token');
+var currentUser = null;
+var isRanked = false;
+var rankedMatchId = null;
+var rankedPollTimer = null;
+var rankedEloChange = null;
+var _soloSaved = false;
+
+// Auto-load profile on startup if token exists
+if (authToken) {
+    loadProfile().then(function(ok) { if (ok) updateProfileBtn(); });
+}
+
+async function authRegister() {
+    var user = document.getElementById('reg-user').value.trim();
+    var email = document.getElementById('reg-email').value.trim();
+    var pass = document.getElementById('reg-pass').value;
+    document.getElementById('auth-error-reg').textContent = '';
+    if (!user || !email || !pass) { document.getElementById('auth-error-reg').textContent = 'All fields required'; return; }
+    try {
+        var r = await fetch(SERVER_URL + '/api/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, email: email, password: pass })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('auth-error-reg').textContent = data.error || 'Error'; return; }
+        authToken = data.token;
+        localStorage.setItem('tdpro_token', authToken);
+        currentUser = data.user;
+        showLoggedMenu();
+    } catch (e) { document.getElementById('auth-error-reg').textContent = 'Server unreachable'; }
+}
+
+async function authLogin() {
+    var loginVal = document.getElementById('login-email').value.trim();
+    var pass = document.getElementById('login-pass').value;
+    document.getElementById('auth-error').textContent = '';
+    if (!loginVal || !pass) { document.getElementById('auth-error').textContent = 'Login and password required'; return; }
+    try {
+        var r = await fetch(SERVER_URL + '/api/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: loginVal, password: pass })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('auth-error').textContent = data.error || 'Error'; return; }
+        authToken = data.token;
+        localStorage.setItem('tdpro_token', authToken);
+        currentUser = data.user;
+        showLoggedMenu();
+    } catch (e) { document.getElementById('auth-error').textContent = 'Server unreachable'; }
+}
+
+function showLoginView() {
+    document.getElementById('auth-register-view').style.display = 'none';
+    document.getElementById('auth-login-view').style.display = '';
+    document.getElementById('auth-error').textContent = '';
+}
+
+function showRegisterView() {
+    document.getElementById('auth-login-view').style.display = 'none';
+    document.getElementById('auth-register-view').style.display = '';
+    document.getElementById('auth-error-reg').textContent = '';
+}
+
+function authLogout() {
+    authToken = null;
+    currentUser = null;
+    localStorage.removeItem('tdpro_token');
+    showAuthMenu();
+    updateProfileBtn();
+}
+
+async function loadProfile() {
+    if (!authToken) return false;
+    try {
+        var r = await fetch(SERVER_URL + '/api/profile', { headers: { 'Authorization': 'Bearer ' + authToken } });
+        if (!r.ok) { authToken = null; localStorage.removeItem('tdpro_token'); return false; }
+        currentUser = await r.json();
+        return true;
+    } catch (e) { return false; }
+}
+
+function showLoggedMenu() {
+    document.getElementById('menu-duel-auth').style.display = 'none';
+    document.getElementById('menu-duel-logged').style.display = '';
+    document.getElementById('logged-user').textContent = currentUser.username;
+    document.getElementById('logged-elo').textContent = currentUser.elo;
+    document.getElementById('logged-played').textContent = currentUser.gamesPlayed || 0;
+    updateProfileBtn();
+}
+
+function showAuthMenu() {
+    document.getElementById('menu-duel-logged').style.display = 'none';
+    document.getElementById('menu-duel-auth').style.display = '';
+    document.getElementById('auth-error').textContent = '';
+}
+
+function updateProfileBtn() {
+    var btn = document.getElementById('profile-btn');
+    if (currentUser) {
+        btn.style.display = 'flex';
+        document.getElementById('profile-btn-name').textContent = currentUser.username;
+    } else {
+        btn.style.display = 'none';
+    }
+}
+
+function showProfile() {
+    if (!currentUser) return;
+    document.getElementById('prof-name').textContent = currentUser.username;
+    document.getElementById('prof-elo').textContent = currentUser.elo;
+    document.getElementById('prof-played').textContent = currentUser.gamesPlayed || 0;
+    document.getElementById('prof-wave').textContent = currentUser.bestWave || 0;
+    document.getElementById('prof-score').textContent = currentUser.bestScore || 0;
+    document.getElementById('profile-overlay').style.display = 'flex';
+}
+
+function hideProfile() {
+    document.getElementById('profile-overlay').style.display = 'none';
+}
+
+async function startRankedQueue() {
+    if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
+    document.getElementById('menu-duel').style.display = 'none';
+    document.getElementById('menu-ranked-queue').style.display = '';
+    document.getElementById('ranked-status').textContent = 'Searching for opponent...';
+    document.getElementById('ranked-timer').textContent = '';
+    try {
+        var r = await fetch(SERVER_URL + '/api/queue/join', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('ranked-status').textContent = data.error || 'Error'; return; }
+        if (data.status === 'matched') {
+            connectRankedMatch(data);
+            return;
+        }
+        // Waiting — start polling
+        rankedMatchId = data.matchId;
+        rankedPollTimer = setInterval(pollRankedStatus, 2000);
+    } catch (e) {
+        document.getElementById('ranked-status').textContent = 'Server unreachable';
+    }
+}
+
+async function pollRankedStatus() {
+    try {
+        var r = await fetch(SERVER_URL + '/api/queue/status', {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        });
+        var data = await r.json();
+        if (data.status === 'matched') {
+            clearInterval(rankedPollTimer); rankedPollTimer = null;
+            connectRankedMatch(data);
+        } else if (data.status === 'timeout' || data.status === 'expired') {
+            clearInterval(rankedPollTimer); rankedPollTimer = null;
+            document.getElementById('ranked-status').textContent = 'No opponent found';
+            document.getElementById('ranked-timer').textContent = '';
+            setTimeout(function() {
+                document.getElementById('menu-ranked-queue').style.display = 'none';
+                document.getElementById('menu-duel').style.display = '';
+                showLoggedMenu();
+            }, 1500);
+        } else if (data.status === 'waiting') {
+            document.getElementById('ranked-timer').textContent = data.waited + 's';
+        }
+    } catch (e) { /* ignore poll errors */ }
+}
+
+function connectRankedMatch(data) {
+    rankedMatchId = data.matchId;
+    isRanked = true;
+    rankedEloChange = null;
+    var peerCode = data.peerCode;
+    document.getElementById('ranked-status').textContent = 'Opponent found! Connecting...';
+    document.getElementById('ranked-timer').textContent = data.opponent.username + ' (ELO: ' + data.opponent.elo + ')';
+
+    if (data.isHost) {
+        peer = new Peer('tdpro-' + peerCode);
+        peer.on('open', function() {});
+        peer.on('connection', function(c) {
+            conn = c;
+            isHost = true;
+            conn.on('open', function() {
+                setupConnection();
+                conn.send({ type: 'init', entryGroups: ENTRY_GROUPS });
+                setTimeout(startDuel, 800);
+            });
+        });
+        peer.on('error', function(err) {
+            document.getElementById('ranked-status').textContent = 'Connection error: ' + err.type;
+        });
+    } else {
+        peer = new Peer();
+        peer.on('open', function() {
+            conn = peer.connect('tdpro-' + peerCode, { reliable: true });
+            conn.on('open', function() {
+                isHost = false;
+                setupConnection();
+            });
+            conn.on('error', function() {
+                document.getElementById('ranked-status').textContent = 'Connection failed';
+            });
+        });
+        peer.on('error', function(err) {
+            document.getElementById('ranked-status').textContent = 'Error: ' + err.type;
+        });
+    }
+}
+
+function cancelRankedQueue() {
+    if (rankedPollTimer) { clearInterval(rankedPollTimer); rankedPollTimer = null; }
+    fetch(SERVER_URL + '/api/queue/leave', {
+        method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken }
+    }).catch(function() {});
+    if (peer) { peer.destroy(); peer = null; conn = null; }
+    document.getElementById('menu-ranked-queue').style.display = 'none';
+    document.getElementById('menu-duel').style.display = '';
+    showLoggedMenu();
+}
+
+function submitRankedResult(resultStr) {
+    if (!isRanked || !authToken || !rankedMatchId) return;
+    fetch(SERVER_URL + '/api/match/result', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({
+            matchId: rankedMatchId,
+            finalScore: finalScore(),
+            finalLives: Math.max(0, lives),
+            finalWave: waveNum,
+            result: resultStr
+        })
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.eloChange !== undefined) rankedEloChange = data.eloChange;
+        if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
+    }).catch(function() {});
+}
+
+async function menuShowDuel() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-duel').style.display = '';
+    if (authToken) {
+        var ok = await loadProfile();
+        if (ok) { showLoggedMenu(); } else { showAuthMenu(); }
+    } else {
+        showAuthMenu();
+    }
 }
 
 function menuBack() {
@@ -2733,6 +3007,7 @@ function setupConnection() {
             duelResultSub = 'Opponent disconnected';
             showMessage('Opponent disconnected');
             playSfx('victory');
+            submitRankedResult('win');
         }
     });
 }
@@ -2790,6 +3065,7 @@ function handlePeerMessage(data) {
             duelResultTitle = 'VICTORY';
             duelResultSub = 'Opponent has been eliminated';
             playSfx('victory');
+            submitRankedResult('win');
         }
     } else if (data.type === 'game_complete') {
         opponentFinished = true;
@@ -2833,12 +3109,14 @@ function checkDuelEnd() {
         duelResultSub = 'Scores and times are equal!';
     }
     playSfx(duelResultTitle === 'VICTORY' ? 'victory' : 'gameover');
+    submitRankedResult(duelResultTitle === 'VICTORY' ? 'win' : (duelResultTitle === 'DEFEAT' ? 'loss' : 'draw'));
 }
 
 // === MULTIPLAYER MENU ===
 function menuShowMulti() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-multi').style.display = '';
+    if (currentUser) document.getElementById('multi-name').value = currentUser.username;
 }
 function menuMultiBack() {
     document.getElementById('menu-multi').style.display = 'none';
@@ -2848,7 +3126,7 @@ var _rndNames = ['Shadow','Phantom','Blaze','Vortex','Neon','Cipher','Nova','Pul
 var _myRndName = _rndNames[Math.floor(Math.random() * _rndNames.length)] + Math.floor(Math.random() * 100);
 function getMultiName() {
     var n = (document.getElementById('multi-name').value || '').trim();
-    return n || _myRndName;
+    return n || (currentUser ? currentUser.username : _myRndName);
 }
 function menuMultiCreate() {
     if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
