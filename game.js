@@ -3011,7 +3011,7 @@ function handleMultiJoinerMessage(data) {
     } else if (data.type === 'multi_end') {
         multiEnded = true;
         var myRank = data.rankings.findIndex(function(r) { return r.id === myPlayerId; });
-        multiResultTitle = myRank === 0 ? 'VICTORY' : '#' + (myRank + 1);
+        multiResultTitle = myRank === 0 ? 'VICTORY' : 'DEFEAT';
         multiResultSub = data.rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
         playSfx(myRank === 0 ? 'victory' : 'gameover');
     }
@@ -3092,9 +3092,13 @@ function updateMultiOpponentView() {
 function checkMultiEnd() {
     if (multiEnded || !isHost) return;
     var aliveCount = 0;
-    multiPlayers.forEach(function(p) { if (p.alive) aliveCount++; });
-    // Game ends when 1 or 0 players alive
-    if (aliveCount > 1) return;
+    var allDone = true;
+    multiPlayers.forEach(function(p) {
+        if (p.alive) aliveCount++;
+        if (p.alive && !p.finished) allDone = false;
+    });
+    // Game ends when 1 or 0 players alive, OR all alive players finished all waves
+    if (aliveCount > 1 && !allDone) return;
     multiEnded = true;
     // Update host's own data before building rankings
     var me = multiPlayers.get(myPlayerId);
@@ -3110,7 +3114,7 @@ function checkMultiEnd() {
     });
     multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_end', rankings: rankings }); });
     var myRank = rankings.findIndex(function(r) { return r.id === myPlayerId; });
-    multiResultTitle = myRank === 0 ? 'VICTORY' : '#' + (myRank + 1);
+    multiResultTitle = myRank === 0 ? 'VICTORY' : 'DEFEAT';
     multiResultSub = rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
     playSfx(myRank === 0 ? 'victory' : 'gameover');
 }
