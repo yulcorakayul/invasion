@@ -237,6 +237,10 @@
         #menu-sub { font-family:'JetBrains Mono',monospace; font-size:9px; color:#405060; letter-spacing:4px; text-transform:uppercase; margin-bottom:40px; }
         .menu-btn { display:block; width:220px; margin:8px auto; padding:12px 0; background:transparent; border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:all .2s; border-radius:2px; }
         .menu-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
+        .ranked-btn { border-color:#ffaa00; color:#ffaa00; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .ranked-btn svg { width:14px; height:14px; flex-shrink:0; }
+        .ranked-btn:hover { animation:none; background:#ffaa00; color:#030308; box-shadow:0 0 24px rgba(255,170,0,0.5); }
+        .ranked-btn:hover svg { stroke:#030308; }
         .menu-btn:disabled { opacity:.3; pointer-events:none; }
         .menu-btn-back { display:inline-block; margin-top:16px; padding:6px 16px; background:transparent; border:none; color:#405060; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:1px; cursor:pointer; transition:color .2s; text-transform:uppercase; }
         .menu-btn-back:hover { color:#ff0066; }
@@ -378,7 +382,7 @@
             <div id="menu-sub">Tower Defense</div>
             <div id="menu-main">
                 <button class="menu-btn" onclick="menuStartSolo()">SOLO</button>
-                <button class="menu-btn" onclick="menuShowDuel()">RANKED</button>
+                <button class="menu-btn ranked-btn" onclick="menuShowDuel()"><svg viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>RANKED</button>
                 <button class="menu-btn" onclick="menuShowMulti()">MULTIPLAYER</button>
                 <button class="menu-btn" onclick="menuShowRules()">RULES</button>
             </div>
