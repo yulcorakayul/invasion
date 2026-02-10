@@ -335,6 +335,15 @@
         .lb-name { color: #a0b8cc; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: uppercase; }
         .lb-val { color: #00f0ff; font-weight: 700; flex-shrink: 0; }
         #lb-loading { color: #405060; font-size: 9px; letter-spacing: 1px; text-transform: uppercase; padding: 20px 0; }
+        /* ── SOLO END OVERLAY ── */
+        #solo-end-overlay {
+            position: fixed; inset: 0; z-index: 10002; background: rgba(3,3,8,0.95);
+            display: none; align-items: center; justify-content: center;
+        }
+        #solo-end-box { text-align: center; min-width: 260px; }
+        #solo-end-score { color: #00ff88; font-family: 'Press Start 2P', monospace; font-size: 14px; margin-bottom: 18px; }
+        #solo-end-error { color: #ff0066; font-size: 9px; min-height: 14px; margin-top: 6px; letter-spacing: 0.5px; }
+        .solo-end-sep { color: #405060; font-size: 9px; letter-spacing: 2px; margin: 14px 0; text-transform: uppercase; }
         .mute-btn {
             width: 36px;
             height: 36px;
@@ -516,6 +525,21 @@
             <div id="lb-loading" style="display:none">Loading...</div>
             <div id="lb-list"></div>
             <button class="menu-btn-back" onclick="hideLeaderboard()" style="margin-top:12px">&#8592; Close</button>
+        </div>
+    </div>
+    <div id="solo-end-overlay">
+        <div id="solo-end-box">
+            <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">SAVE YOUR SCORE</div>
+            <div id="solo-end-score">0</div>
+            <input class="auth-input" id="solo-guest-name" placeholder="ENTER A PSEUDO" maxlength="20" autocomplete="off" spellcheck="false">
+            <button class="menu-btn" onclick="saveSoloGuest()" style="width:200px">SAVE</button>
+            <div class="solo-end-sep">&#8212; or &#8212;</div>
+            <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">LOGIN TO YOUR ACCOUNT</div>
+            <input class="auth-input" id="solo-login-email" placeholder="USERNAME OR EMAIL" autocomplete="off" spellcheck="false">
+            <input class="auth-input" id="solo-login-pass" type="password" placeholder="PASSWORD" maxlength="50">
+            <button class="menu-btn" onclick="saveSoloLogin()" style="width:200px">LOGIN &amp; SAVE</button>
+            <div id="solo-end-error"></div>
+            <button class="menu-btn-back" onclick="hideSoloEndOverlay()" style="margin-top:12px">Skip</button>
         </div>
     </div>
     <div id="duel-layout">

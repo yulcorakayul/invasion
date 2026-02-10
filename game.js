@@ -1786,13 +1786,17 @@ function gameLoop(time) {
                     ctx.fillText('ELO: ' + (rankedEloChange >= 0 ? '+' : '') + rankedEloChange, CANVAS_W / 2, CANVAS_H / 2 + 40);
                 }
             } else {
-                if (!_soloSaved && authToken && !isDuel) {
+                if (!_soloSaved && !isDuel) {
                     _soloSaved = true;
-                    fetch(SERVER_URL + '/api/solo/save', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-                        body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
-                    }).catch(function() {});
+                    if (authToken) {
+                        fetch(SERVER_URL + '/api/solo/save', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                            body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
+                        }).catch(function() {});
+                    } else {
+                        showSoloEndOverlay();
+                    }
                 }
                 ctx.fillStyle = '#ff0066';
                 ctx.font = '700 14px "Press Start 2P", monospace';
@@ -1845,13 +1849,17 @@ function gameLoop(time) {
 
     // Solo victory overlay
     if (!isDuel && !isMulti && waveNum >= WAVES.length && !waveActive && enemies.length === 0 && lives > 0) {
-        if (!_soloSaved && authToken) {
+        if (!_soloSaved) {
             _soloSaved = true;
-            fetch(SERVER_URL + '/api/solo/save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
-                body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
-            }).catch(function() {});
+            if (authToken) {
+                fetch(SERVER_URL + '/api/solo/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+                    body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
+                }).catch(function() {});
+            } else {
+                showSoloEndOverlay();
+            }
         }
         updateUI();
         drawScene();
@@ -3691,5 +3699,73 @@ async function loadLeaderboard(type) {
     } catch (err) {
         loadEl.style.display = 'none';
         listEl.innerHTML = '<div style="color:#ff0066;font-size:9px;padding:20px 0">Failed to load</div>';
+    }
+}
+
+// === SOLO END OVERLAY (save score without account) ===
+var _pendingWave = 0;
+var _pendingScore = 0;
+
+function showSoloEndOverlay() {
+    _pendingWave = waveNum;
+    _pendingScore = finalScore();
+    document.getElementById('solo-end-score').textContent = _pendingScore;
+    document.getElementById('solo-end-error').textContent = '';
+    document.getElementById('solo-guest-name').value = '';
+    document.getElementById('solo-login-email').value = '';
+    document.getElementById('solo-login-pass').value = '';
+    document.getElementById('solo-end-overlay').style.display = 'flex';
+}
+
+function hideSoloEndOverlay() {
+    document.getElementById('solo-end-overlay').style.display = 'none';
+}
+
+async function saveSoloGuest() {
+    var name = document.getElementById('solo-guest-name').value.trim();
+    var errEl = document.getElementById('solo-end-error');
+    errEl.textContent = '';
+    if (!name) { errEl.textContent = 'Enter a pseudo'; return; }
+    try {
+        var r = await fetch(SERVER_URL + '/api/solo/guest-save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ guestName: name, bestWave: _pendingWave, bestScore: _pendingScore })
+        });
+        var data = await r.json();
+        if (!r.ok) { errEl.textContent = data.error || 'Error'; return; }
+        hideSoloEndOverlay();
+    } catch (e) {
+        errEl.textContent = 'Server unreachable';
+    }
+}
+
+async function saveSoloLogin() {
+    var loginVal = document.getElementById('solo-login-email').value.trim();
+    var pass = document.getElementById('solo-login-pass').value;
+    var errEl = document.getElementById('solo-end-error');
+    errEl.textContent = '';
+    if (!loginVal || !pass) { errEl.textContent = 'Login and password required'; return; }
+    try {
+        var r = await fetch(SERVER_URL + '/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: loginVal, password: pass })
+        });
+        var data = await r.json();
+        if (!r.ok) { errEl.textContent = data.error || 'Error'; return; }
+        authToken = data.token;
+        localStorage.setItem('tdpro_token', authToken);
+        currentUser = data.user;
+        updateProfileBtn();
+        // Save the pending score
+        await fetch(SERVER_URL + '/api/solo/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+            body: JSON.stringify({ bestWave: _pendingWave, bestScore: _pendingScore })
+        });
+        hideSoloEndOverlay();
+    } catch (e) {
+        errEl.textContent = 'Server unreachable';
     }
 }
