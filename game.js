@@ -3615,3 +3615,53 @@ function drawOpponentBoard() {
 
     ox.restore();
 }
+
+// === LEADERBOARD ===
+let currentLbType = 'elo';
+
+function showLeaderboard() {
+    document.getElementById('lb-overlay').style.display = 'flex';
+    loadLeaderboard('elo');
+}
+
+function hideLeaderboard() {
+    document.getElementById('lb-overlay').style.display = 'none';
+}
+
+async function loadLeaderboard(type) {
+    currentLbType = type;
+    // Update active tab
+    document.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });
+    var tabs = document.querySelectorAll('.lb-tab');
+    if (type === 'elo') tabs[0].classList.add('active');
+    else if (type === 'solo') tabs[1].classList.add('active');
+    else tabs[2].classList.add('active');
+
+    var listEl = document.getElementById('lb-list');
+    var loadEl = document.getElementById('lb-loading');
+    listEl.innerHTML = '';
+    loadEl.style.display = '';
+
+    try {
+        var r = await fetch(SERVER_URL + '/api/leaderboard?type=' + type);
+        var data = await r.json();
+        loadEl.style.display = 'none';
+
+        if (!data.length) {
+            listEl.innerHTML = '<div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:20px 0">No data yet</div>';
+            return;
+        }
+
+        listEl.innerHTML = data.map(function(u, i) {
+            var rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            var val = '';
+            if (type === 'elo') val = '<span class="lb-val" style="color:#ff0066">' + u.elo + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + u.gamesPlayed + 'G</span>';
+            else if (type === 'solo') val = '<span class="lb-val" style="color:#00ff88">' + u.bestScore + '</span><span style="color:#405060;font-size:9px;margin-left:6px">W' + u.bestWave + '</span>';
+            else val = '<span class="lb-val">' + u.gamesPlayed + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + (u.gamesWon || 0) + 'W</span>';
+            return '<div class="lb-row"><span class="lb-rank ' + rankClass + '">' + (i + 1) + '</span><span class="lb-name">' + u.username + '</span>' + val + '</div>';
+        }).join('');
+    } catch (err) {
+        loadEl.style.display = 'none';
+        listEl.innerHTML = '<div style="color:#ff0066;font-size:9px;padding:20px 0">Failed to load</div>';
+    }
+}
