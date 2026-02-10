@@ -2831,12 +2831,81 @@ function showAuthMenu() {
 
 function updateProfileBtn() {
     var btn = document.getElementById('profile-btn');
+    var loginBtn = document.getElementById('login-btn');
     if (currentUser) {
         btn.style.display = 'flex';
+        loginBtn.style.display = 'none';
         document.getElementById('profile-btn-name').textContent = currentUser.username;
     } else {
         btn.style.display = 'none';
+        loginBtn.style.display = 'flex';
     }
+}
+
+function showLoginOverlay() {
+    document.getElementById('login-overlay').style.display = 'flex';
+    document.getElementById('login-box-login').style.display = '';
+    document.getElementById('login-box-register').style.display = 'none';
+    document.getElementById('login-box-error').textContent = '';
+    document.getElementById('topbar-login-email').value = '';
+    document.getElementById('topbar-login-pass').value = '';
+}
+
+function hideLoginOverlay() {
+    document.getElementById('login-overlay').style.display = 'none';
+}
+
+function showTopbarRegister() {
+    document.getElementById('login-box-login').style.display = 'none';
+    document.getElementById('login-box-register').style.display = '';
+    document.getElementById('login-box-reg-error').textContent = '';
+}
+
+function showTopbarLogin() {
+    document.getElementById('login-box-register').style.display = 'none';
+    document.getElementById('login-box-login').style.display = '';
+    document.getElementById('login-box-error').textContent = '';
+}
+
+async function topbarLogin() {
+    var loginVal = document.getElementById('topbar-login-email').value.trim();
+    var pass = document.getElementById('topbar-login-pass').value;
+    document.getElementById('login-box-error').textContent = '';
+    if (!loginVal || !pass) { document.getElementById('login-box-error').textContent = 'Login and password required'; return; }
+    try {
+        var r = await fetch(SERVER_URL + '/api/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login: loginVal, password: pass })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('login-box-error').textContent = data.error || 'Error'; return; }
+        authToken = data.token;
+        localStorage.setItem('tdpro_token', authToken);
+        currentUser = data.user;
+        updateProfileBtn();
+        hideLoginOverlay();
+    } catch (e) { document.getElementById('login-box-error').textContent = 'Server unreachable'; }
+}
+
+async function topbarRegister() {
+    var user = document.getElementById('topbar-reg-user').value.trim();
+    var email = document.getElementById('topbar-reg-email').value.trim();
+    var pass = document.getElementById('topbar-reg-pass').value;
+    document.getElementById('login-box-reg-error').textContent = '';
+    if (!user || !email || !pass) { document.getElementById('login-box-reg-error').textContent = 'All fields required'; return; }
+    try {
+        var r = await fetch(SERVER_URL + '/api/register', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: user, email: email, password: pass })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('login-box-reg-error').textContent = data.error || 'Error'; return; }
+        authToken = data.token;
+        localStorage.setItem('tdpro_token', authToken);
+        currentUser = data.user;
+        updateProfileBtn();
+        hideLoginOverlay();
+    } catch (e) { document.getElementById('login-box-reg-error').textContent = 'Server unreachable'; }
 }
 
 function showProfile() {

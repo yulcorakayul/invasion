@@ -299,6 +299,14 @@
         .tb-btn:hover { background: rgba(255, 0, 68, 0.2); box-shadow: 0 0 12px rgba(255, 0, 68, 0.25); }
         .tb-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
         #profile-btn { display: none; }
+        #login-btn { display: flex; color: #607888; border-color: rgba(96,120,136,0.35); background: rgba(96,120,136,0.1); }
+        #login-btn:hover { background: rgba(96,120,136,0.2); box-shadow: 0 0 12px rgba(96,120,136,0.25); }
+        #login-overlay {
+            position: fixed; inset: 0; z-index: 10002; background: rgba(3,3,8,0.95);
+            display: none; align-items: center; justify-content: center;
+        }
+        #login-box { text-align: center; min-width: 260px; }
+        #login-box-error { color: #ff0066; font-size: 9px; min-height: 14px; margin-top: 6px; letter-spacing: 0.5px; }
         #profile-overlay {
             position: fixed; inset: 0; z-index: 10001; background: rgba(3,3,8,0.92);
             display: none; align-items: center; justify-content: center;
@@ -485,6 +493,10 @@
         </div>
     </div>
     <div id="top-bar">
+        <button id="login-btn" class="tb-btn" onclick="showLoginOverlay()" title="Login">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>Login</span>
+        </button>
         <button id="profile-btn" class="tb-btn" onclick="showProfile()" title="Profile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <span id="profile-btn-name">---</span>
@@ -540,6 +552,29 @@
             <button class="menu-btn" onclick="saveSoloLogin()" style="width:200px">LOGIN &amp; SAVE</button>
             <div id="solo-end-error"></div>
             <button class="menu-btn-back" onclick="hideSoloEndOverlay()" style="margin-top:12px">Skip</button>
+        </div>
+    </div>
+    <div id="login-overlay">
+        <div id="login-box">
+            <div id="login-box-login">
+                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">LOGIN</div>
+                <input class="auth-input" id="topbar-login-email" placeholder="USERNAME OR EMAIL" autocomplete="off" spellcheck="false">
+                <input class="auth-input" id="topbar-login-pass" type="password" placeholder="PASSWORD" maxlength="50">
+                <button class="menu-btn" onclick="topbarLogin()" style="width:200px">LOGIN</button>
+                <div id="login-box-error"></div>
+                <button class="menu-btn-back" onclick="showTopbarRegister()">No account? Register</button>
+                <button class="menu-btn-back" onclick="hideLoginOverlay()">&#8592; Close</button>
+            </div>
+            <div id="login-box-register" style="display:none">
+                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">REGISTER</div>
+                <input class="auth-input" id="topbar-reg-user" placeholder="USERNAME" maxlength="20" autocomplete="off" spellcheck="false">
+                <input class="auth-input" id="topbar-reg-email" placeholder="EMAIL" autocomplete="off" spellcheck="false">
+                <input class="auth-input" id="topbar-reg-pass" type="password" placeholder="PASSWORD" maxlength="50">
+                <button class="menu-btn" onclick="topbarRegister()" style="width:200px">REGISTER</button>
+                <div id="login-box-reg-error"></div>
+                <button class="menu-btn-back" onclick="showTopbarLogin()">Already have an account? Login</button>
+                <button class="menu-btn-back" onclick="hideLoginOverlay()">&#8592; Close</button>
+            </div>
         </div>
     </div>
     <div id="duel-layout">
