@@ -36,7 +36,19 @@ function generateEntryGroups() {
 const ENTRY_GROUPS = generateEntryGroups();
 const ENTRY_GROUP_WEIGHTS = ENTRY_GROUPS.map(g => g.length);
 const ENTRY_ROWS = ENTRY_GROUPS.flat();
-const EXIT_ROWS = [8, 9, 10, 11, 12];
+function generateExitGroups() {
+    const sA = Math.floor(Math.random() * (GRID - 2));
+    const validB = [];
+    for (let s = 0; s <= GRID - 2; s++) {
+        if (s <= sA - 3 || s >= sA + 4) validB.push(s);
+    }
+    const sB = validB[Math.floor(Math.random() * validB.length)];
+    const gA = [sA, sA + 1, sA + 2];
+    const gB = [sB, sB + 1];
+    return sA < sB ? [gA, gB] : [gB, gA];
+}
+const EXIT_GROUPS = generateExitGroups();
+const EXIT_ROWS = EXIT_GROUPS.flat();
 const ENTRY_COL = 0;
 const EXIT_COL = GRID - 1;
 
@@ -44,6 +56,11 @@ function setEntryGroups(groups) {
     ENTRY_GROUPS.splice(0, ENTRY_GROUPS.length, ...groups);
     ENTRY_GROUP_WEIGHTS.splice(0, ENTRY_GROUP_WEIGHTS.length, ...groups.map(g => g.length));
     ENTRY_ROWS.splice(0, ENTRY_ROWS.length, ...groups.flat());
+}
+
+function setExitGroups(groups) {
+    EXIT_GROUPS.splice(0, EXIT_GROUPS.length, ...groups);
+    EXIT_ROWS.splice(0, EXIT_ROWS.length, ...groups.flat());
 }
 
 // Seeded PRNG (mulberry32) for deterministic duel spawns
@@ -1472,16 +1489,21 @@ function drawScene() {
     }
     ctx.shadowBlur = 0;
 
-    // OUT zone
+    // OUT zones
     const outX = GX + GRID * CS;
     for (const row of EXIT_ROWS) {
         ctx.fillStyle = '#180808';
         ctx.fillRect(outX, row * CS, CS, CS);
     }
     ctx.fillStyle = '#ff0066';
-    ctx.font = '600 11px "JetBrains Mono", monospace';
+    ctx.font = '600 9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 8;
-    ctx.fillText('OUT', outX + CS / 2, EXIT_ROWS[2] * CS + CS / 2);
+    for (const group of EXIT_GROUPS) {
+        const cy = (group[0] + group[group.length - 1]) / 2 * CS + CS / 2;
+        ctx.fillText('OUT', outX + CS / 2, cy);
+    }
     ctx.shadowBlur = 0;
 
     // Separators
@@ -2887,7 +2909,7 @@ function connectRankedMatch(data) {
             isHost = true;
             conn.on('open', function() {
                 setupConnection();
-                conn.send({ type: 'init', entryGroups: ENTRY_GROUPS });
+                conn.send({ type: 'init', entryGroups: ENTRY_GROUPS, exitGroups: EXIT_GROUPS });
                 setTimeout(startDuel, 800);
             });
         });
@@ -2986,7 +3008,7 @@ function menuCreateRoom() {
         conn.on('open', function() {
             setupConnection();
             // Send game config (entry groups) so both boards match
-            conn.send({ type: 'init', entryGroups: ENTRY_GROUPS });
+            conn.send({ type: 'init', entryGroups: ENTRY_GROUPS, exitGroups: EXIT_GROUPS });
             document.getElementById('menu-wait').textContent = '';
             document.getElementById('menu-status').textContent = 'Opponent connected!';
             document.getElementById('menu-status').style.display = '';
@@ -3072,6 +3094,7 @@ function startDuel() {
 function handlePeerMessage(data) {
     if (data.type === 'init') {
         setEntryGroups(data.entryGroups);
+        if (data.exitGroups) setExitGroups(data.exitGroups);
         startDuel();
     } else if (data.type === 'wave_start') {
         // Ignore if we already started this wave (both timers fired)
@@ -3261,7 +3284,7 @@ function menuMultiStart() {
     var roster = [];
     multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
     multiConns.forEach(function(c) {
-        if (c.open) c.send({ type: 'multi_init', entryGroups: ENTRY_GROUPS, players: roster, hostId: myPlayerId });
+        if (c.open) c.send({ type: 'multi_init', entryGroups: ENTRY_GROUPS, exitGroups: EXIT_GROUPS, players: roster, hostId: myPlayerId });
     });
     startMultiGame(roster);
 }
@@ -3333,6 +3356,7 @@ function handleMultiJoinerMessage(data) {
         }).join('');
     } else if (data.type === 'multi_init') {
         setEntryGroups(data.entryGroups);
+        if (data.exitGroups) setExitGroups(data.exitGroups);
         multiPlayers.clear();
         data.players.forEach(function(p) {
             if (p.id !== myPlayerId) {
@@ -3591,8 +3615,12 @@ function drawOpponentBoard() {
         ox.fillText('IN', CS / 2, cy);
     }
     ox.fillStyle = '#ff0066';
-    ox.font = '600 11px "JetBrains Mono", monospace';
-    ox.fillText('OUT', outX + CS / 2, EXIT_ROWS[2] * CS + CS / 2);
+    ox.font = '600 9px "JetBrains Mono", monospace';
+    for (var egi = 0; egi < EXIT_GROUPS.length; egi++) {
+        var eg = EXIT_GROUPS[egi];
+        var ecy = (eg[0] + eg[eg.length - 1]) / 2 * CS + CS / 2;
+        ox.fillText('OUT', outX + CS / 2, ecy);
+    }
 
     // Towers (skip grenade index 7)
     for (var ti = 0; ti < oppBoardData.towers.length; ti++) {
