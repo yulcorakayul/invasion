@@ -1355,9 +1355,9 @@ function startWave(sync) {
     // Duel: wave 1 only starts via countdown timer
     if (isDuel && waveNum === 0 && duelStartTimer > 0) return;
     if (isMulti && waveNum === 0 && multiStartTimer > 0) return;
-    // Multi joiner: send request to host instead of starting locally
-    if (isMulti && !isHost && sync) {
-        if (conn && conn.open) conn.send({ type: 'multi_wave_request', waveNum: waveNum + 1 });
+    // Multi joiner: send request to host instead of starting locally (only if connected)
+    if (isMulti && !isHost && sync && conn && conn.open) {
+        conn.send({ type: 'multi_wave_request', waveNum: waveNum + 1 });
         return;
     }
     nextWaveTimer = 0;
@@ -1681,10 +1681,17 @@ function gameLoop(time) {
                         var me = multiPlayers.get(myPlayerId);
                         if (me) { me.finished = true; me.finalScore = finalScore(); me.finalTime = gameEndTime - gameStartTime; }
                         checkMultiEnd();
+                        showMessage('Done! Waiting...'); playSfx('victory');
+                    } else if (conn && conn.open) {
+                        conn.send({ type: 'multi_game_complete', score: finalScore(), time: gameEndTime - gameStartTime });
+                        showMessage('Done! Waiting...'); playSfx('victory');
                     } else {
-                        if (conn) conn.send({ type: 'multi_game_complete', score: finalScore(), time: gameEndTime - gameStartTime });
+                        // Host gone, end locally as victory
+                        multiEnded = true;
+                        multiResultTitle = 'VICTORY';
+                        multiResultSub = 'Score: ' + finalScore() + 'pts';
+                        playSfx('victory');
                     }
-                    showMessage('Done! Waiting...'); playSfx('victory');
                 } else {
                     showMessage('Victory!'); playSfx('victory');
                 }
@@ -1697,6 +1704,7 @@ function gameLoop(time) {
                     startWave(true); // host broadcasts to all
                 } else if (isMulti && !isHost) {
                     if (conn && conn.open) conn.send({ type: 'multi_wave_request', waveNum: waveNum + 1 });
+                    else startWave(false); // host gone, continue locally
                 } else if (isDuel) {
                     startWave(true);
                 }
@@ -1712,8 +1720,8 @@ function gameLoop(time) {
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
             if (waveNum < WAVES.length && lives > 0) {
-                // Multi joiners: don't auto-launch, wait for host's multi_wave_start
-                if (isMulti && !isHost) { /* wait for host sync */ }
+                // Multi joiners: wait for host sync, unless host disconnected
+                if (isMulti && !isHost && conn && conn.open) { /* wait for host sync */ }
                 else startWave(isDuel || (isMulti && isHost));
             }
         }
@@ -1733,8 +1741,8 @@ function gameLoop(time) {
         multiStartTimer -= dt;
         if (multiStartTimer <= 0) {
             multiStartTimer = 0;
-            // Only host initiates wave 1; joiners wait for multi_wave_start
-            if (isHost) startWave(true);
+            // Host initiates wave 1; joiners wait unless host disconnected
+            if (isHost || !(conn && conn.open)) startWave(isHost);
         }
     }
 
@@ -3340,10 +3348,8 @@ function menuMultiJoin() {
             conn.on('data', handleMultiJoinerMessage);
             conn.on('close', function() {
                 if (!multiEnded && isMulti) {
-                    multiEnded = true;
-                    multiResultTitle = 'DISCONNECTED';
-                    multiResultSub = 'Host disconnected';
-                    showMessage('Host disconnected');
+                    showMessage('Host disconnected — game continues');
+                    conn = null;
                 }
             });
             document.getElementById('menu-multi-join').style.display = 'none';
