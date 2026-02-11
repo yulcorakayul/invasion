@@ -626,10 +626,13 @@ class Tower {
     }
 
     draw() {
+        this.x = cellX(this.col);
+        this.y = cellY(this.row);
         const { x, y, level, type } = this;
         const st = this.stats;
         const td = this.typeDef;
         const bx = GX + this.col * CS, by = this.row * CS;
+        ctx.globalAlpha = 1;
 
         ctx.fillStyle = td.bg;
         ctx.fillRect(bx, by, CS, CS);
@@ -1593,6 +1596,7 @@ function scheduleLoop() {
 }
 
 function gameLoop(time) {
+  try {
     if (!time) time = performance.now();
     const rawDt = (time - lastTime) / 1000;
     lastTime = time;
@@ -1995,6 +1999,7 @@ function gameLoop(time) {
     }
 
     scheduleLoop();
+  } catch (e) { console.error('gameLoop error:', e); scheduleLoop(); }
 }
 
 // === TOWER ICONS ===
@@ -2994,20 +2999,32 @@ function connectRankedMatch(data) {
             document.getElementById('ranked-status').textContent = 'Connection error: ' + err.type;
         });
     } else {
-        peer = new Peer();
-        peer.on('open', function() {
-            conn = peer.connect('tdpro-' + peerCode, { reliable: true });
-            conn.on('open', function() {
-                isHost = false;
-                setupConnection();
+        var retries = 0;
+        var maxRetries = 5;
+        function attemptConnect() {
+            if (peer) peer.destroy();
+            peer = new Peer();
+            peer.on('open', function() {
+                conn = peer.connect('tdpro-' + peerCode, { reliable: true });
+                conn.on('open', function() {
+                    isHost = false;
+                    setupConnection();
+                });
+                conn.on('error', function() {
+                    document.getElementById('ranked-status').textContent = 'Connection failed';
+                });
             });
-            conn.on('error', function() {
-                document.getElementById('ranked-status').textContent = 'Connection failed';
+            peer.on('error', function(err) {
+                if (err.type === 'peer-unavailable' && retries < maxRetries) {
+                    retries++;
+                    document.getElementById('ranked-status').textContent = 'Connecting... (attempt ' + (retries + 1) + ')';
+                    setTimeout(attemptConnect, 2000);
+                } else {
+                    document.getElementById('ranked-status').textContent = 'Error: ' + err.type;
+                }
             });
-        });
-        peer.on('error', function(err) {
-            document.getElementById('ranked-status').textContent = 'Error: ' + err.type;
-        });
+        }
+        setTimeout(attemptConnect, 1500);
     }
 }
 
