@@ -2,6 +2,6 @@
   "name": "tdinvasion",
   "version": "1.0.0",
   "scripts": {
-    "start": "npx serve -s . -l 3000"
+    "start": "npx serve -s . -l ${PORT:-3000}"
   }
 }
