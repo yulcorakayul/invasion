@@ -2305,6 +2305,8 @@ function updateWaveBar() {
         if (item.idx < 0) continue;
         const i = item.idx;
         const w = WAVES[i];
+        if (!w) { item.el.style.display = 'none'; continue; }
+        item.el.style.display = '';
         const isActive = i === waveNum - 1 && waveActive;
         const isDone = waveActive ? i < waveNum - 1 : i < waveNum;
         item.el.style.background = isActive ? WAVE_BG_ACTIVE[w.type] : WAVE_BG[w.type];
