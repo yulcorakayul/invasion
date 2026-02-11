@@ -259,7 +259,7 @@ const WAVES_RANKED = [
     // --- Endgame (46-50) ---
     { count: 18, hp: 2600,  type: 'regen' },
     { count: 22, hp: 3400,  type: 'normal' },
-    { count: 4,  hp: 55000, type: 'boss_shield' },
+    { count: 3,  hp: 55000, type: 'boss_shield' },
     { count: 22, hp: 3400,  type: 'shield' },
     { count: 8,  hp: 50000, type: 'boss_normal', types: ['boss_normal','boss_ghost','boss_splitter','boss_fast','boss_swarm','boss_shield','boss_stealth','boss_regen'] },
 ];
@@ -2247,6 +2247,8 @@ const _wbEls = [];
 let _wbCellW = 0;
 let _wbInner = null;
 
+function resetWaveBar() { _wbBuilt = false; _wbCellW = 0; }
+
 function buildWaveBar() {
     if (_wbBuilt) return;
     _wbBuilt = true;
@@ -2740,6 +2742,7 @@ function menuStartSolo() {
     isDuel = false;
     isMulti = false;
     WAVES = WAVES_SOLO;
+    resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('speed-btn').style.display = '';
@@ -3183,6 +3186,7 @@ function setupConnection() {
 function startDuel() {
     isDuel = true;
     WAVES = WAVES_RANKED;
+    resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     duelEnded = false;
     duelResultTitle = '';
@@ -3510,6 +3514,7 @@ function startMultiGame(playerRoster) {
     isMulti = true;
     isDuel = false;
     WAVES = WAVES_RANKED;
+    resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     multiEnded = false;
     multiResultTitle = '';
