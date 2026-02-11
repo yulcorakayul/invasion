@@ -2,4 +2,4 @@
 nixPkgs = ["...", "nodejs_18"]
 
 [start]
-cmd = "npx serve -s . -l ${PORT:-3000}"
+cmd = "npx serve -s ."
