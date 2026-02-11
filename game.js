@@ -133,11 +133,11 @@ const TOWER_TYPES = [
     {
         name: 'Exorcist', desc: 'Very powerful, targets ghosts only.', bg: '#0c0a18', ghostOnly: true,
         levels: [null,
-            { cost: 75, damage: 50,  range: 3.5, fireRate: 1.0, color: '#af0' },
-            { cost: 135, damage: 75,  range: 4,   fireRate: 0.9, color: '#bf0' },
-            { cost: 195, damage: 110, range: 4.5, fireRate: 0.8, color: '#cf0' },
-            { cost: 255, damage: 150, range: 5,   fireRate: 0.7, color: '#df0' },
-            { cost: 330,damage: 300, range: 6,   fireRate: 0.45,color: '#ef0' }, // L5: ghost annihilator
+            { cost: 75, damage: 150,  range: 3.5, fireRate: 1.0, color: '#af0' },
+            { cost: 135, damage: 225,  range: 4,   fireRate: 0.9, color: '#bf0' },
+            { cost: 195, damage: 330, range: 4.5, fireRate: 0.8, color: '#cf0' },
+            { cost: 255, damage: 450, range: 5,   fireRate: 0.7, color: '#df0' },
+            { cost: 330,damage: 900, range: 6,   fireRate: 0.45,color: '#ef0' }, // L5: ghost annihilator
         ],
     },
     // ── Tier 2 (mid 20g) ──
