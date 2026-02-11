@@ -1691,6 +1691,7 @@ function gameLoop(time) {
                         multiResultTitle = 'VICTORY';
                         multiResultSub = 'Score: ' + finalScore() + 'pts';
                         playSfx('victory');
+                        saveMultiScoreToSolo();
                     }
                 } else {
                     showMessage('Victory!'); playSfx('victory');
@@ -1760,6 +1761,7 @@ function gameLoop(time) {
             if (isMulti && !multiEnded) {
                 multiResultTitle = 'DEFEAT';
                 multiResultSub = 'You have been eliminated';
+                saveMultiScoreToSolo();
                 if (isHost) {
                     var me = multiPlayers.get(myPlayerId);
                     if (me) me.alive = false;
@@ -3506,6 +3508,7 @@ function handleMultiJoinerMessage(data) {
         multiResultTitle = myRank === 0 ? 'VICTORY' : 'DEFEAT';
         multiResultSub = data.rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
         playSfx(myRank === 0 ? 'victory' : 'gameover');
+        saveMultiScoreToSolo();
     }
 }
 
@@ -3519,6 +3522,7 @@ function startMultiGame(playerRoster) {
     multiEnded = false;
     multiResultTitle = '';
     multiResultSub = '';
+    _multiScoreSaved = false;
     multiStartTimer = 15;
     for (var i = 0; i < playerRoster.length; i++) {
         if (playerRoster[i].id !== myPlayerId) { selectedViewPlayer = playerRoster[i].id; break; }
@@ -3583,6 +3587,17 @@ function updateMultiOpponentView() {
     if (p.boardData) { oppBoardData = p.boardData; drawOpponentBoard(); }
 }
 
+var _multiScoreSaved = false;
+function saveMultiScoreToSolo() {
+    if (_multiScoreSaved || !authToken) return;
+    _multiScoreSaved = true;
+    fetch(SERVER_URL + '/api/solo/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+        body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
+    }).catch(function() {});
+}
+
 // === MULTI GAME END ===
 function checkMultiEnd() {
     if (multiEnded || !isHost) return;
@@ -3612,6 +3627,7 @@ function checkMultiEnd() {
     multiResultTitle = myRank === 0 ? 'VICTORY' : 'DEFEAT';
     multiResultSub = rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
     playSfx(myRank === 0 ? 'victory' : 'gameover');
+    saveMultiScoreToSolo();
 }
 
 function handleMultiDisconnect(peerId) {
