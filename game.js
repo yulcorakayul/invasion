@@ -89,22 +89,22 @@ const TOWER_TYPES = [
     {
         name: 'Cannon', desc: 'Versatile turret, fast fire rate.', bg: '#0a1020',
         levels: [null,
-            { cost: 15, damage: 12, range: 3,   fireRate: 0.7,  color: '#5cf' },
-            { cost: 25, damage: 18, range: 3.2, fireRate: 0.65, color: '#5df' },
-            { cost: 40, damage: 26, range: 3.5, fireRate: 0.55, color: '#6ef' },
-            { cost: 55, damage: 36, range: 3.8, fireRate: 0.45, color: '#7ff' },
-            { cost: 75, damage: 60, range: 4.5, fireRate: 0.3,  color: '#8ff' }, // L5: machine gun
+            { cost: 15, damage: 13, range: 3,   fireRate: 0.7,  color: '#5cf' },
+            { cost: 25, damage: 20, range: 3.2, fireRate: 0.65, color: '#5df' },
+            { cost: 40, damage: 29, range: 3.5, fireRate: 0.55, color: '#6ef' },
+            { cost: 55, damage: 40, range: 3.8, fireRate: 0.45, color: '#7ff' },
+            { cost: 75, damage: 66, range: 4.5, fireRate: 0.3,  color: '#8ff' }, // L5: machine gun
         ],
     },
     // ── Tier 3 (expensive 30g) ──
     {
         name: 'Sniper', desc: 'Long range, high damage, slow fire.', bg: '#100a08',
         levels: [null,
-            { cost: 90, damage: 45,  range: 6,   fireRate: 1.8, color: '#f90' },
-            { cost: 150, damage: 70,  range: 6.5, fireRate: 1.6, color: '#fa0' },
-            { cost: 210, damage: 100, range: 7,   fireRate: 1.4, color: '#fb0' },
-            { cost: 270, damage: 140, range: 7.5, fireRate: 1.2, color: '#fc0' },
-            { cost: 345,damage: 250, range: 9,   fireRate: 0.8, color: '#fd0' }, // L5: one-shot sniper
+            { cost: 90, damage: 50,  range: 6,   fireRate: 1.8, color: '#f90' },
+            { cost: 150, damage: 77,  range: 6.5, fireRate: 1.6, color: '#fa0' },
+            { cost: 210, damage: 110, range: 7,   fireRate: 1.4, color: '#fb0' },
+            { cost: 270, damage: 154, range: 7.5, fireRate: 1.2, color: '#fc0' },
+            { cost: 345,damage: 275, range: 9,   fireRate: 0.8, color: '#fd0' }, // L5: one-shot sniper
         ],
     },
     // ── Tier 1 (cheap 10g) ──
@@ -112,43 +112,43 @@ const TOWER_TYPES = [
         name: 'Freeze', desc: 'Slows down hit enemies.', bg: '#081018', slow: true,
         levels: [null,
             { cost: 30, damage: 3,  range: 2.5, fireRate: 0.5,  color: '#0cf', slowFactor: 0.5,  slowDur: 1.5 },
-            { cost: 60, damage: 5,  range: 2.8, fireRate: 0.45, color: '#0df', slowFactor: 0.45, slowDur: 1.8 },
-            { cost: 105, damage: 7,  range: 3,   fireRate: 0.4,  color: '#0ef', slowFactor: 0.4,  slowDur: 2.0 },
-            { cost: 150, damage: 10, range: 3.3, fireRate: 0.35, color: '#0ff', slowFactor: 0.35, slowDur: 2.3 },
-            { cost: 210, damage: 18, range: 4,   fireRate: 0.25, color: '#2ff', slowFactor: 0.2,  slowDur: 3.5 }, // L5: deep freeze
+            { cost: 60, damage: 6,  range: 2.8, fireRate: 0.45, color: '#0df', slowFactor: 0.45, slowDur: 1.8 },
+            { cost: 105, damage: 8,  range: 3,   fireRate: 0.4,  color: '#0ef', slowFactor: 0.4,  slowDur: 2.0 },
+            { cost: 150, damage: 11, range: 3.3, fireRate: 0.35, color: '#0ff', slowFactor: 0.35, slowDur: 2.3 },
+            { cost: 210, damage: 20, range: 4,   fireRate: 0.25, color: '#2ff', slowFactor: 0.2,  slowDur: 3.5 }, // L5: deep freeze
         ],
     },
     // ── Tier 2 (mid 25g) ──
     {
         name: 'Splash', desc: 'Area damage, long range.', bg: '#140810', splash: true,
         levels: [null,
-            { cost: 75, damage: 10, range: 5,   fireRate: 1.2, color: '#f66', splashR: 1.6 },
-            { cost: 120, damage: 17, range: 5.5, fireRate: 1.1, color: '#f77', splashR: 1.8 },
-            { cost: 180, damage: 26, range: 6,   fireRate: 1.0, color: '#f88', splashR: 2.0 },
-            { cost: 240, damage: 38, range: 6.5, fireRate: 0.9, color: '#f99', splashR: 2.2 },
-            { cost: 315,damage: 75, range: 8,   fireRate: 0.7, color: '#faa', splashR: 3.5 }, // L5: mega splash
+            { cost: 75, damage: 11, range: 5,   fireRate: 1.2, color: '#f66', splashR: 1.6 },
+            { cost: 120, damage: 19, range: 5.5, fireRate: 1.1, color: '#f77', splashR: 1.8 },
+            { cost: 180, damage: 29, range: 6,   fireRate: 1.0, color: '#f88', splashR: 2.0 },
+            { cost: 240, damage: 42, range: 6.5, fireRate: 0.9, color: '#f99', splashR: 2.2 },
+            { cost: 315,damage: 83, range: 8,   fireRate: 0.7, color: '#faa', splashR: 3.5 }, // L5: mega splash
         ],
     },
     // ── Tier 2 (mid 25g, ghost only) ──
     {
         name: 'Exorcist', desc: 'Very powerful, targets ghosts only.', bg: '#0c0a18', ghostOnly: true,
         levels: [null,
-            { cost: 75, damage: 150,  range: 3.5, fireRate: 1.0, color: '#af0' },
-            { cost: 135, damage: 225,  range: 4,   fireRate: 0.9, color: '#bf0' },
-            { cost: 195, damage: 330, range: 4.5, fireRate: 0.8, color: '#cf0' },
-            { cost: 255, damage: 450, range: 5,   fireRate: 0.7, color: '#df0' },
-            { cost: 330,damage: 900, range: 6,   fireRate: 0.45,color: '#ef0' }, // L5: ghost annihilator
+            { cost: 75, damage: 165,  range: 3.5, fireRate: 1.0, color: '#af0' },
+            { cost: 135, damage: 248,  range: 4,   fireRate: 0.9, color: '#bf0' },
+            { cost: 195, damage: 363, range: 4.5, fireRate: 0.8, color: '#cf0' },
+            { cost: 255, damage: 495, range: 5,   fireRate: 0.7, color: '#df0' },
+            { cost: 330,damage: 990, range: 6,   fireRate: 0.45,color: '#ef0' }, // L5: ghost annihilator
         ],
     },
     // ── Tier 2 (mid 20g) ──
     {
         name: 'Tesla', desc: 'Electric aura, hits all nearby enemies.', bg: '#101008', aura: true,
         levels: [null,
-            { cost: 60, damage: 7,  range: 1.6, fireRate: 0.3,  color: '#ff0' },
-            { cost: 105, damage: 11, range: 1.8, fireRate: 0.28, color: '#ff2' },
-            { cost: 165, damage: 16, range: 2.0, fireRate: 0.25, color: '#ff4' },
-            { cost: 225, damage: 22, range: 2.2, fireRate: 0.22, color: '#ff6' },
-            { cost: 285, damage: 45, range: 3.0, fireRate: 0.15, color: '#ff8' }, // L5: lightning storm
+            { cost: 60, damage: 8,  range: 1.6, fireRate: 0.3,  color: '#ff0' },
+            { cost: 105, damage: 12, range: 1.8, fireRate: 0.28, color: '#ff2' },
+            { cost: 165, damage: 18, range: 2.0, fireRate: 0.25, color: '#ff4' },
+            { cost: 225, damage: 24, range: 2.2, fireRate: 0.22, color: '#ff6' },
+            { cost: 285, damage: 50, range: 3.0, fireRate: 0.15, color: '#ff8' }, // L5: lightning storm
         ],
     },
     // ── Tier 2 (mid 20g, support) ──
@@ -166,22 +166,22 @@ const TOWER_TYPES = [
     {
         name: 'Grenade', desc: 'Single explosion, then self-destructs.', bg: '#181008', grenade: true,
         levels: [null,
-            { cost: 36, damage: 90,  range: 2.5, fireRate: 1, color: '#f80', splashR: 2.5 },
-            { cost: 66, damage: 140, range: 3,   fireRate: 1, color: '#f90', splashR: 3 },
-            { cost: 105, damage: 210, range: 3.5, fireRate: 1, color: '#fa0', splashR: 3.5 },
-            { cost: 150, damage: 320, range: 4,   fireRate: 1, color: '#fb0', splashR: 4 },
-            { cost: 195, damage: 700, range: 5,   fireRate: 1, color: '#fc0', splashR: 5.5 }, // L5: mega bomb
+            { cost: 36, damage: 99,  range: 2.5, fireRate: 1, color: '#f80', splashR: 2.5 },
+            { cost: 66, damage: 154, range: 3,   fireRate: 1, color: '#f90', splashR: 3 },
+            { cost: 105, damage: 231, range: 3.5, fireRate: 1, color: '#fa0', splashR: 3.5 },
+            { cost: 150, damage: 352, range: 4,   fireRate: 1, color: '#fb0', splashR: 4 },
+            { cost: 195, damage: 770, range: 5,   fireRate: 1, color: '#fc0', splashR: 5.5 }, // L5: mega bomb
         ],
     },
     // ── Tier 3 (expensive 30g) ──
     {
         name: 'Laser', desc: 'Beam across 3 tiles in a line.', bg: '#100818', laser: true,
         levels: [null,
-            { cost: 90, damage: 22, range: 3, fireRate: 1.2, color: '#f0f' },
-            { cost: 150, damage: 35, range: 3, fireRate: 1.0, color: '#f2f' },
-            { cost: 210, damage: 50, range: 3, fireRate: 0.8, color: '#f4f' },
-            { cost: 270, damage: 70, range: 3, fireRate: 0.6, color: '#f6f' },
-            { cost: 345,damage: 140,range: 4, fireRate: 0.4, color: '#f8f' }, // L5: death beam
+            { cost: 90, damage: 24, range: 3, fireRate: 1.2, color: '#f0f' },
+            { cost: 150, damage: 39, range: 3, fireRate: 1.0, color: '#f2f' },
+            { cost: 210, damage: 55, range: 3, fireRate: 0.8, color: '#f4f' },
+            { cost: 270, damage: 77, range: 3, fireRate: 0.6, color: '#f6f' },
+            { cost: 345,damage: 154,range: 4, fireRate: 0.4, color: '#f8f' }, // L5: death beam
         ],
     },
 ];
