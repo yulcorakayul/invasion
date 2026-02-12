@@ -4042,7 +4042,7 @@ async function loadLeaderboard(type) {
         listEl.innerHTML = data.map(function(u, i) {
             let rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
             let val = '';
-            if (type === 'elo') val = '<span class="lb-val" style="color:#ff0066">' + u.elo + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + u.gamesPlayed + 'G</span>';
+            if (type === 'elo') val = '<span class="lb-val" style="color:' + (i === 0 ? '#ffaa00' : '#ff0066') + '">' + u.elo + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + u.gamesPlayed + 'G</span>';
             else if (type === 'solo') val = '<span class="lb-val" style="color:#00ff88">' + u.bestScore + '</span><span style="color:#405060;font-size:9px;margin-left:6px">W' + u.bestWave + '</span>';
             else val = '<span class="lb-val">' + u.gamesPlayed + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + (u.gamesWon || 0) + 'W</span>';
             return '<div class="lb-row"><span class="lb-rank ' + rankClass + '">' + (i + 1) + '</span><span class="lb-name">' + u.username + '</span>' + val + '</div>';
