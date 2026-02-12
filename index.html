@@ -372,8 +372,9 @@
         .lb-tab { padding: 5px 10px; background: transparent; border: 1px solid #1a2840; border-radius: 2px; color: #405060; font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: all .15s; text-transform: uppercase; }
         .lb-tab:hover { border-color: #ff006660; color: #ff0066; }
         .lb-tab.active { border-color: #ff0066; color: #ff0066; background: rgba(255,0,102,0.1); }
-        .lb-tab.elo-tab { border-color: #ffaa00; color: #ffaa00; display: inline-flex; align-items: center; gap: 5px; }
-        .lb-tab.elo-tab:hover { border-color: #ffaa00; color: #ffaa00; background: rgba(255,170,0,0.1); }
+        .lb-tab.elo-tab { display: inline-flex; align-items: center; gap: 5px; }
+        .lb-tab.elo-tab svg { stroke: currentColor; }
+        .lb-tab.elo-tab:hover { border-color: #ffaa0060; color: #ffaa00; }
         .lb-tab.elo-tab.active { border-color: #ffaa00; color: #ffaa00; background: rgba(255,170,0,0.15); box-shadow: 0 0 10px rgba(255,170,0,0.2); }
         #lb-list { text-align: left; max-height: 340px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #1a2840 transparent; }
         .lb-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-bottom: 1px solid #0a1828; font-size: 10px; letter-spacing: 0.5px; }
@@ -588,7 +589,7 @@
         <div id="lb-box">
             <div style="color:#ff0066;font-family:'Press Start 2P',monospace;font-size:12px;letter-spacing:4px;margin-bottom:16px">LEADERBOARD</div>
             <div class="lb-tabs">
-                <button class="lb-tab elo-tab active" onclick="loadLeaderboard('elo')"><svg viewBox="0 0 24 24" fill="none" stroke="#ffaa00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>ELO</button>
+                <button class="lb-tab elo-tab active" onclick="loadLeaderboard('elo')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>ELO</button>
                 <button class="lb-tab" onclick="loadLeaderboard('solo')">SOLO HIGH SCORE</button>
                 <button class="lb-tab" onclick="loadLeaderboard('games')">RANKED GAMES</button>
             </div>

@@ -1,6 +1,6 @@
 // === CONFIG ===
-function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-var PEER_CONFIG = { config: { iceServers: [
+function escapeHtml(s) { let d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+const PEER_CONFIG = { config: { iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
     { urls: 'stun:stun2.l.google.com:19302' }
@@ -73,7 +73,7 @@ function setExitGroups(groups) {
 function seededRandom(seed) {
     return function() {
         seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-        var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
         t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
         return ((t ^ t >>> 14) >>> 0) / 4294967296;
     };
@@ -366,6 +366,8 @@ let multiResultSub = '';
 let _lastMultiStatusSend = 0;
 let _multiRoster = []; // full roster with peer IDs for host migration
 let _multiHostId = ''; // current host peer ID
+let _migrationConnHandler = null;
+let _migrationTimer = null;
 
 function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
@@ -1283,7 +1285,7 @@ function updateUI() {
         if (selectedTower.typeDef.booster) {
             document.getElementById('tow-damage').textContent = '+' + Math.round(st.boostPct * 100) + '%';
         } else {
-            var boostMul = selectedTower.getBoostMultiplier();
+            let boostMul = selectedTower.getBoostMultiplier();
             if (boostMul > 1) {
                 document.getElementById('tow-damage').textContent = Math.round(st.damage * boostMul) + ' (' + st.damage + '+' + Math.round((boostMul - 1) * 100) + '%)';
             } else {
@@ -1704,7 +1706,7 @@ function gameLoop(time) {
                 } else if (isMulti) {
                     gameEndTime = Date.now();
                     if (isHost) {
-                        var me = multiPlayers.get(myPlayerId);
+                        let me = multiPlayers.get(myPlayerId);
                         if (me) { me.finished = true; me.finalScore = finalScore(); me.finalTime = gameEndTime - gameStartTime; }
                         checkMultiEnd();
                         showMessage('Done! Waiting...'); playSfx('victory');
@@ -1789,7 +1791,7 @@ function gameLoop(time) {
                 multiResultSub = 'You have been eliminated';
                 saveMultiScoreToSolo();
                 if (isHost) {
-                    var me = multiPlayers.get(myPlayerId);
+                    let me = multiPlayers.get(myPlayerId);
                     if (me) me.alive = false;
                     checkMultiEnd();
                 } else {
@@ -1807,10 +1809,10 @@ function gameLoop(time) {
             for (const e of enemies) e.draw();
             ctx.fillStyle = 'rgba(3,3,8,0.8)';
             ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-            var rTitle = isDuel ? duelResultTitle : '';
-            var rSub = isDuel ? duelResultSub : '';
+            let rTitle = isDuel ? duelResultTitle : '';
+            let rSub = isDuel ? duelResultSub : '';
             if (rTitle) {
-                var isWin = rTitle === 'VICTORY';
+                let isWin = rTitle === 'VICTORY';
                 ctx.fillStyle = isWin ? '#00ff88' : '#ff0066';
                 ctx.font = '700 14px "Press Start 2P", monospace';
                 ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1829,7 +1831,7 @@ function gameLoop(time) {
                 if (!_soloSaved && !isDuel) {
                     _soloSaved = true;
                     if (authToken) {
-                        fetch(SERVER_URL + '/api/solo/save', {
+                        fetchWithTimeout(SERVER_URL + '/api/solo/save', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
                             body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
@@ -1854,8 +1856,8 @@ function gameLoop(time) {
     }
 
     // Duel/Multi result overlay (when ended but I'm still alive)
-    var endTitle = (duelEnded && duelResultTitle) ? duelResultTitle : ((multiEnded && multiResultTitle) ? multiResultTitle : '');
-    var endSub = (duelEnded && duelResultTitle) ? duelResultSub : ((multiEnded && multiResultTitle) ? multiResultSub : '');
+    let endTitle = (duelEnded && duelResultTitle) ? duelResultTitle : ((multiEnded && multiResultTitle) ? multiResultTitle : '');
+    let endSub = (duelEnded && duelResultTitle) ? duelResultSub : ((multiEnded && multiResultTitle) ? multiResultSub : '');
     if (endTitle && lives > 0) {
         updateUI();
         drawScene();
@@ -1864,7 +1866,7 @@ function gameLoop(time) {
         for (const e of enemies) e.draw();
         ctx.fillStyle = 'rgba(3,3,8,0.8)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        var eIsWin = endTitle === 'VICTORY';
+        let eIsWin = endTitle === 'VICTORY';
         ctx.fillStyle = eIsWin ? '#00ff88' : '#ff0066';
         ctx.font = '700 14px "Press Start 2P", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1873,8 +1875,8 @@ function gameLoop(time) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
         ctx.font = '9px "JetBrains Mono", monospace';
-        var subLines = endSub.split('\n');
-        for (var si = 0; si < subLines.length; si++) {
+        let subLines = endSub.split('\n');
+        for (let si = 0; si < subLines.length; si++) {
             ctx.fillText(subLines[si], CANVAS_W / 2, CANVAS_H / 2 + si * 14);
         }
         if (rankedEloChange !== null && duelEnded) {
@@ -1892,7 +1894,7 @@ function gameLoop(time) {
         if (!_soloSaved) {
             _soloSaved = true;
             if (authToken) {
-                fetch(SERVER_URL + '/api/solo/save', {
+                fetchWithTimeout(SERVER_URL + '/api/solo/save', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
                     body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
@@ -1939,20 +1941,14 @@ function gameLoop(time) {
         _lastMultiStatusSend += dt;
         if (_lastMultiStatusSend >= 0.5) {
             _lastMultiStatusSend = 0;
-            var myTw = towers.map(function(t) { return { r: t.row, c: t.col, i: t.type }; });
-            var myEn = enemies.filter(function(e) { return e.alive; }).map(function(e) {
+            let myTw = towers.map(function(t) { return { r: t.row, c: t.col, i: t.type }; });
+            let myEn = enemies.filter(function(e) { return e.alive; }).map(function(e) {
                 return { gx: (e.x - GX) / CS, gy: e.y / CS, t: e.typeName, s: ENEMY_TYPES[e.typeName].scale || 1 };
             });
             if (isHost) {
-                var me = multiPlayers.get(myPlayerId);
+                let me = multiPlayers.get(myPlayerId);
                 if (me) { me.lives = lives; me.score = score; me.wave = waveNum; me.boardData = { towers: myTw, enemies: myEn }; me.alive = lives > 0; }
-                var allP = [];
-                multiPlayers.forEach(function(p, id) {
-                    allP.push({ id: id, name: p.name, lives: p.lives, score: p.score, wave: p.wave, alive: p.alive, tw: p.boardData ? p.boardData.towers : [], en: p.boardData ? p.boardData.enemies : [] });
-                });
-                multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_status', players: allP }); });
-                updateMultiPlayerListUI();
-                updateMultiOpponentView();
+                broadcastMultiStatus();
             } else {
                 if (conn && conn.open) conn.send({ type: 'my_status', lives: lives, score: score, wave: waveNum, tw: myTw, en: myEn });
             }
@@ -2027,8 +2023,8 @@ function gameLoop(time) {
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
         ctx.font = '9px "JetBrains Mono", monospace';
-        var mSubLines = multiResultSub.split('\n');
-        for (var mi = 0; mi < mSubLines.length; mi++) {
+        let mSubLines = multiResultSub.split('\n');
+        for (let mi = 0; mi < mSubLines.length; mi++) {
             ctx.fillText(mSubLines[mi], CANVAS_W / 2, CANVAS_H / 2 + mi * 14);
         }
         if (multiEnded) showReplayBtn();
@@ -2773,7 +2769,7 @@ function showReplayBtn() {
 function toggleSpeed() {
     if (isDuel || isMulti) return;
     gameSpeed = gameSpeed === 1 ? 2 : 1;
-    var btn = document.getElementById('speed-btn');
+    let btn = document.getElementById('speed-btn');
     btn.textContent = 'x' + gameSpeed;
     btn.classList.toggle('fast', gameSpeed === 2);
 }
@@ -2789,14 +2785,37 @@ function menuStartSolo() {
 }
 
 // === AUTH & RANKED ===
-var SERVER_URL = 'https://invasion-server-production.up.railway.app';
-var authToken = localStorage.getItem('tdpro_token');
-var currentUser = null;
-var isRanked = false;
-var rankedMatchId = null;
-var rankedPollTimer = null;
-var rankedEloChange = null;
-var _soloSaved = false;
+const SERVER_URL = 'https://invasion-server-production.up.railway.app';
+let authToken = localStorage.getItem('tdpro_token');
+let currentUser = null;
+
+function fetchWithTimeout(url, opts, timeout) {
+    timeout = timeout || 8000;
+    const controller = new AbortController();
+    const hasAuth = opts && opts.headers && opts.headers.Authorization;
+    const options = Object.assign({}, opts || {}, { signal: controller.signal });
+    const timer = setTimeout(function() { controller.abort(); }, timeout);
+    return fetch(url, options).then(function(r) {
+        clearTimeout(timer);
+        if (r.status === 401 && hasAuth) {
+            authToken = null;
+            localStorage.removeItem('tdpro_token');
+            currentUser = null;
+            showMessage('Session expired, please log in again');
+            updateProfileBtn();
+        }
+        return r;
+    }).catch(function(err) {
+        clearTimeout(timer);
+        if (err.name === 'AbortError') throw new Error('Request timed out');
+        throw err;
+    });
+}
+let isRanked = false;
+let rankedMatchId = null;
+let rankedPollTimer = null;
+let rankedEloChange = null;
+let _soloSaved = false;
 
 // Auto-load profile on startup if token exists
 if (authToken) {
@@ -2804,17 +2823,17 @@ if (authToken) {
 }
 
 async function authRegister() {
-    var user = document.getElementById('reg-user').value.trim();
-    var email = document.getElementById('reg-email').value.trim();
-    var pass = document.getElementById('reg-pass').value;
+    let user = document.getElementById('reg-user').value.trim();
+    let email = document.getElementById('reg-email').value.trim();
+    let pass = document.getElementById('reg-pass').value;
     document.getElementById('auth-error-reg').textContent = '';
     if (!user || !email || !pass) { document.getElementById('auth-error-reg').textContent = 'All fields required'; return; }
     try {
-        var r = await fetch(SERVER_URL + '/api/register', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/register', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: user, email: email, password: pass })
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { document.getElementById('auth-error-reg').textContent = data.error || 'Error'; return; }
         authToken = data.token;
         localStorage.setItem('tdpro_token', authToken);
@@ -2824,16 +2843,16 @@ async function authRegister() {
 }
 
 async function authLogin() {
-    var loginVal = document.getElementById('login-email').value.trim();
-    var pass = document.getElementById('login-pass').value;
+    let loginVal = document.getElementById('login-email').value.trim();
+    let pass = document.getElementById('login-pass').value;
     document.getElementById('auth-error').textContent = '';
     if (!loginVal || !pass) { document.getElementById('auth-error').textContent = 'Login and password required'; return; }
     try {
-        var r = await fetch(SERVER_URL + '/api/login', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/login', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ login: loginVal, password: pass })
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { document.getElementById('auth-error').textContent = data.error || 'Error'; return; }
         authToken = data.token;
         localStorage.setItem('tdpro_token', authToken);
@@ -2865,7 +2884,7 @@ function authLogout() {
 async function loadProfile() {
     if (!authToken) return false;
     try {
-        var r = await fetch(SERVER_URL + '/api/profile', { headers: { 'Authorization': 'Bearer ' + authToken } });
+        let r = await fetchWithTimeout(SERVER_URL + '/api/profile', { headers: { 'Authorization': 'Bearer ' + authToken } });
         if (!r.ok) { authToken = null; localStorage.removeItem('tdpro_token'); return false; }
         currentUser = await r.json();
         return true;
@@ -2888,8 +2907,8 @@ function showAuthMenu() {
 }
 
 function updateProfileBtn() {
-    var btn = document.getElementById('profile-btn');
-    var loginBtn = document.getElementById('login-btn');
+    let btn = document.getElementById('profile-btn');
+    let loginBtn = document.getElementById('login-btn');
     if (currentUser) {
         btn.style.display = 'flex';
         loginBtn.style.display = 'none';
@@ -2913,18 +2932,18 @@ function hideLoginOverlay() {
     document.getElementById('login-overlay').style.display = 'none';
 }
 
-var _patchNotesLoaded = false;
+let _patchNotesLoaded = false;
 function showPatchNotes() {
     document.getElementById('patch-overlay').classList.add('active');
     if (!_patchNotesLoaded) {
         _patchNotesLoaded = true;
-        fetch(SERVER_URL + '/api/patchnotes').then(function(r) { return r.json(); }).then(function(notes) {
-            var box = document.getElementById('patch-box');
-            var html = '<h2>PATCH NOTES</h2>';
-            for (var i = 0; i < notes.length; i++) {
-                var n = notes[i];
+        fetchWithTimeout(SERVER_URL + '/api/patchnotes').then(function(r) { return r.json(); }).then(function(notes) {
+            let box = document.getElementById('patch-box');
+            let html = '<h2>PATCH NOTES</h2>';
+            for (let i = 0; i < notes.length; i++) {
+                let n = notes[i];
                 html += '<div class="patch-version">' + n.version + '</div><ul class="patch-list">';
-                for (var j = 0; j < n.items.length; j++) {
+                for (let j = 0; j < n.items.length; j++) {
                     html += '<li>' + n.items[j] + '</li>';
                 }
                 html += '</ul>';
@@ -2951,16 +2970,16 @@ function showTopbarLogin() {
 }
 
 async function topbarLogin() {
-    var loginVal = document.getElementById('topbar-login-email').value.trim();
-    var pass = document.getElementById('topbar-login-pass').value;
+    let loginVal = document.getElementById('topbar-login-email').value.trim();
+    let pass = document.getElementById('topbar-login-pass').value;
     document.getElementById('login-box-error').textContent = '';
     if (!loginVal || !pass) { document.getElementById('login-box-error').textContent = 'Login and password required'; return; }
     try {
-        var r = await fetch(SERVER_URL + '/api/login', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/login', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ login: loginVal, password: pass })
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { document.getElementById('login-box-error').textContent = data.error || 'Error'; return; }
         authToken = data.token;
         localStorage.setItem('tdpro_token', authToken);
@@ -2971,17 +2990,17 @@ async function topbarLogin() {
 }
 
 async function topbarRegister() {
-    var user = document.getElementById('topbar-reg-user').value.trim();
-    var email = document.getElementById('topbar-reg-email').value.trim();
-    var pass = document.getElementById('topbar-reg-pass').value;
+    let user = document.getElementById('topbar-reg-user').value.trim();
+    let email = document.getElementById('topbar-reg-email').value.trim();
+    let pass = document.getElementById('topbar-reg-pass').value;
     document.getElementById('login-box-reg-error').textContent = '';
     if (!user || !email || !pass) { document.getElementById('login-box-reg-error').textContent = 'All fields required'; return; }
     try {
-        var r = await fetch(SERVER_URL + '/api/register', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/register', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: user, email: email, password: pass })
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { document.getElementById('login-box-reg-error').textContent = data.error || 'Error'; return; }
         authToken = data.token;
         localStorage.setItem('tdpro_token', authToken);
@@ -3012,10 +3031,10 @@ async function startRankedQueue() {
     document.getElementById('ranked-status').textContent = 'Searching for opponent...';
     document.getElementById('ranked-timer').textContent = '';
     try {
-        var r = await fetch(SERVER_URL + '/api/queue/join', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/queue/join', {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken }
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { document.getElementById('ranked-status').textContent = data.error || 'Error'; return; }
         if (data.status === 'matched') {
             connectRankedMatch(data);
@@ -3031,10 +3050,10 @@ async function startRankedQueue() {
 
 async function pollRankedStatus() {
     try {
-        var r = await fetch(SERVER_URL + '/api/queue/status', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/queue/status', {
             headers: { 'Authorization': 'Bearer ' + authToken }
         });
-        var data = await r.json();
+        let data = await r.json();
         if (data.status === 'matched') {
             clearInterval(rankedPollTimer); rankedPollTimer = null;
             connectRankedMatch(data);
@@ -3057,7 +3076,7 @@ function connectRankedMatch(data) {
     rankedMatchId = data.matchId;
     isRanked = true;
     rankedEloChange = null;
-    var peerCode = data.peerCode;
+    let peerCode = data.peerCode;
     document.getElementById('ranked-status').textContent = 'Opponent found! Connecting...';
     document.getElementById('ranked-timer').textContent = data.opponent.username + ' (ELO: ' + data.opponent.elo + ')';
 
@@ -3077,8 +3096,8 @@ function connectRankedMatch(data) {
             document.getElementById('ranked-status').textContent = 'Connection error: ' + err.type;
         });
     } else {
-        var retries = 0;
-        var maxRetries = 5;
+        let retries = 0;
+        let maxRetries = 5;
         function attemptConnect() {
             if (peer) peer.destroy();
             peer = new Peer(undefined, PEER_CONFIG);
@@ -3108,7 +3127,7 @@ function connectRankedMatch(data) {
 
 function cancelRankedQueue() {
     if (rankedPollTimer) { clearInterval(rankedPollTimer); rankedPollTimer = null; }
-    fetch(SERVER_URL + '/api/queue/leave', {
+    fetchWithTimeout(SERVER_URL + '/api/queue/leave', {
         method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken }
     }).catch(function() {});
     if (peer) { peer.destroy(); peer = null; conn = null; }
@@ -3119,7 +3138,7 @@ function cancelRankedQueue() {
 
 function submitRankedResult(resultStr) {
     if (!isRanked || !authToken || !rankedMatchId) return;
-    fetch(SERVER_URL + '/api/match/result', {
+    fetchWithTimeout(SERVER_URL + '/api/match/result', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({
@@ -3139,7 +3158,7 @@ async function menuShowDuel() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-duel').style.display = '';
     if (authToken) {
-        var ok = await loadProfile();
+        let ok = await loadProfile();
         if (ok) { showLoggedMenu(); } else { showAuthMenu(); }
     } else {
         showAuthMenu();
@@ -3234,8 +3253,8 @@ function menuCancelHost() {
     menuBackToDuel();
 }
 
-var _duelDisconnectTimer = null;
-var _duelDisconnectCountdown = 0;
+let _duelDisconnectTimer = null;
+let _duelDisconnectCountdown = 0;
 
 function setupConnection() {
     conn.on('data', handlePeerMessage);
@@ -3346,7 +3365,7 @@ function checkDuelEnd() {
     const myTime = gameEndTime - gameStartTime;
     duelEnded = true;
 
-    var myFinal = finalScore();
+    let myFinal = finalScore();
     if (myFinal > opponentFinalScore) {
         duelResultTitle = 'VICTORY';
         duelResultSub = 'Score: ' + myFinal + ' vs ' + opponentFinalScore;
@@ -3377,23 +3396,23 @@ function menuMultiBack() {
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-main').style.display = '';
 }
-var _rndNames = ['Shadow','Phantom','Blaze','Vortex','Neon','Cipher','Nova','Pulse','Flux','Drift','Spark','Glitch','Echo','Byte','Hexa','Pixel','Turbo','Zinc','Onyx','Razor','Storm','Frost','Volt','Chaos','Omega'];
-var _myRndName = _rndNames[Math.floor(Math.random() * _rndNames.length)] + Math.floor(Math.random() * 100);
+const _rndNames = ['Shadow','Phantom','Blaze','Vortex','Neon','Cipher','Nova','Pulse','Flux','Drift','Spark','Glitch','Echo','Byte','Hexa','Pixel','Turbo','Zinc','Onyx','Razor','Storm','Frost','Volt','Chaos','Omega'];
+let _myRndName = _rndNames[Math.floor(Math.random() * _rndNames.length)] + Math.floor(Math.random() * 100);
 function getMultiName() {
-    var n = (document.getElementById('multi-name').value || '').trim();
+    let n = (document.getElementById('multi-name').value || '').trim();
     return n || (currentUser ? currentUser.username : _myRndName);
 }
 function menuMultiCreate() {
     if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-multi-host').style.display = '';
-    var code = generateRoomCode();
+    let code = generateRoomCode();
     document.getElementById('multi-code').textContent = code;
     document.getElementById('multi-lobby-list').textContent = 'Waiting for players...';
     document.getElementById('multi-start-btn').disabled = true;
     multiPlayers.clear();
     multiConns = [];
-    var myName = getMultiName();
+    let myName = getMultiName();
     peer = new Peer('tdmulti-' + code, PEER_CONFIG);
     peer.on('open', function() {
         myPlayerId = peer.id;
@@ -3418,10 +3437,10 @@ function menuMultiShowJoin() {
 }
 function menuMultiJoin() {
     if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
-    var code = document.getElementById('multi-join-code').value.toUpperCase().trim();
+    let code = document.getElementById('multi-join-code').value.toUpperCase().trim();
     if (code.length !== 4) return;
     document.getElementById('multi-join-error').style.display = 'none';
-    var myName = getMultiName();
+    let myName = getMultiName();
     peer = new Peer(undefined, PEER_CONFIG);
     peer.on('open', function() {
         myPlayerId = peer.id;
@@ -3467,7 +3486,7 @@ function menuMultiLeave() {
     if (peer) { peer.destroy(); peer = null; conn = null; }
 }
 function menuMultiStart() {
-    var roster = [];
+    let roster = [];
     multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
     _multiRoster = roster.slice();
     _multiHostId = myPlayerId;
@@ -3477,12 +3496,12 @@ function menuMultiStart() {
     startMultiGame(roster);
 }
 function updateMultiLobbyUI() {
-    var list = document.getElementById('multi-lobby-list');
-    var html = '';
-    var count = 0;
+    let list = document.getElementById('multi-lobby-list');
+    let html = '';
+    let count = 0;
     multiPlayers.forEach(function(p, id) {
         count++;
-        var isMe = id === myPlayerId;
+        let isMe = id === myPlayerId;
         html += '<div style="color:' + (isMe ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + (isMe ? p.name + ' (Host)' : p.name) + '</div>';
     });
     list.innerHTML = html;
@@ -3491,17 +3510,17 @@ function updateMultiLobbyUI() {
 
 // === MULTIPLAYER HOST MESSAGE HANDLER ===
 function handleMultiHostMessage(data, senderConn) {
-    var senderId = senderConn.peer;
+    let senderId = senderConn.peer;
     if (data.type === 'multi_join') {
         if (multiPlayers.size >= 50) { senderConn.send({ type: 'lobby_full' }); senderConn.close(); return; }
         multiPlayers.set(senderId, { conn: senderConn, name: data.name || ('P' + multiPlayers.size), lives: 20, score: 0, wave: 0, boardData: null, alive: true });
         multiConns.push(senderConn);
         updateMultiLobbyUI();
-        var roster = [];
+        let roster = [];
         multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
         multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_lobby', players: roster }); });
     } else if (data.type === 'my_status') {
-        var p = multiPlayers.get(senderId);
+        let p = multiPlayers.get(senderId);
         if (p) {
             p.lives = data.lives; p.score = data.score; p.wave = data.wave;
             if (data.tw) p.boardData = { towers: data.tw, enemies: data.en };
@@ -3512,11 +3531,11 @@ function handleMultiHostMessage(data, senderConn) {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
         // Flush host's remaining unspawned enemies if wave still active
         if (waveActive && enemiesToSpawn > 0) {
-            var wd = WAVES[waveNum - 1];
+            let wd = WAVES[waveNum - 1];
             while (enemiesToSpawn > 0) {
-                var sr;
+                let sr;
                 if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
-                else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
+                else { let v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
                 const _fi = wd.count - enemiesToSpawn;
                 const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
                 if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
@@ -3526,11 +3545,11 @@ function handleMultiHostMessage(data, senderConn) {
         waveActive = false;
         startWave(true); // host starts + broadcasts multi_wave_start to all
     } else if (data.type === 'multi_game_over') {
-        var p2 = multiPlayers.get(senderId);
+        let p2 = multiPlayers.get(senderId);
         if (p2) p2.alive = false;
         checkMultiEnd();
     } else if (data.type === 'multi_game_complete') {
-        var p3 = multiPlayers.get(senderId);
+        let p3 = multiPlayers.get(senderId);
         if (p3) { p3.finished = true; p3.finalScore = data.score; p3.finalTime = data.time; }
         checkMultiEnd();
     }
@@ -3540,6 +3559,7 @@ function handleMultiHostMessage(data, senderConn) {
 function handleMultiJoinerMessage(data) {
     if (data.type === 'new_host') {
         _multiHostId = data.hostId;
+        cleanupMigration();
         showMessage('New host connected');
         return;
     }
@@ -3554,7 +3574,7 @@ function handleMultiJoinerMessage(data) {
         return;
     }
     if (data.type === 'multi_lobby') {
-        var el = document.getElementById('multi-lobby-players');
+        let el = document.getElementById('multi-lobby-players');
         el.innerHTML = data.players.map(function(p) {
             return '<div style="color:' + (p.id === myPlayerId ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + escapeHtml(p.name) + '</div>';
         }).join('');
@@ -3573,7 +3593,7 @@ function handleMultiJoinerMessage(data) {
     } else if (data.type === 'multi_status') {
         data.players.forEach(function(p) {
             if (p.id === myPlayerId) return;
-            var ex = multiPlayers.get(p.id);
+            let ex = multiPlayers.get(p.id);
             if (ex) {
                 ex.lives = p.lives; ex.score = p.score; ex.wave = p.wave; ex.alive = p.alive;
                 if (p.tw) ex.boardData = { towers: p.tw, enemies: p.en };
@@ -3602,7 +3622,7 @@ function handleMultiJoinerMessage(data) {
         startWave(false);
     } else if (data.type === 'multi_end') {
         multiEnded = true;
-        var myRank = data.rankings.findIndex(function(r) { return r.id === myPlayerId; });
+        let myRank = data.rankings.findIndex(function(r) { return r.id === myPlayerId; });
         multiResultTitle = myRank === 0 ? 'VICTORY' : 'DEFEAT';
         multiResultSub = data.rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
         playSfx(myRank === 0 ? 'victory' : 'gameover');
@@ -3622,7 +3642,7 @@ function startMultiGame(playerRoster) {
     multiResultSub = '';
     _multiScoreSaved = false;
     multiStartTimer = 15;
-    for (var i = 0; i < playerRoster.length; i++) {
+    for (let i = 0; i < playerRoster.length; i++) {
         if (playerRoster[i].id !== myPlayerId) { selectedViewPlayer = playerRoster[i].id; break; }
     }
     document.getElementById('menu-overlay').style.display = 'none';
@@ -3635,9 +3655,9 @@ function startMultiGame(playerRoster) {
 
 // === PLAYER LIST UI ===
 function updateMultiPlayerListUI() {
-    var listEl = document.getElementById('multi-player-list');
+    let listEl = document.getElementById('multi-player-list');
     if (!listEl) return;
-    var arr = [];
+    let arr = [];
     multiPlayers.forEach(function(p, id) {
         if (id === myPlayerId) {
             arr.push({ id: id, name: p.name + ' (You)', lives: lives, score: score, wave: waveNum, alive: lives > 0 });
@@ -3648,15 +3668,15 @@ function updateMultiPlayerListUI() {
     // Add self if host (host is in multiPlayers) — already covered above
     // Add self if joiner (joiner is NOT in multiPlayers)
     if (!isHost && !multiPlayers.has(myPlayerId)) {
-        var myName = getMultiName();
+        let myName = getMultiName();
         arr.push({ id: myPlayerId, name: myName + ' (You)', lives: lives, score: score, wave: waveNum, alive: lives > 0 });
     }
     arr.sort(function(a, b) { return b.score - a.score || b.lives - a.lives; });
-    var html = '';
-    for (var i = 0; i < arr.length; i++) {
-        var p = arr[i];
-        var sel = p.id === selectedViewPlayer ? ' selected' : '';
-        var dead = !p.alive ? ' dead' : '';
+    let html = '';
+    for (let i = 0; i < arr.length; i++) {
+        let p = arr[i];
+        let sel = p.id === selectedViewPlayer ? ' selected' : '';
+        let dead = !p.alive ? ' dead' : '';
         html += '<div class="mp-row' + sel + dead + '" onclick="selectMultiPlayer(\'' + escapeHtml(p.id) + '\')">'
               + '<span class="mp-rank">' + (i + 1) + '</span>'
               + '<span class="mp-name">' + escapeHtml(p.name) + '</span>'
@@ -3676,40 +3696,57 @@ function selectMultiPlayer(playerId) {
 
 function updateMultiOpponentView() {
     if (!selectedViewPlayer) return;
-    var p = multiPlayers.get(selectedViewPlayer);
+    let p = multiPlayers.get(selectedViewPlayer);
     if (!p) return;
     document.getElementById('opp-lives').textContent = p.lives;
     document.getElementById('opp-score').textContent = p.score;
-    var label = document.querySelector('.opp-label');
+    let label = document.querySelector('.opp-label');
     if (label) label.textContent = p.name;
     if (p.boardData) { oppBoardData = p.boardData; drawOpponentBoard(); }
 }
 
-var _multiScoreSaved = false;
+let _multiScoreSaved = false;
 function saveMultiScoreToSolo() {
     if (_multiScoreSaved || !authToken) return;
     _multiScoreSaved = true;
-    fetch(SERVER_URL + '/api/solo/save', {
+    fetchWithTimeout(SERVER_URL + '/api/solo/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
     }).catch(function() { showMessage('Score save failed'); });
 }
 
+function broadcastMultiStatus() {
+    let allP = [];
+    multiPlayers.forEach(function(p, id) {
+        allP.push({ id: id, name: p.name, lives: p.lives, score: p.score, wave: p.wave, alive: p.alive, tw: p.boardData ? p.boardData.towers : [], en: p.boardData ? p.boardData.enemies : [] });
+    });
+    multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_status', players: allP }); });
+    updateMultiPlayerListUI();
+    updateMultiOpponentView();
+}
+
 // === HOST MIGRATION ===
+function cleanupMigration() {
+    if (_migrationTimer) { clearTimeout(_migrationTimer); _migrationTimer = null; }
+    if (_migrationConnHandler && peer) { peer.off('connection', _migrationConnHandler); _migrationConnHandler = null; }
+}
+
 function attemptHostMigration() {
     if (multiEnded || !isMulti) return;
-    // Remove old host from roster tracking
-    var oldHostId = _multiHostId;
-    var oldHostP = multiPlayers.get(oldHostId);
-    if (oldHostP) oldHostP.alive = false;
+    // Cleanup previous migration attempt
+    cleanupMigration();
 
-    // Elect new host: first alive player in roster (excluding old host and self-dead)
-    var newHostId = null;
-    for (var i = 0; i < _multiRoster.length; i++) {
-        var rid = _multiRoster[i].id;
-        if (rid === oldHostId) continue;
-        var rp = multiPlayers.get(rid);
+    let oldHostId = _multiHostId;
+    // Remove old host from players and roster
+    multiPlayers.delete(oldHostId);
+    _multiRoster = _multiRoster.filter(function(r) { return r.id !== oldHostId; });
+
+    // Elect new host: first alive player in roster
+    let newHostId = null;
+    for (let i = 0; i < _multiRoster.length; i++) {
+        let rid = _multiRoster[i].id;
+        let rp = multiPlayers.get(rid);
         if (rid === myPlayerId) {
             if (lives > 0) { newHostId = rid; break; }
         } else if (rp && rp.alive) {
@@ -3717,11 +3754,24 @@ function attemptHostMigration() {
         }
     }
     if (!newHostId) {
-        // No alive player left, just end locally
+        multiEnded = true;
+        multiResultTitle = 'DISCONNECTED';
+        multiResultSub = 'All players disconnected';
         showMessage('All players disconnected');
         return;
     }
     _multiHostId = newHostId;
+
+    // Start migration timeout (15s)
+    _migrationTimer = setTimeout(function() {
+        _migrationTimer = null;
+        if (!multiEnded && isMulti) {
+            multiEnded = true;
+            multiResultTitle = 'DISCONNECTED';
+            multiResultSub = 'Host migration failed';
+            showMessage('Connection lost');
+        }
+    }, 15000);
 
     if (newHostId === myPlayerId) {
         // I become the new host
@@ -3729,41 +3779,48 @@ function attemptHostMigration() {
         multiConns = [];
         // Add myself to multiPlayers if not present
         if (!multiPlayers.has(myPlayerId)) {
-            var myName = getMultiName();
+            let myName = getMultiName();
             multiPlayers.set(myPlayerId, { conn: null, name: myName, lives: lives, score: score, wave: waveNum, boardData: null, alive: lives > 0 });
         } else {
-            var me = multiPlayers.get(myPlayerId);
+            let me = multiPlayers.get(myPlayerId);
             me.lives = lives; me.score = score; me.wave = waveNum; me.alive = lives > 0;
         }
         showMessage('You are now host');
         // Connect to all other alive players
-        var otherIds = _multiRoster.filter(function(r) { return r.id !== myPlayerId && r.id !== oldHostId; }).map(function(r) { return r.id; });
-        for (var j = 0; j < otherIds.length; j++) {
+        let otherIds = _multiRoster.filter(function(r) { return r.id !== myPlayerId; }).map(function(r) { return r.id; });
+        for (let j = 0; j < otherIds.length; j++) {
             (function(targetId) {
-                var c = peer.connect(targetId, { reliable: true });
+                let c = peer.connect(targetId, { reliable: true });
                 c.on('open', function() {
+                    if (_migrationTimer) { clearTimeout(_migrationTimer); _migrationTimer = null; }
                     multiConns.push(c);
                     c.send({ type: 'new_host', hostId: myPlayerId });
                     c.on('data', function(data) { handleMultiHostMessage(data, c); });
                     c.on('close', function() { handleMultiDisconnect(c.peer); });
+                    broadcastMultiStatus();
                 });
             })(otherIds[j]);
         }
         // Listen for incoming connections from late joiners
-        peer.on('connection', function(c) {
+        _migrationConnHandler = function(c) {
             c.on('open', function() {
                 multiConns.push(c);
                 c.send({ type: 'new_host', hostId: myPlayerId });
                 c.on('data', function(data) { handleMultiHostMessage(data, c); });
                 c.on('close', function() { handleMultiDisconnect(c.peer); });
+                broadcastMultiStatus();
             });
-        });
+        };
+        peer.on('connection', _migrationConnHandler);
+        // Cancel timeout once at least one connection succeeds
+        if (otherIds.length === 0) cleanupMigration();
     } else {
         // Someone else is the new host, wait for their connection
         showMessage('Host migrating...');
-        peer.on('connection', function(c) {
+        _migrationConnHandler = function(c) {
             c.on('open', function() {
                 conn = c;
+                cleanupMigration();
                 conn.on('data', handleMultiJoinerMessage);
                 conn.on('close', function() {
                     if (!multiEnded && isMulti) {
@@ -3772,15 +3829,16 @@ function attemptHostMigration() {
                     }
                 });
             });
-        });
+        };
+        peer.on('connection', _migrationConnHandler);
     }
 }
 
 // === MULTI GAME END ===
 function checkMultiEnd() {
     if (multiEnded || !isHost) return;
-    var aliveCount = 0;
-    var allDone = true;
+    let aliveCount = 0;
+    let allDone = true;
     multiPlayers.forEach(function(p) {
         if (p.alive) aliveCount++;
         if (p.alive && !p.finished) allDone = false;
@@ -3789,11 +3847,11 @@ function checkMultiEnd() {
     if (aliveCount > 1 && !allDone) return;
     multiEnded = true;
     // Update host's own data before building rankings
-    var me = multiPlayers.get(myPlayerId);
+    let me = multiPlayers.get(myPlayerId);
     if (me) { me.score = score; me.lives = lives; me.alive = lives > 0; }
-    var rankings = [];
+    let rankings = [];
     multiPlayers.forEach(function(p, id) {
-        var fs = p.finalScore || (p.score + (p.alive ? p.lives * 10 : 0));
+        let fs = p.finalScore || (p.score + (p.alive ? p.lives * 10 : 0));
         rankings.push({ id: id, name: p.name, score: fs, alive: p.alive, time: p.finalTime || 0 });
     });
     rankings.sort(function(a, b) {
@@ -3801,7 +3859,7 @@ function checkMultiEnd() {
         return b.score - a.score;
     });
     multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_end', rankings: rankings }); });
-    var myRank = rankings.findIndex(function(r) { return r.id === myPlayerId; });
+    let myRank = rankings.findIndex(function(r) { return r.id === myPlayerId; });
     multiResultTitle = myRank === 0 ? 'VICTORY' : 'DEFEAT';
     multiResultSub = rankings.map(function(r, i) { return (i + 1) + '. ' + r.name + ' - ' + r.score + 'pts'; }).join('\n');
     playSfx(myRank === 0 ? 'victory' : 'gameover');
@@ -3809,7 +3867,7 @@ function checkMultiEnd() {
 }
 
 function handleMultiDisconnect(peerId) {
-    var p = multiPlayers.get(peerId);
+    let p = multiPlayers.get(peerId);
     if (p) {
         p.alive = false;
         multiConns = multiConns.filter(function(c) { return c.peer !== peerId; });
@@ -3844,7 +3902,7 @@ document.addEventListener('keydown', function(e) {
         if (selectedTower) sellSelected();
     }
     // 1-9 = select tower type
-    var num = parseInt(e.key);
+    let num = parseInt(e.key);
     if (num >= 1 && num <= TOWER_TYPES.length) {
         toggleTowerMode(num - 1);
     }
@@ -3855,16 +3913,16 @@ document.addEventListener('keydown', function(e) {
 const OPP_TOWER_COLORS = ['#5cf','#f90','#cfefff','#f6a','#b6f','#ee0','#5fa',null,'#f2f'];
 
 function initOpponentCanvas() {
-    var oc = document.getElementById('opp-canvas');
+    let oc = document.getElementById('opp-canvas');
     oc.width = Math.round(CANVAS_W * 0.75);
     oc.height = Math.round(CANVAS_H * 0.75);
 }
 
 function drawOpponentBoard() {
     if (!oppBoardData) return;
-    var oc = document.getElementById('opp-canvas');
-    var ox = oc.getContext('2d');
-    var sc = 0.75;
+    let oc = document.getElementById('opp-canvas');
+    let ox = oc.getContext('2d');
+    let sc = 0.75;
     oc.width = Math.round(CANVAS_W * sc);
     oc.height = Math.round(CANVAS_H * sc);
     ox.save();
@@ -3875,13 +3933,13 @@ function drawOpponentBoard() {
     ox.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     // Entry zones
-    for (var ei = 0; ei < ENTRY_ROWS.length; ei++) {
+    for (let ei = 0; ei < ENTRY_ROWS.length; ei++) {
         ox.fillStyle = '#061810';
         ox.fillRect(0, ENTRY_ROWS[ei] * CS, CS, CS);
     }
     // Exit zones
-    var outX = GX + GRID * CS;
-    for (var xi = 0; xi < EXIT_ROWS.length; xi++) {
+    let outX = GX + GRID * CS;
+    for (let xi = 0; xi < EXIT_ROWS.length; xi++) {
         ox.fillStyle = '#180808';
         ox.fillRect(outX, EXIT_ROWS[xi] * CS, CS, CS);
     }
@@ -3893,10 +3951,10 @@ function drawOpponentBoard() {
     // Subtle grid lines
     ox.strokeStyle = '#ffffff06';
     ox.lineWidth = 0.5;
-    for (var r = 0; r <= GRID; r++) {
+    for (let r = 0; r <= GRID; r++) {
         ox.beginPath(); ox.moveTo(GX, r * CS); ox.lineTo(GX + GRID * CS, r * CS); ox.stroke();
     }
-    for (var c = 0; c <= GRID; c++) {
+    for (let c = 0; c <= GRID; c++) {
         ox.beginPath(); ox.moveTo(GX + c * CS, 0); ox.lineTo(GX + c * CS, CANVAS_H); ox.stroke();
     }
 
@@ -3910,32 +3968,32 @@ function drawOpponentBoard() {
     ox.fillStyle = '#00ff88';
     ox.font = '600 9px "JetBrains Mono", monospace';
     ox.textAlign = 'center'; ox.textBaseline = 'middle';
-    for (var gi = 0; gi < ENTRY_GROUPS.length; gi++) {
-        var g = ENTRY_GROUPS[gi];
-        var cy = (g[0] + g[g.length - 1]) / 2 * CS + CS / 2;
+    for (let gi = 0; gi < ENTRY_GROUPS.length; gi++) {
+        let g = ENTRY_GROUPS[gi];
+        let cy = (g[0] + g[g.length - 1]) / 2 * CS + CS / 2;
         ox.fillText('IN', CS / 2, cy);
     }
     ox.fillStyle = '#ff0066';
     ox.font = '600 9px "JetBrains Mono", monospace';
-    for (var egi = 0; egi < EXIT_GROUPS.length; egi++) {
-        var eg = EXIT_GROUPS[egi];
-        var ecy = (eg[0] + eg[eg.length - 1]) / 2 * CS + CS / 2;
+    for (let egi = 0; egi < EXIT_GROUPS.length; egi++) {
+        let eg = EXIT_GROUPS[egi];
+        let ecy = (eg[0] + eg[eg.length - 1]) / 2 * CS + CS / 2;
         ox.fillText('OUT', outX + CS / 2, ecy);
     }
 
     // Towers (skip grenade index 7)
-    for (var ti = 0; ti < oppBoardData.towers.length; ti++) {
-        var tw = oppBoardData.towers[ti];
-        var tc = OPP_TOWER_COLORS[tw.i];
+    for (let ti = 0; ti < oppBoardData.towers.length; ti++) {
+        let tw = oppBoardData.towers[ti];
+        let tc = OPP_TOWER_COLORS[tw.i];
         if (!tc) continue; // skip grenade
         ox.fillStyle = tc;
         ox.fillRect(GX + tw.c * CS + 2, tw.r * CS + 2, CS - 4, CS - 4);
     }
 
     // Enemies
-    for (var eii = 0; eii < oppBoardData.enemies.length; eii++) {
-        var en = oppBoardData.enemies[eii];
-        var et = ENEMY_TYPES[en.t];
+    for (let eii = 0; eii < oppBoardData.enemies.length; eii++) {
+        let en = oppBoardData.enemies[eii];
+        let et = ENEMY_TYPES[en.t];
         ox.fillStyle = et ? et.color : '#ff0000';
         ox.beginPath();
         ox.arc(GX + en.gx * CS, en.gy * CS, CS * 0.3 * (en.s || 1), 0, Math.PI * 2);
@@ -3961,29 +4019,29 @@ async function loadLeaderboard(type) {
     currentLbType = type;
     // Update active tab
     document.querySelectorAll('.lb-tab').forEach(function(t) { t.classList.remove('active'); });
-    var tabs = document.querySelectorAll('.lb-tab');
+    let tabs = document.querySelectorAll('.lb-tab');
     if (type === 'elo') tabs[0].classList.add('active');
     else if (type === 'solo') tabs[1].classList.add('active');
     else tabs[2].classList.add('active');
 
-    var listEl = document.getElementById('lb-list');
-    var loadEl = document.getElementById('lb-loading');
+    let listEl = document.getElementById('lb-list');
+    let loadEl = document.getElementById('lb-loading');
     listEl.innerHTML = '';
     loadEl.style.display = '';
 
     try {
-        var r = await fetch(SERVER_URL + '/api/solo/leaderboard?type=' + type);
-        var data = await r.json();
+        let r = await fetchWithTimeout(SERVER_URL + '/api/solo/leaderboard?type=' + type);
+        let data = await r.json();
         loadEl.style.display = 'none';
 
         if (!data.length) {
-            listEl.innerHTML = '<div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:20px 0">No data yet</div>';
+            listEl.innerHTML = '<div style="color:#405060;font-size:9px;let ter-spacing:1px;text-transform:uppercase;padding:20px 0">No data yet</div>';
             return;
         }
 
         listEl.innerHTML = data.map(function(u, i) {
-            var rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-            var val = '';
+            let rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+            let val = '';
             if (type === 'elo') val = '<span class="lb-val" style="color:#ff0066">' + u.elo + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + u.gamesPlayed + 'G</span>';
             else if (type === 'solo') val = '<span class="lb-val" style="color:#00ff88">' + u.bestScore + '</span><span style="color:#405060;font-size:9px;margin-left:6px">W' + u.bestWave + '</span>';
             else val = '<span class="lb-val">' + u.gamesPlayed + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + (u.gamesWon || 0) + 'W</span>';
@@ -3996,8 +4054,8 @@ async function loadLeaderboard(type) {
 }
 
 // === SOLO END OVERLAY (save score without account) ===
-var _pendingWave = 0;
-var _pendingScore = 0;
+let _pendingWave = 0;
+let _pendingScore = 0;
 
 function showSoloEndOverlay() {
     _pendingWave = waveNum;
@@ -4015,17 +4073,17 @@ function hideSoloEndOverlay() {
 }
 
 async function saveSoloGuest() {
-    var name = document.getElementById('solo-guest-name').value.trim();
-    var errEl = document.getElementById('solo-end-error');
+    let name = document.getElementById('solo-guest-name').value.trim();
+    let errEl = document.getElementById('solo-end-error');
     errEl.textContent = '';
     if (!name) { errEl.textContent = 'Enter a pseudo'; return; }
     try {
-        var r = await fetch(SERVER_URL + '/api/solo/guest-save', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/solo/guest-save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ guestName: name, bestWave: _pendingWave, bestScore: _pendingScore })
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { errEl.textContent = data.error || 'Error'; return; }
         hideSoloEndOverlay();
     } catch (e) {
@@ -4034,25 +4092,25 @@ async function saveSoloGuest() {
 }
 
 async function saveSoloLogin() {
-    var loginVal = document.getElementById('solo-login-email').value.trim();
-    var pass = document.getElementById('solo-login-pass').value;
-    var errEl = document.getElementById('solo-end-error');
+    let loginVal = document.getElementById('solo-login-email').value.trim();
+    let pass = document.getElementById('solo-login-pass').value;
+    let errEl = document.getElementById('solo-end-error');
     errEl.textContent = '';
     if (!loginVal || !pass) { errEl.textContent = 'Login and password required'; return; }
     try {
-        var r = await fetch(SERVER_URL + '/api/login', {
+        let r = await fetchWithTimeout(SERVER_URL + '/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ login: loginVal, password: pass })
         });
-        var data = await r.json();
+        let data = await r.json();
         if (!r.ok) { errEl.textContent = data.error || 'Error'; return; }
         authToken = data.token;
         localStorage.setItem('tdpro_token', authToken);
         currentUser = data.user;
         updateProfileBtn();
         // Save the pending score
-        await fetch(SERVER_URL + '/api/solo/save', {
+        await fetchWithTimeout(SERVER_URL + '/api/solo/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
             body: JSON.stringify({ bestWave: _pendingWave, bestScore: _pendingScore })
