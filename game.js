@@ -278,7 +278,7 @@ const WAVES_SOLO = (function() {
         const isBoss = (i % 10 === 0);
         if (isBoss) {
             const bossIdx = Math.floor((i / 10 - 1) % bossTypes.length);
-            const bossCount = Math.min(2 + Math.floor(i / 20), 10);
+            const bossCount = Math.min(2 + Math.floor(i / 30), 10);
             const bossHp = Math.round(1200 * Math.pow(1.12, i));
             if (i === 100) {
                 waves.push({ count: 10, hp: Math.round(5000 * Math.pow(1.12, 100)), type: 'boss_normal', types: bossTypes });
