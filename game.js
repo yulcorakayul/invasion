@@ -2452,8 +2452,8 @@ let audioCtx = null;
 let masterGain = null;
 let musicGain = null;
 let sfxGain = null;
-let isMusicMuted = false;
-let isSfxMuted = false;
+let isMusicMuted = localStorage.getItem('musicMuted') === '1';
+let isSfxMuted = localStorage.getItem('sfxMuted') === '1';
 let musicStarted = false;
 
 function initAudio() {
@@ -2463,16 +2463,27 @@ function initAudio() {
     masterGain.gain.value = 1;
     masterGain.connect(audioCtx.destination);
     musicGain = audioCtx.createGain();
-    musicGain.gain.value = 0.25;
+    musicGain.gain.value = isMusicMuted ? 0 : 0.25;
     musicGain.connect(masterGain);
     sfxGain = audioCtx.createGain();
-    sfxGain.gain.value = 0.5;
+    sfxGain.gain.value = isSfxMuted ? 0 : 0.5;
     sfxGain.connect(masterGain);
 }
+
+// Apply saved mute state to UI on load
+(function() {
+    if (isMusicMuted) document.getElementById('mute-music').classList.add('muted');
+    if (isSfxMuted) {
+        document.getElementById('mute-sfx').classList.add('muted');
+        document.getElementById('sfx-icon-on').style.display = 'none';
+        document.getElementById('sfx-icon-off').style.display = '';
+    }
+})();
 
 function toggleMusic() {
     initAudio();
     isMusicMuted = !isMusicMuted;
+    localStorage.setItem('musicMuted', isMusicMuted ? '1' : '0');
     musicGain.gain.setTargetAtTime(isMusicMuted ? 0 : 0.25, audioCtx.currentTime, 0.05);
     document.getElementById('mute-music').classList.toggle('muted', isMusicMuted);
     if (!musicStarted) { startMusic(); musicStarted = true; }
@@ -2481,6 +2492,7 @@ function toggleMusic() {
 function toggleSfx() {
     initAudio();
     isSfxMuted = !isSfxMuted;
+    localStorage.setItem('sfxMuted', isSfxMuted ? '1' : '0');
     sfxGain.gain.setTargetAtTime(isSfxMuted ? 0 : 0.5, audioCtx.currentTime, 0.05);
     document.getElementById('mute-sfx').classList.toggle('muted', isSfxMuted);
     document.getElementById('sfx-icon-on').style.display = isSfxMuted ? 'none' : '';
