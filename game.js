@@ -202,7 +202,7 @@ const ENEMY_TYPES = {
     boss_swarm:    { speed: 0.7, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.6, spawnInt: 0.5, pts: 5 },
     boss_shield:   { speed: 0.5, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.7, shield: 30, pts: 7 },
     boss_stealth:  { speed: 0.8, color: '#334', stroke: '#556', reward: 22,  label: 'Boss Stl',   scale: 1.5, stealth: true, pts: 6 },
-    boss_regen:    { speed: 0.5, color: '#1a3', stroke: '#3c5', reward: 24,  label: 'Boss Rgn',   scale: 1.7, regenRate: 0.05, pts: 7 },
+    boss_regen:    { speed: 0.5, color: '#1a3', stroke: '#3c5', reward: 24,  label: 'Boss Rgn',   scale: 1.7, regenRate: 0.02, pts: 7 },
 };
 
 const WAVES_RANKED = [
@@ -1267,7 +1267,7 @@ function updateUI() {
             btn.textContent = 'Lv.' + (selectedTower.level + 1) + ' (' + c + 'g)';
             btn.disabled = gold < c;
         }
-        const refund = Math.floor(selectedTower.totalCost * 0.6);
+        const refund = Math.floor(selectedTower.totalCost * 0.4);
         document.getElementById('sell-btn').textContent = 'Sell (' + refund + 'g)';
     } else if (placingType >= 0) {
         infoTower.style.display = 'none';
@@ -1318,7 +1318,7 @@ function sellSelected() {
     const { row, col } = selectedTower;
     grid[row][col] = 0;
     towers = towers.filter(t => t !== selectedTower);
-    const refund = Math.floor(selectedTower.totalCost * 0.6);
+    const refund = Math.floor(selectedTower.totalCost * 0.4);
     gold += refund;
     selectedTower = null;
     playSfx('sell');
@@ -1461,7 +1461,7 @@ canvas.addEventListener('contextmenu', (e) => {
     if (!tower) return;
     grid[row][col] = 0;
     towers = towers.filter(t => t !== tower);
-    const refund = Math.floor(tower.totalCost * 0.6);
+    const refund = Math.floor(tower.totalCost * 0.4);
     gold += refund;
     if (selectedTower === tower) selectedTower = null;
     playSfx('sell');
@@ -3413,6 +3413,7 @@ function updateMultiLobbyUI() {
 function handleMultiHostMessage(data, senderConn) {
     var senderId = senderConn.peer;
     if (data.type === 'multi_join') {
+        if (multiPlayers.size >= 50) { senderConn.send({ type: 'lobby_full' }); senderConn.close(); return; }
         multiPlayers.set(senderId, { conn: senderConn, name: data.name || ('P' + multiPlayers.size), lives: 20, score: 0, wave: 0, boardData: null, alive: true });
         multiConns.push(senderConn);
         updateMultiLobbyUI();
@@ -3457,6 +3458,16 @@ function handleMultiHostMessage(data, senderConn) {
 
 // === MULTIPLAYER JOINER MESSAGE HANDLER ===
 function handleMultiJoinerMessage(data) {
+    if (data.type === 'lobby_full') {
+        showMessage('Lobby full (50 max)');
+        if (conn) conn.close();
+        if (peer) { peer.destroy(); peer = null; conn = null; }
+        document.getElementById('menu-multi-lobby').style.display = 'none';
+        document.getElementById('menu-multi-join').style.display = '';
+        document.getElementById('multi-join-error').textContent = 'Lobby full (50 players max)';
+        document.getElementById('multi-join-error').style.display = '';
+        return;
+    }
     if (data.type === 'multi_lobby') {
         var el = document.getElementById('multi-lobby-players');
         el.innerHTML = data.players.map(function(p) {
@@ -3516,7 +3527,7 @@ function handleMultiJoinerMessage(data) {
 function startMultiGame(playerRoster) {
     isMulti = true;
     isDuel = false;
-    WAVES = WAVES_RANKED;
+    WAVES = WAVES_SOLO;
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     multiEnded = false;
