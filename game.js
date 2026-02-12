@@ -422,16 +422,47 @@ function findPath(startR, startC, endC, ghost) {
     return null;
 }
 
+function canReachExit(startR, startC, endC, targetExitRows) {
+    if (grid[startR][startC] === 1) return false;
+    const vis = Array.from({ length: GRID }, () => Array(GRID).fill(false));
+    const q = [[startR, startC]];
+    vis[startR][startC] = true;
+    const dirs = [[0,1],[1,0],[0,-1],[-1,0]];
+    while (q.length) {
+        const [r, c] = q.shift();
+        if (c === endC && targetExitRows.includes(r)) return true;
+        for (const [dr, dc] of dirs) {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < GRID && nc >= 0 && nc < GRID && !vis[nr][nc] && grid[nr][nc] !== 1) {
+                vis[nr][nc] = true;
+                q.push([nr, nc]);
+            }
+        }
+    }
+    return false;
+}
+
 function pathExists(testGrid) {
     const old = grid;
     grid = testGrid;
     let allOk = true;
+    // Check each entry group can reach at least one exit
     for (const group of ENTRY_GROUPS) {
         let groupOk = false;
         for (const row of group) {
             if (findPath(row, ENTRY_COL, EXIT_COL)) { groupOk = true; break; }
         }
         if (!groupOk) { allOk = false; break; }
+    }
+    // Check each exit group is reachable from at least one entry
+    if (allOk) {
+        for (const exitGroup of EXIT_GROUPS) {
+            let exitOk = false;
+            for (const eRow of ENTRY_ROWS) {
+                if (canReachExit(eRow, ENTRY_COL, EXIT_COL, exitGroup)) { exitOk = true; break; }
+            }
+            if (!exitOk) { allOk = false; break; }
+        }
     }
     grid = old;
     return allOk;
