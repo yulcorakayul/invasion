@@ -1271,7 +1271,7 @@ function updateUI() {
     document.getElementById('score').textContent = score;
     for (let i = 0; i < TOWER_TYPES.length; i++) {
         const btn = document.getElementById('tbtn-' + i);
-        if (btn) btn.disabled = gold < TOWER_TYPES[i].levels[1].cost && placingType !== i;
+        if (btn) btn.classList.toggle('no-gold', gold < TOWER_TYPES[i].levels[1].cost && placingType !== i);
     }
 
     const infoDesc = document.getElementById('info-desc');
