@@ -4035,7 +4035,7 @@ async function loadLeaderboard(type) {
         loadEl.style.display = 'none';
 
         if (!data.length) {
-            listEl.innerHTML = '<div style="color:#405060;font-size:9px;let ter-spacing:1px;text-transform:uppercase;padding:20px 0">No data yet</div>';
+            listEl.innerHTML = '<div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:20px 0">No data yet</div>';
             return;
         }
 
