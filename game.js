@@ -2920,6 +2920,31 @@ function hideLoginOverlay() {
     document.getElementById('login-overlay').style.display = 'none';
 }
 
+var _patchNotesLoaded = false;
+function showPatchNotes() {
+    document.getElementById('patch-overlay').classList.add('active');
+    if (!_patchNotesLoaded) {
+        _patchNotesLoaded = true;
+        fetch(SERVER_URL + '/api/patchnotes').then(function(r) { return r.json(); }).then(function(notes) {
+            var box = document.getElementById('patch-box');
+            var html = '<h2>PATCH NOTES</h2>';
+            for (var i = 0; i < notes.length; i++) {
+                var n = notes[i];
+                html += '<div class="patch-version">' + n.version + '</div><ul class="patch-list">';
+                for (var j = 0; j < n.items.length; j++) {
+                    html += '<li>' + n.items[j] + '</li>';
+                }
+                html += '</ul>';
+            }
+            html += '<button class="menu-btn-back" onclick="hidePatchNotes()" style="display:block;text-align:center;margin:16px auto 0">&#8592; Close</button>';
+            box.innerHTML = html;
+        }).catch(function() {});
+    }
+}
+function hidePatchNotes() {
+    document.getElementById('patch-overlay').classList.remove('active');
+}
+
 function showTopbarRegister() {
     document.getElementById('login-box-login').style.display = 'none';
     document.getElementById('login-box-register').style.display = '';
