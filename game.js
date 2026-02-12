@@ -1,4 +1,10 @@
 // === CONFIG ===
+function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+var PEER_CONFIG = { config: { iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
+]}};
 const GRID = 20;
 
 // Measure bar overhead with canvas hidden, then compute CS to fit viewport
@@ -1827,7 +1833,7 @@ function gameLoop(time) {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
                             body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
-                        }).catch(function() {});
+                        }).catch(function() { showMessage('Score save failed'); });
                     } else {
                         showSoloEndOverlay();
                     }
@@ -1890,7 +1896,7 @@ function gameLoop(time) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
                     body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
-                }).catch(function() {});
+                }).catch(function() { showMessage('Score save failed'); });
             } else {
                 showSoloEndOverlay();
             }
@@ -2925,7 +2931,7 @@ function showPatchNotes() {
             }
             html += '<button class="menu-btn-back" onclick="hidePatchNotes()" style="display:block;text-align:center;margin:16px auto 0">&#8592; Close</button>';
             box.innerHTML = html;
-        }).catch(function() {});
+        }).catch(function() { _patchNotesLoaded = false; });
     }
 }
 function hidePatchNotes() {
@@ -3000,7 +3006,7 @@ function hideProfile() {
 }
 
 async function startRankedQueue() {
-    if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
+    if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
     document.getElementById('menu-duel').style.display = 'none';
     document.getElementById('menu-ranked-queue').style.display = '';
     document.getElementById('ranked-status').textContent = 'Searching for opponent...';
@@ -3056,7 +3062,7 @@ function connectRankedMatch(data) {
     document.getElementById('ranked-timer').textContent = data.opponent.username + ' (ELO: ' + data.opponent.elo + ')';
 
     if (data.isHost) {
-        peer = new Peer('tdpro-' + peerCode);
+        peer = new Peer('tdpro-' + peerCode, PEER_CONFIG);
         peer.on('open', function() {});
         peer.on('connection', function(c) {
             conn = c;
@@ -3075,7 +3081,7 @@ function connectRankedMatch(data) {
         var maxRetries = 5;
         function attemptConnect() {
             if (peer) peer.destroy();
-            peer = new Peer();
+            peer = new Peer(undefined, PEER_CONFIG);
             peer.on('open', function() {
                 conn = peer.connect('tdpro-' + peerCode, { reliable: true });
                 conn.on('open', function() {
@@ -3126,7 +3132,7 @@ function submitRankedResult(resultStr) {
     }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.eloChange !== undefined) rankedEloChange = data.eloChange;
         if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
-    }).catch(function() {});
+    }).catch(function() { showMessage('Result submit failed'); });
 }
 
 async function menuShowDuel() {
@@ -3156,7 +3162,7 @@ function menuBackFromRules() {
 }
 
 function menuCreateRoom() {
-    if (typeof Peer === 'undefined') { alert('PeerJS non charge'); return; }
+    if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
     document.getElementById('menu-duel').style.display = 'none';
     document.getElementById('menu-host').style.display = '';
     const code = generateRoomCode();
@@ -3164,7 +3170,7 @@ function menuCreateRoom() {
     document.getElementById('menu-wait').textContent = 'Waiting for opponent...';
     document.getElementById('menu-status').style.display = 'none';
 
-    peer = new Peer('tdpro-' + code);
+    peer = new Peer('tdpro-' + code, PEER_CONFIG);
     peer.on('open', function() {
         // Ready, waiting for connection
     });
@@ -3193,12 +3199,12 @@ function menuShowJoin() {
 }
 
 function menuJoinRoom() {
-    if (typeof Peer === 'undefined') { alert('PeerJS non charge'); return; }
+    if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
     const code = document.getElementById('join-code').value.toUpperCase().trim();
     if (code.length !== 4) return;
     document.getElementById('join-error').style.display = 'none';
 
-    peer = new Peer();
+    peer = new Peer(undefined, PEER_CONFIG);
     peer.on('open', function() {
         conn = peer.connect('tdpro-' + code, { reliable: true });
         conn.on('open', function() {
@@ -3378,7 +3384,7 @@ function getMultiName() {
     return n || (currentUser ? currentUser.username : _myRndName);
 }
 function menuMultiCreate() {
-    if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
+    if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-multi-host').style.display = '';
     var code = generateRoomCode();
@@ -3388,7 +3394,7 @@ function menuMultiCreate() {
     multiPlayers.clear();
     multiConns = [];
     var myName = getMultiName();
-    peer = new Peer('tdmulti-' + code);
+    peer = new Peer('tdmulti-' + code, PEER_CONFIG);
     peer.on('open', function() {
         myPlayerId = peer.id;
         isHost = true;
@@ -3411,12 +3417,12 @@ function menuMultiShowJoin() {
     setTimeout(function() { document.getElementById('multi-join-code').focus(); }, 100);
 }
 function menuMultiJoin() {
-    if (typeof Peer === 'undefined') { alert('PeerJS not loaded'); return; }
+    if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
     var code = document.getElementById('multi-join-code').value.toUpperCase().trim();
     if (code.length !== 4) return;
     document.getElementById('multi-join-error').style.display = 'none';
     var myName = getMultiName();
-    peer = new Peer();
+    peer = new Peer(undefined, PEER_CONFIG);
     peer.on('open', function() {
         myPlayerId = peer.id;
         conn = peer.connect('tdmulti-' + code, { reliable: true });
@@ -3550,7 +3556,7 @@ function handleMultiJoinerMessage(data) {
     if (data.type === 'multi_lobby') {
         var el = document.getElementById('multi-lobby-players');
         el.innerHTML = data.players.map(function(p) {
-            return '<div style="color:' + (p.id === myPlayerId ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + p.name + '</div>';
+            return '<div style="color:' + (p.id === myPlayerId ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + escapeHtml(p.name) + '</div>';
         }).join('');
     } else if (data.type === 'multi_init') {
         setEntryGroups(data.entryGroups);
@@ -3651,9 +3657,9 @@ function updateMultiPlayerListUI() {
         var p = arr[i];
         var sel = p.id === selectedViewPlayer ? ' selected' : '';
         var dead = !p.alive ? ' dead' : '';
-        html += '<div class="mp-row' + sel + dead + '" onclick="selectMultiPlayer(\'' + p.id + '\')">'
+        html += '<div class="mp-row' + sel + dead + '" onclick="selectMultiPlayer(\'' + escapeHtml(p.id) + '\')">'
               + '<span class="mp-rank">' + (i + 1) + '</span>'
-              + '<span class="mp-name">' + p.name + '</span>'
+              + '<span class="mp-name">' + escapeHtml(p.name) + '</span>'
               + '<span class="mp-score">' + p.score + 'pts</span>'
               + '<span class="mp-lives">' + p.lives + 'hp</span>'
               + '</div>';
@@ -3687,7 +3693,7 @@ function saveMultiScoreToSolo() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
-    }).catch(function() {});
+    }).catch(function() { showMessage('Score save failed'); });
 }
 
 // === HOST MIGRATION ===
@@ -3966,7 +3972,7 @@ async function loadLeaderboard(type) {
     loadEl.style.display = '';
 
     try {
-        var r = await fetch(SERVER_URL + '/api/leaderboard?type=' + type);
+        var r = await fetch(SERVER_URL + '/api/solo/leaderboard?type=' + type);
         var data = await r.json();
         loadEl.style.display = 'none';
 
