@@ -358,6 +358,8 @@ let multiEnded = false;
 let multiResultTitle = '';
 let multiResultSub = '';
 let _lastMultiStatusSend = 0;
+let _multiRoster = []; // full roster with peer IDs for host migration
+let _multiHostId = ''; // current host peer ID
 
 function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
@@ -3214,16 +3216,31 @@ function menuCancelHost() {
     menuBackToDuel();
 }
 
+var _duelDisconnectTimer = null;
+var _duelDisconnectCountdown = 0;
+
 function setupConnection() {
     conn.on('data', handlePeerMessage);
     conn.on('close', function() {
         if (!duelEnded) {
-            duelEnded = true;
-            duelResultTitle = 'VICTORY';
-            duelResultSub = 'Opponent disconnected';
-            showMessage('Opponent disconnected');
-            playSfx('victory');
-            submitRankedResult('win');
+            _duelDisconnectCountdown = 8;
+            showMessage('Opponent disconnected — win in 8s...');
+            _duelDisconnectTimer = setInterval(function() {
+                _duelDisconnectCountdown--;
+                if (_duelDisconnectCountdown <= 0) {
+                    clearInterval(_duelDisconnectTimer);
+                    _duelDisconnectTimer = null;
+                    if (!duelEnded) {
+                        duelEnded = true;
+                        duelResultTitle = 'VICTORY';
+                        duelResultSub = 'Opponent disconnected';
+                        playSfx('victory');
+                        submitRankedResult('win');
+                    }
+                } else {
+                    showMessage('Opponent disconnected — win in ' + _duelDisconnectCountdown + 's...');
+                }
+            }, 1000);
         }
     });
 }
@@ -3397,8 +3414,8 @@ function menuMultiJoin() {
             conn.on('data', handleMultiJoinerMessage);
             conn.on('close', function() {
                 if (!multiEnded && isMulti) {
-                    showMessage('Host disconnected — game continues');
                     conn = null;
+                    attemptHostMigration();
                 }
             });
             document.getElementById('menu-multi-join').style.display = 'none';
@@ -3434,6 +3451,8 @@ function menuMultiLeave() {
 function menuMultiStart() {
     var roster = [];
     multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
+    _multiRoster = roster.slice();
+    _multiHostId = myPlayerId;
     multiConns.forEach(function(c) {
         if (c.open) c.send({ type: 'multi_init', entryGroups: ENTRY_GROUPS, exitGroups: EXIT_GROUPS, players: roster, hostId: myPlayerId });
     });
@@ -3501,6 +3520,11 @@ function handleMultiHostMessage(data, senderConn) {
 
 // === MULTIPLAYER JOINER MESSAGE HANDLER ===
 function handleMultiJoinerMessage(data) {
+    if (data.type === 'new_host') {
+        _multiHostId = data.hostId;
+        showMessage('New host connected');
+        return;
+    }
     if (data.type === 'lobby_full') {
         showMessage('Lobby full (50 max)');
         if (conn) conn.close();
@@ -3519,6 +3543,8 @@ function handleMultiJoinerMessage(data) {
     } else if (data.type === 'multi_init') {
         setEntryGroups(data.entryGroups);
         if (data.exitGroups) setExitGroups(data.exitGroups);
+        _multiRoster = data.players.slice();
+        _multiHostId = data.hostId;
         multiPlayers.clear();
         data.players.forEach(function(p) {
             if (p.id !== myPlayerId) {
@@ -3650,6 +3676,86 @@ function saveMultiScoreToSolo() {
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({ bestWave: waveNum, bestScore: finalScore() })
     }).catch(function() {});
+}
+
+// === HOST MIGRATION ===
+function attemptHostMigration() {
+    if (multiEnded || !isMulti) return;
+    // Remove old host from roster tracking
+    var oldHostId = _multiHostId;
+    var oldHostP = multiPlayers.get(oldHostId);
+    if (oldHostP) oldHostP.alive = false;
+
+    // Elect new host: first alive player in roster (excluding old host and self-dead)
+    var newHostId = null;
+    for (var i = 0; i < _multiRoster.length; i++) {
+        var rid = _multiRoster[i].id;
+        if (rid === oldHostId) continue;
+        var rp = multiPlayers.get(rid);
+        if (rid === myPlayerId) {
+            if (lives > 0) { newHostId = rid; break; }
+        } else if (rp && rp.alive) {
+            newHostId = rid; break;
+        }
+    }
+    if (!newHostId) {
+        // No alive player left, just end locally
+        showMessage('All players disconnected');
+        return;
+    }
+    _multiHostId = newHostId;
+
+    if (newHostId === myPlayerId) {
+        // I become the new host
+        isHost = true;
+        multiConns = [];
+        // Add myself to multiPlayers if not present
+        if (!multiPlayers.has(myPlayerId)) {
+            var myName = getMultiName();
+            multiPlayers.set(myPlayerId, { conn: null, name: myName, lives: lives, score: score, wave: waveNum, boardData: null, alive: lives > 0 });
+        } else {
+            var me = multiPlayers.get(myPlayerId);
+            me.lives = lives; me.score = score; me.wave = waveNum; me.alive = lives > 0;
+        }
+        showMessage('You are now host');
+        // Connect to all other alive players
+        var otherIds = _multiRoster.filter(function(r) { return r.id !== myPlayerId && r.id !== oldHostId; }).map(function(r) { return r.id; });
+        for (var j = 0; j < otherIds.length; j++) {
+            (function(targetId) {
+                var c = peer.connect(targetId, { reliable: true });
+                c.on('open', function() {
+                    multiConns.push(c);
+                    c.send({ type: 'new_host', hostId: myPlayerId });
+                    c.on('data', function(data) { handleMultiHostMessage(data, c); });
+                    c.on('close', function() { handleMultiDisconnect(c.peer); });
+                });
+            })(otherIds[j]);
+        }
+        // Listen for incoming connections from late joiners
+        peer.on('connection', function(c) {
+            c.on('open', function() {
+                multiConns.push(c);
+                c.send({ type: 'new_host', hostId: myPlayerId });
+                c.on('data', function(data) { handleMultiHostMessage(data, c); });
+                c.on('close', function() { handleMultiDisconnect(c.peer); });
+            });
+        });
+    } else {
+        // Someone else is the new host, wait for their connection
+        showMessage('Host migrating...');
+        peer.on('connection', function(c) {
+            c.on('open', function() {
+                conn = c;
+                conn.on('data', handleMultiJoinerMessage);
+                conn.on('close', function() {
+                    if (!multiEnded && isMulti) {
+                        conn = null;
+                        attemptHostMigration();
+                    }
+                });
+            });
+        });
+    }
 }
 
 // === MULTI GAME END ===
