@@ -1488,19 +1488,6 @@ canvas.addEventListener('click', () => {
 
 canvas.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    if (!hoveredCell) return;
-    const { row, col } = hoveredCell;
-    const tower = getTowerAt(row, col);
-    if (!tower) return;
-    grid[row][col] = 0;
-    towers = towers.filter(t => t !== tower);
-    const refund = Math.floor(tower.totalCost * 0.4);
-    gold += refund;
-    if (selectedTower === tower) selectedTower = null;
-    playSfx('sell');
-    updateUI();
-    showMessage('Sold +' + refund + 'g');
-    for (const e of enemies) { if (e.alive && !e.ghost) e.recalcPath(); }
 });
 
 // === DRAW ===
