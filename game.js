@@ -2991,6 +2991,9 @@ function submitRankedResult(resultStr) {
             finalScore: finalScore(),
             finalLives: Math.max(0, lives),
             finalWave: waveNum,
+            oppScore: opponentFinalScore || opponentScore,
+            oppLives: Math.max(0, opponentLives),
+            oppWave: opponentWave,
             result: resultStr
         })
     }).then(function(r) { return r.json(); }).then(function(data) {
