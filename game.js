@@ -149,6 +149,8 @@ let duelResultTitle = '';
 let duelResultSub = '';
 let duelStartTimer = 0;
 let _bgInterval = null;
+let _bgWorker = null;
+let _pendingWaveStarts = [];
 let oppBoardData = null;
 
 // === MULTIPLAYER STATE ===
@@ -1530,8 +1532,22 @@ function gameLoop(time) {
             }
         } else {
             if (lives > 0) showMessage('Wave ' + waveNum + ' complete');
-            // Multi: auto-advance immediately when wave clears
-            if ((isMulti || isDuel) && lives > 0 && waveNum < WAVES.length) {
+            // Check queued wave_starts first (catch-up from background tab)
+            if (_pendingWaveStarts.length > 0 && lives > 0 && waveNum < WAVES.length) {
+                _pendingWaveStarts.sort(function(a, b) { return a - b; });
+                // Remove any that are already past
+                while (_pendingWaveStarts.length > 0 && _pendingWaveStarts[0] <= waveNum) _pendingWaveStarts.shift();
+                if (_pendingWaveStarts.length > 0) {
+                    _pendingWaveStarts.shift();
+                    // If next queued is exactly waveNum+1, start it normally
+                    // If further ahead, re-queue the rest and start the immediate next
+                    waveActive = false; nextWaveTimer = 0;
+                    if (isDuel) duelStartTimer = 0;
+                    if (isMulti) multiStartTimer = 0;
+                    startWave(false);
+                }
+            // Normal auto-advance
+            } else if ((isMulti || isDuel) && lives > 0 && waveNum < WAVES.length) {
                 if (isMulti && isHost) {
                     startWave(true); // host broadcasts to all
                 } else if (isMulti && !isHost) {
@@ -2226,20 +2242,32 @@ function resizeGame() {
 }
 window.addEventListener('resize', resizeGame);
 
-// === BACKGROUND TAB (duel) ===
+// === BACKGROUND TAB (duel/multi) ===
+// Web Worker timer — not throttled by browser in background tabs
+function createBgWorker() {
+    try {
+        var blob = new Blob(['var t=null;self.onmessage=function(e){if(e.data==="start"){if(t)clearInterval(t);t=setInterval(function(){self.postMessage(0)},100)}else{if(t){clearInterval(t);t=null}}}'], { type: 'application/javascript' });
+        var w = new Worker(URL.createObjectURL(blob));
+        w.onmessage = function() { gameLoop(performance.now()); };
+        return w;
+    } catch (e) { return null; }
+}
 document.addEventListener('visibilitychange', function() {
     if (!isDuel && !isMulti) return;
     if (document.hidden) {
-        // Tab hidden: start backup interval so game keeps running
-        if (!_bgInterval) {
-            _bgInterval = setInterval(function() {
-                gameLoop(performance.now());
-            }, 100);
+        // Tab hidden: use Web Worker for unthrottled ticks (full speed in background)
+        if (!_bgWorker) _bgWorker = createBgWorker();
+        if (_bgWorker) {
+            _bgWorker.postMessage('start');
+        } else if (!_bgInterval) {
+            // Fallback: throttled setInterval (browsers cap at ~1/s)
+            _bgInterval = setInterval(function() { gameLoop(performance.now()); }, 100);
         }
     } else {
-        // Tab visible: stop interval, resume rAF
+        // Tab visible: stop background timer, resume rAF
+        if (_bgWorker) _bgWorker.postMessage('stop');
         if (_bgInterval) { clearInterval(_bgInterval); _bgInterval = null; }
-        lastTime = performance.now(); // reset to avoid huge dt spike
+        lastTime = performance.now();
         scheduleLoop();
     }
 });
@@ -2610,6 +2638,7 @@ function resetGameState() {
     multiStartTimer = 0; _lastMultiStatusSend = 0; _multiScoreSaved = false;
     let ed = document.getElementById('emote-display'); if (ed) ed.innerHTML = '';
     _emoteSendTimes = [];
+    _pendingWaveStarts = [];
     for (let r = 0; r < GRID; r++) { grid[r] = []; for (let c = 0; c < GRID; c++) grid[r][c] = 0; }
     let newEntry = generateEntryGroups();
     setEntryGroups(newEntry);
@@ -3267,33 +3296,27 @@ function handlePeerMessage(data) {
     } else if (data.type === 'wave_start') {
         // Ignore if we already started this wave (both timers fired)
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
-        var duelCatchUp = data.waveNum !== undefined && data.waveNum > waveNum + 1;
-        if (duelCatchUp) {
-            // Behind by multiple waves (tab was hidden): skip ahead
-            // Keep existing enemies on field (they still deal damage), just stop spawning more
-            enemiesToSpawn = 0;
-            waveActive = false;
-            nextWaveTimer = 0;
-            duelStartTimer = 0;
-            waveNum = data.waveNum - 1;
-        } else {
-            // Flush remaining unspawned enemies from current wave
-            if (waveActive && enemiesToSpawn > 0) {
-                var wd2 = WAVES[waveNum - 1];
-                while (enemiesToSpawn > 0) {
-                    var sr2;
-                    if (waveSpawnIdx < waveSpawnRows.length) sr2 = waveSpawnRows[waveSpawnIdx++];
-                    else { var v2 = getValidEntryRows(); if (v2.length) sr2 = v2[Math.floor(Math.random() * v2.length)]; }
-                    var _fi2 = wd2.count - enemiesToSpawn;
-                    var _ft2 = wd2.types ? wd2.types[_fi2 % wd2.types.length] : wd2.type;
-                    if (sr2 !== undefined) enemies.push(new Enemy(sr2, wd2.hp, _ft2));
-                    enemiesToSpawn--;
-                }
-            }
-            waveActive = false;
-            nextWaveTimer = 0;
-            duelStartTimer = 0; // clear countdown so wave 1 guard doesn't block
+        // If behind by multiple waves, queue and let game process naturally
+        if (data.waveNum !== undefined && data.waveNum > waveNum + 1) {
+            _pendingWaveStarts.push(data.waveNum);
+            return;
         }
+        // Flush remaining unspawned enemies from current wave
+        if (waveActive && enemiesToSpawn > 0) {
+            var wd2 = WAVES[waveNum - 1];
+            while (enemiesToSpawn > 0) {
+                var sr2;
+                if (waveSpawnIdx < waveSpawnRows.length) sr2 = waveSpawnRows[waveSpawnIdx++];
+                else { var v2 = getValidEntryRows(); if (v2.length) sr2 = v2[Math.floor(Math.random() * v2.length)]; }
+                var _fi2 = wd2.count - enemiesToSpawn;
+                var _ft2 = wd2.types ? wd2.types[_fi2 % wd2.types.length] : wd2.type;
+                if (sr2 !== undefined) enemies.push(new Enemy(sr2, wd2.hp, _ft2));
+                enemiesToSpawn--;
+            }
+        }
+        waveActive = false;
+        nextWaveTimer = 0;
+        duelStartTimer = 0;
         startWave(false); // don't echo back
     } else if (data.type === 'status') {
         opponentLives = data.lives;
@@ -3600,31 +3623,25 @@ function handleMultiJoinerMessage(data) {
         updateMultiOpponentView();
     } else if (data.type === 'multi_wave_start') {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
-        var catchingUp = data.waveNum !== undefined && data.waveNum > waveNum + 1;
-        if (catchingUp) {
-            // Behind by multiple waves (tab was hidden): skip ahead
-            // Keep existing enemies on field (they still deal damage), just stop spawning more
-            enemiesToSpawn = 0;
-            waveActive = false;
-            nextWaveTimer = 0;
-            multiStartTimer = 0;
-            waveNum = data.waveNum - 1;
-        } else {
-            // Normal: flush remaining unspawned enemies from current wave
-            if (waveActive && enemiesToSpawn > 0) {
-                var wd = WAVES[waveNum - 1];
-                while (enemiesToSpawn > 0) {
-                    var sr;
-                    if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
-                    else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
-                    var _fi = wd.count - enemiesToSpawn;
-                    var _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
-                    if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
-                    enemiesToSpawn--;
-                }
-            }
-            waveActive = false; nextWaveTimer = 0; multiStartTimer = 0;
+        // If behind by multiple waves, queue and let game process naturally
+        if (data.waveNum !== undefined && data.waveNum > waveNum + 1) {
+            _pendingWaveStarts.push(data.waveNum);
+            return;
         }
+        // Flush remaining unspawned enemies from current wave
+        if (waveActive && enemiesToSpawn > 0) {
+            var wd = WAVES[waveNum - 1];
+            while (enemiesToSpawn > 0) {
+                var sr;
+                if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
+                else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
+                var _fi = wd.count - enemiesToSpawn;
+                var _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
+                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
+                enemiesToSpawn--;
+            }
+        }
+        waveActive = false; nextWaveTimer = 0; multiStartTimer = 0;
         startWave(false);
     } else if (data.type === 'multi_end') {
         multiEnded = true;
