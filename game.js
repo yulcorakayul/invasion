@@ -3267,22 +3267,34 @@ function handlePeerMessage(data) {
     } else if (data.type === 'wave_start') {
         // Ignore if we already started this wave (both timers fired)
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
-        // Flush remaining unspawned enemies from current wave
-        if (waveActive && enemiesToSpawn > 0) {
-            const wd = WAVES[waveNum - 1];
-            while (enemiesToSpawn > 0) {
-                let sr;
-                if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
-                else { const v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
-                const _fi = wd.count - enemiesToSpawn;
-                const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
-                enemiesToSpawn--;
+        var duelCatchUp = data.waveNum !== undefined && data.waveNum > waveNum + 1;
+        if (duelCatchUp) {
+            // Behind by multiple waves (tab was hidden): skip ahead cleanly
+            enemies = [];
+            projectiles = [];
+            enemiesToSpawn = 0;
+            waveActive = false;
+            nextWaveTimer = 0;
+            duelStartTimer = 0;
+            waveNum = data.waveNum - 1;
+        } else {
+            // Flush remaining unspawned enemies from current wave
+            if (waveActive && enemiesToSpawn > 0) {
+                var wd2 = WAVES[waveNum - 1];
+                while (enemiesToSpawn > 0) {
+                    var sr2;
+                    if (waveSpawnIdx < waveSpawnRows.length) sr2 = waveSpawnRows[waveSpawnIdx++];
+                    else { var v2 = getValidEntryRows(); if (v2.length) sr2 = v2[Math.floor(Math.random() * v2.length)]; }
+                    var _fi2 = wd2.count - enemiesToSpawn;
+                    var _ft2 = wd2.types ? wd2.types[_fi2 % wd2.types.length] : wd2.type;
+                    if (sr2 !== undefined) enemies.push(new Enemy(sr2, wd2.hp, _ft2));
+                    enemiesToSpawn--;
+                }
             }
+            waveActive = false;
+            nextWaveTimer = 0;
+            duelStartTimer = 0; // clear countdown so wave 1 guard doesn't block
         }
-        waveActive = false;
-        nextWaveTimer = 0;
-        duelStartTimer = 0; // clear countdown so wave 1 guard doesn't block
         startWave(false); // don't echo back
     } else if (data.type === 'status') {
         opponentLives = data.lives;
@@ -3589,20 +3601,32 @@ function handleMultiJoinerMessage(data) {
         updateMultiOpponentView();
     } else if (data.type === 'multi_wave_start') {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
-        // Flush remaining unspawned enemies from current wave
-        if (waveActive && enemiesToSpawn > 0) {
-            const wd = WAVES[waveNum - 1];
-            while (enemiesToSpawn > 0) {
-                let sr;
-                if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
-                else { const v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
-                const _fi = wd.count - enemiesToSpawn;
-                const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
-                enemiesToSpawn--;
+        var catchingUp = data.waveNum !== undefined && data.waveNum > waveNum + 1;
+        if (catchingUp) {
+            // Behind by multiple waves (tab was hidden): skip ahead cleanly
+            enemies = [];
+            projectiles = [];
+            enemiesToSpawn = 0;
+            waveActive = false;
+            nextWaveTimer = 0;
+            multiStartTimer = 0;
+            waveNum = data.waveNum - 1;
+        } else {
+            // Normal: flush remaining unspawned enemies from current wave
+            if (waveActive && enemiesToSpawn > 0) {
+                var wd = WAVES[waveNum - 1];
+                while (enemiesToSpawn > 0) {
+                    var sr;
+                    if (waveSpawnIdx < waveSpawnRows.length) sr = waveSpawnRows[waveSpawnIdx++];
+                    else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
+                    var _fi = wd.count - enemiesToSpawn;
+                    var _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
+                    if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
+                    enemiesToSpawn--;
+                }
             }
+            waveActive = false; nextWaveTimer = 0; multiStartTimer = 0;
         }
-        waveActive = false; nextWaveTimer = 0; multiStartTimer = 0;
         startWave(false);
     } else if (data.type === 'multi_end') {
         multiEnded = true;
