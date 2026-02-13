@@ -301,7 +301,7 @@
         /* ── DUEL LAYOUT ── */
         #duel-layout { display:flex; align-items:stretch; gap:12px; }
         /* ── OPPONENT PANEL (right side in duel) ── */
-        #opp-panel { display:none; flex-direction:column; gap:0; border:1px solid #ff006630; border-radius:3px; overflow:hidden; }
+        #opp-panel { display:none; flex-direction:column; gap:0; border:1px solid #ff006630; border-radius:3px; overflow:hidden; background:#0c0410; }
         #opp-panel.active { display:flex; }
         #opp-bar { display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding:8px 12px; background:#0c0410; border-bottom:1px solid #ff006620; }
         .opp-label { color:#ff0066; font-weight:700; letter-spacing:1px; text-transform:uppercase; font-size:9px; text-shadow:0 0 6px #ff006640; margin-bottom:2px; }
@@ -415,9 +415,18 @@
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
         /* ── EMOTE BAR ── */
-        #emote-bar { display:flex; gap:4px; padding:6px 8px; background:#0c0410; border-top:1px solid #ff006620; flex-wrap:wrap; justify-content:center; }
-        .emote-btn { padding:4px 8px; background:#0a0e18; border:1px solid #1a2840; color:#607888; font-family:'JetBrains Mono',monospace; font-size:8px; cursor:pointer; border-radius:2px; text-transform:uppercase; letter-spacing:1px; transition:all .15s; }
-        .emote-btn:hover { border-color:#ff0066; color:#ff0066; }
+        #emote-bar { display:flex; gap:4px; padding:6px 8px; border-top:1px solid #ff006620; align-items:center; justify-content:center; }
+        .emote-btn { padding:4px 6px; background:#0a0e18; border:1px solid #1a2840; font-size:28px; cursor:pointer; border-radius:3px; transition:all .15s; line-height:1; }
+        .emote-btn:hover { border-color:#00f0ff; background:#0a1420; transform:scale(1.15); }
+        .emote-btn:active { border-color:#00f0ff; background:#0a1a2a; box-shadow:0 0 8px #00f0ff40; }
+        #emote-mute-btn { margin-left:6px; padding:4px 6px; background:transparent; border:1px solid #ff006640; color:#ff0066; font-size:28px; cursor:pointer; border-radius:3px; transition:all .15s; line-height:1; opacity:0.5; }
+        #emote-mute-btn:hover { opacity:0.8; }
+        #emote-mute-btn.muted { opacity:1; background:rgba(255,0,102,0.15); border-color:#ff0066; }
+        #emote-display { display:none; flex:1; min-height:60px; position:relative; overflow:hidden; }
+        #emote-display .emote-pop { position:absolute; left:50%; top:40%; font-size:48px; transform:translate(-50%,-50%) scale(0.5); animation:emotePop 2.5s ease-out forwards; pointer-events:none; filter:drop-shadow(0 0 4px rgba(0,0,0,0.5)); }
+        #emote-display .emote-pop.mine { filter:drop-shadow(0 0 10px #00f0ff) drop-shadow(0 0 20px #00f0ffaa) drop-shadow(0 0 35px #00f0ff60); }
+        #emote-display .emote-pop.enemy { filter:drop-shadow(0 0 10px #ff0066) drop-shadow(0 0 20px #ff0066aa) drop-shadow(0 0 35px #ff006660); }
+        @keyframes emotePop { 0% { opacity:1; transform:translate(-50%,-50%) scale(0.5); } 20% { opacity:1; transform:translate(-50%,-50%) scale(1.2) translateY(-5px); } 40% { transform:translate(-50%,-50%) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1) translateY(-15px); } }
         /* ── MULTI PLAYER LIST ── */
         #multi-player-list { display:none; flex:1; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; scrollbar-width:none; -ms-overflow-style:none; }
         #multi-player-list::-webkit-scrollbar { display:none; }
@@ -430,8 +439,10 @@
         .mp-score { color:#00ff88; font-weight:700; }
         .mp-lives { color:#ff6688; }
         /* ── REPLAY BUTTON ── */
-        #replay-btn { position:absolute; left:50%; bottom:30%; transform:translateX(-50%); z-index:200; display:none; padding:10px 30px; background:rgba(3,3,8,0.8); border:1px solid #ff0066; color:#ff0066; font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; border-radius:2px; text-transform:uppercase; transition:all .2s; }
+        #replay-btn { position:absolute; left:50%; transform:translateX(-50%); z-index:200; padding:12px 40px; background:rgba(3,3,8,0.9); border:2px solid #ff0066; color:#ff0066; font-family:'Press Start 2P',monospace; font-size:11px; font-weight:700; letter-spacing:3px; text-indent:3px; cursor:pointer; border-radius:3px; text-transform:uppercase; transition:all .2s; text-shadow:0 0 8px #ff006640; text-align:center; }
         #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
+        #replay-btn.waiting-host { border:none; background:transparent; color:#506070; cursor:default; text-shadow:none; font-size:8px; padding:8px 20px; letter-spacing:2px; text-indent:2px; pointer-events:none; }
+        #replay-btn.waiting-host:hover { background:transparent; color:#506070; box-shadow:none; }
         /* ── SPEED BUTTON ── */
         #speed-btn { padding:4px 10px; background:transparent; border:1px solid #405060; color:#607888; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; cursor:pointer; border-radius:2px; transition:all .2s; }
         #speed-btn:hover { border-color:#00f0ff; color:#00f0ff; }
@@ -753,17 +764,19 @@
         </div>
         <canvas id="opp-canvas"></canvas>
         <div id="emote-bar" style="display:none">
-            <button class="emote-btn" onclick="sendEmote(0)">GG</button>
-            <button class="emote-btn" onclick="sendEmote(1)">GL HF</button>
-            <button class="emote-btn" onclick="sendEmote(2)">WP</button>
-            <button class="emote-btn" onclick="sendEmote(3)">?</button>
-            <button class="emote-btn" onclick="sendEmote(4)">...</button>
-            <button class="emote-btn" onclick="sendEmote(5)">oops</button>
+            <button class="emote-btn" onclick="sendEmote(0)">👏</button>
+            <button class="emote-btn" onclick="sendEmote(1)">🍀</button>
+            <button class="emote-btn" onclick="sendEmote(2)">👍</button>
+            <button class="emote-btn" onclick="sendEmote(3)">🤔</button>
+            <button class="emote-btn" onclick="sendEmote(4)">😐</button>
+            <button class="emote-btn" onclick="sendEmote(5)">💀</button>
+            <button id="emote-mute-btn" onclick="toggleEmoteMute()" title="Mute emotes">🔇</button>
         </div>
+        <div id="emote-display"></div>
         <div id="multi-player-list"></div>
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=154"></script>
+    <script src="game.js?v=163"></script>
 </body>
 </html>

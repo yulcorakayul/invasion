@@ -168,10 +168,9 @@ let _migrationConnHandler = null;
 let _migrationTimer = null;
 
 // === EMOTE STATE ===
-const EMOTES = ['GG', 'GL HF', 'WP', '?', '...', 'oops'];
-let _lastEmoteSend = 0;
-let _emoteMyText = ''; let _emoteMyTimer = 0;
-let _emoteOppText = ''; let _emoteOppTimer = 0;
+const EMOTES = ['\u{1F44F}', '\u{1F340}', '\u{1F44D}', '\u{1F914}', '\u{1F612}', '\u{1F480}'];
+let _emoteSendTimes = [];
+let _emoteMuted = false;
 
 function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
@@ -1655,6 +1654,7 @@ function gameLoop(time) {
                 ctx.fillText('SCORE: ' + finalScore(), CANVAS_W / 2, CANVAS_H / 2 + 20);
             }
             showReplayBtn();
+            scheduleLoop();
             return;
         }
     }
@@ -1775,9 +1775,6 @@ function gameLoop(time) {
     for (const ex of explosions) ex.timer -= dt;
     explosions = explosions.filter(ex => ex.timer > 0);
 
-    // Update emote timers
-    if (_emoteMyTimer > 0) _emoteMyTimer -= dt;
-    if (_emoteOppTimer > 0) _emoteOppTimer -= dt;
 
     updateUI();
     // Skip rendering when tab is hidden (background duel)
@@ -1819,14 +1816,15 @@ function gameLoop(time) {
         ctx.globalAlpha = 1;
     }
 
-    // Multi: draw DEFEAT overlay for dead players (game loop continues for spectating)
+    // Multi: draw result overlay for dead players (game loop continues for spectating)
     if (isMulti && lives <= 0 && multiResultTitle) {
         ctx.fillStyle = 'rgba(3,3,8,0.7)';
         ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-        ctx.fillStyle = '#ff0066';
+        let mIsWin = multiResultTitle === 'VICTORY';
+        ctx.fillStyle = mIsWin ? '#00ff88' : '#ff0066';
         ctx.font = '700 14px "Press Start 2P", monospace';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
+        ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 20;
         ctx.fillText(multiResultTitle, CANVAS_W / 2, CANVAS_H / 2 - 30);
         ctx.shadowBlur = 0;
         ctx.fillStyle = '#506070';
@@ -1836,24 +1834,6 @@ function gameLoop(time) {
             ctx.fillText(mSubLines[mi], CANVAS_W / 2, CANVAS_H / 2 + mi * 14);
         }
         if (multiEnded) showReplayBtn();
-    }
-
-    // Draw received emote on MY canvas (top-right)
-    if (_emoteMyTimer > 0 && _emoteMyText) {
-        let ea = Math.min(1, _emoteMyTimer / 0.5);
-        ctx.globalAlpha = ea;
-        ctx.fillStyle = 'rgba(3,3,8,0.7)';
-        let ew = ctx.measureText ? 80 : 80;
-        ctx.font = '700 11px "Press Start 2P", monospace';
-        ew = ctx.measureText(_emoteMyText).width + 20;
-        ctx.fillRect(CANVAS_W - ew - 10, 10, ew, 28);
-        ctx.strokeStyle = '#ff0066';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(CANVAS_W - ew - 10, 10, ew, 28);
-        ctx.fillStyle = '#ff0066';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(_emoteMyText, CANVAS_W - ew / 2 - 10, 24);
-        ctx.globalAlpha = 1;
     }
 
     scheduleLoop();
@@ -2590,10 +2570,25 @@ function generateRoomCode() {
 
 function showReplayBtn() {
     let btn = document.getElementById('replay-btn');
-    if (isMulti && isHost) { btn.textContent = 'REPLAY'; }
-    else if (isRanked) { btn.textContent = 'PLAY AGAIN'; }
-    else { btn.textContent = 'MENU'; }
-    btn.style.display = '';
+    let cvs = document.getElementById('game');
+    // Position above center of canvas
+    let cTop = cvs.offsetTop;
+    let cCenter = cTop + cvs.height / 2;
+    btn.style.top = (cCenter - 100) + 'px';
+    btn.classList.remove('waiting-host');
+    btn.disabled = false;
+    if (isMulti && isHost) {
+        btn.textContent = 'REPLAY';
+    } else if (isMulti && !isHost) {
+        btn.textContent = 'EN ATTENTE DE L\'H\u00D4TE';
+        btn.classList.add('waiting-host');
+        btn.disabled = true;
+    } else if (isRanked) {
+        btn.textContent = 'PLAY AGAIN';
+    } else {
+        btn.textContent = 'MENU';
+    }
+    btn.style.display = 'block';
 }
 
 function resetGameState() {
@@ -2613,7 +2608,8 @@ function resetGameState() {
     _duelDisconnectCountdown = 0;
     multiEnded = false; multiResultTitle = ''; multiResultSub = '';
     multiStartTimer = 0; _lastMultiStatusSend = 0; _multiScoreSaved = false;
-    _emoteMyText = ''; _emoteMyTimer = 0; _emoteOppText = ''; _emoteOppTimer = 0;
+    let ed = document.getElementById('emote-display'); if (ed) ed.innerHTML = '';
+    _emoteSendTimes = [];
     for (let r = 0; r < GRID; r++) { grid[r] = []; for (let c = 0; c < GRID; c++) grid[r][c] = 0; }
     let newEntry = generateEntryGroups();
     setEntryGroups(newEntry);
@@ -2622,6 +2618,7 @@ function resetGameState() {
     document.getElementById('replay-btn').style.display = 'none';
     document.getElementById('speed-btn').style.display = 'none';
     document.getElementById('emote-bar').style.display = 'none';
+    document.getElementById('emote-display').style.display = 'none';
     resetWaveBar();
     updateUI();
 }
@@ -3079,11 +3076,12 @@ function cancelRankedQueue() {
 
 function submitRankedResult(resultStr) {
     if (!isRanked || !authToken || !rankedMatchId) return;
+    var mid = rankedMatchId;
     fetchWithTimeout(SERVER_URL + '/api/match/result', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
         body: JSON.stringify({
-            matchId: rankedMatchId,
+            matchId: mid,
             finalScore: finalScore(),
             finalLives: Math.max(0, lives),
             finalWave: waveNum,
@@ -3095,7 +3093,24 @@ function submitRankedResult(resultStr) {
     }).then(function(r) { return r.json(); }).then(function(data) {
         if (data.eloChange !== undefined) rankedEloChange = data.eloChange;
         if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
+        if (data.status === 'waiting') pollRankedResult(mid, 0);
     }).catch(function() { showMessage('Result submit failed'); });
+}
+
+function pollRankedResult(matchId, attempt) {
+    if (attempt >= 10) return;
+    setTimeout(function() {
+        fetchWithTimeout(SERVER_URL + '/api/match/result/' + matchId, {
+            headers: { 'Authorization': 'Bearer ' + authToken }
+        }).then(function(r) { return r.json(); }).then(function(data) {
+            if (data.status === 'waiting') {
+                pollRankedResult(matchId, attempt + 1);
+            } else {
+                if (data.eloChange !== undefined) rankedEloChange = data.eloChange;
+                if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
+            }
+        }).catch(function() {});
+    }, 2000);
 }
 
 async function menuShowDuel() {
@@ -3238,6 +3253,7 @@ function startDuel() {
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
     document.getElementById('emote-bar').style.display = 'flex';
+    document.getElementById('emote-display').style.display = 'flex';
     document.getElementById('multi-player-list').style.display = 'none';
     initOpponentCanvas();
     resizeGame();
@@ -3293,7 +3309,7 @@ function handlePeerMessage(data) {
         checkDuelEnd();
     } else if (data.type === 'emote') {
         if (data.id >= 0 && data.id < EMOTES.length) {
-            showEmoteOnMyCanvas(EMOTES[data.id]);
+            showEmotePopup(EMOTES[data.id], false);
         }
     }
 }
@@ -3615,6 +3631,7 @@ function startMultiGame(playerRoster) {
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
     document.getElementById('emote-bar').style.display = 'none';
+    document.getElementById('emote-display').style.display = 'none';
     document.getElementById('multi-player-list').style.display = 'block';
     initOpponentCanvas();
     resizeGame();
@@ -3969,44 +3986,45 @@ function drawOpponentBoard() {
     }
 
     ox.restore();
-
-    // Draw emote overlay on opponent canvas (sent confirmation)
-    if (_emoteOppTimer > 0 && _emoteOppText) {
-        let ea = Math.min(1, _emoteOppTimer / 0.5);
-        ox.globalAlpha = ea;
-        ox.fillStyle = 'rgba(3,3,8,0.6)';
-        ox.font = '700 10px "Press Start 2P", monospace';
-        let ow = oc.width, oh = oc.height;
-        let tw = ox.measureText(_emoteOppText).width + 20;
-        ox.fillRect(ow / 2 - tw / 2, oh / 2 - 14, tw, 28);
-        ox.strokeStyle = '#00f0ff';
-        ox.lineWidth = 1;
-        ox.strokeRect(ow / 2 - tw / 2, oh / 2 - 14, tw, 28);
-        ox.fillStyle = '#00f0ff';
-        ox.textAlign = 'center'; ox.textBaseline = 'middle';
-        ox.fillText(_emoteOppText, ow / 2, oh / 2);
-        ox.globalAlpha = 1;
-    }
 }
 
 // === EMOTES ===
 function sendEmote(id) {
     if (!isDuel || duelEnded) return;
     let now = Date.now();
-    if (now - _lastEmoteSend < 3000) return;
-    _lastEmoteSend = now;
+    // Rate limit: max 3 emotes per 10s
+    _emoteSendTimes = _emoteSendTimes.filter(function(t) { return now - t < 10000; });
+    if (_emoteSendTimes.length >= 3) return;
+    _emoteSendTimes.push(now);
     if (conn && conn.open) conn.send({ type: 'emote', id: id });
-    showEmoteOnOppCanvas(EMOTES[id]);
+    showEmotePopup(EMOTES[id], true);
 }
 
-function showEmoteOnOppCanvas(text) {
-    _emoteOppText = text;
-    _emoteOppTimer = 2.0;
+function showEmotePopup(emoji, isMine) {
+    if (_emoteMuted) return;
+    let el = document.getElementById('emote-display');
+    if (!el) return;
+    let span = document.createElement('span');
+    span.className = 'emote-pop ' + (isMine ? 'mine' : 'enemy');
+    span.textContent = emoji;
+    el.appendChild(span);
+    setTimeout(function() { if (span.parentNode) span.parentNode.removeChild(span); }, 2500);
 }
 
-function showEmoteOnMyCanvas(text) {
-    _emoteMyText = text;
-    _emoteMyTimer = 2.0;
+function toggleEmoteMute() {
+    _emoteMuted = !_emoteMuted;
+    let btn = document.getElementById('emote-mute-btn');
+    if (btn) {
+        btn.classList.toggle('muted', _emoteMuted);
+        btn.textContent = _emoteMuted ? '\u{1F507}' : '\u{1F508}';
+    }
+    let bar = document.getElementById('emote-bar');
+    if (bar) {
+        let btns = bar.querySelectorAll('.emote-btn');
+        for (let i = 0; i < btns.length; i++) btns[i].style.display = _emoteMuted ? 'none' : '';
+    }
+    let ed = document.getElementById('emote-display');
+    if (ed) ed.innerHTML = '';
 }
 
 // === MULTI CHAT ===
