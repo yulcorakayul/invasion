@@ -2698,6 +2698,7 @@ function toggleSpeed() {
 
 function menuStartSolo() {
     if (!_configLoaded) return;
+    loadGameConfig();
     isDuel = false;
     isMulti = false;
     resetWaveBar();
@@ -2995,6 +2996,7 @@ function hideProfile() {
 
 async function startRankedQueue() {
     if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
+    loadGameConfig();
     document.getElementById('menu-duel').style.display = 'none';
     document.getElementById('menu-ranked-queue').style.display = '';
     document.getElementById('ranked-status').textContent = 'Searching for opponent...';
@@ -3573,6 +3575,7 @@ function menuMultiLeave() {
     startRoomListPolling();
 }
 function menuMultiStart() {
+    loadGameConfig();
     let code = document.getElementById('multi-code').textContent;
     unregisterRoom(code);
     let roster = [];
