@@ -2665,6 +2665,9 @@ async function authRegister() {
     if (!user || !email || !pass) { document.getElementById('auth-error-reg').textContent = 'All fields required'; return; }
     if (user.length < 3 || user.length > 20) { document.getElementById('auth-error-reg').textContent = 'Username must be 3-20 characters'; return; }
     if (!/^[a-zA-Z0-9_-]+$/.test(user)) { document.getElementById('auth-error-reg').textContent = 'Username: letters, numbers, _ and - only'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('auth-error-reg').textContent = 'Invalid email format'; return; }
+    if (pass.length < 6) { document.getElementById('auth-error-reg').textContent = 'Password must be at least 6 characters'; return; }
+    if (pass.length > 72) { document.getElementById('auth-error-reg').textContent = 'Password must be at most 72 characters'; return; }
     try {
         let r = await fetchWithTimeout(SERVER_URL + '/api/register', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -2832,6 +2835,11 @@ async function topbarRegister() {
     let pass = document.getElementById('topbar-reg-pass').value;
     document.getElementById('login-box-reg-error').textContent = '';
     if (!user || !email || !pass) { document.getElementById('login-box-reg-error').textContent = 'All fields required'; return; }
+    if (user.length < 3 || user.length > 20) { document.getElementById('login-box-reg-error').textContent = 'Username must be 3-20 characters'; return; }
+    if (!/^[a-zA-Z0-9_-]+$/.test(user)) { document.getElementById('login-box-reg-error').textContent = 'Username: letters, numbers, _ and - only'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('login-box-reg-error').textContent = 'Invalid email format'; return; }
+    if (pass.length < 6) { document.getElementById('login-box-reg-error').textContent = 'Password must be at least 6 characters'; return; }
+    if (pass.length > 72) { document.getElementById('login-box-reg-error').textContent = 'Password must be at most 72 characters'; return; }
     try {
         let r = await fetchWithTimeout(SERVER_URL + '/api/register', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
