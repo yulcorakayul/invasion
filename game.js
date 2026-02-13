@@ -167,6 +167,12 @@ let _multiHostId = ''; // current host peer ID
 let _migrationConnHandler = null;
 let _migrationTimer = null;
 
+// === EMOTE STATE ===
+const EMOTES = ['GG', 'GL HF', 'WP', '?', '...', 'oops'];
+let _lastEmoteSend = 0;
+let _emoteMyText = ''; let _emoteMyTimer = 0;
+let _emoteOppText = ''; let _emoteOppTimer = 0;
+
 function spawnGoldText(x, y, amount) {
     floatingTexts.push({ x, y, text: '+' + amount + 'g', life: 0.8, maxLife: 0.8 });
 }
@@ -1769,6 +1775,10 @@ function gameLoop(time) {
     for (const ex of explosions) ex.timer -= dt;
     explosions = explosions.filter(ex => ex.timer > 0);
 
+    // Update emote timers
+    if (_emoteMyTimer > 0) _emoteMyTimer -= dt;
+    if (_emoteOppTimer > 0) _emoteOppTimer -= dt;
+
     updateUI();
     // Skip rendering when tab is hidden (background duel)
     if (document.hidden) { scheduleLoop(); return; }
@@ -1826,6 +1836,24 @@ function gameLoop(time) {
             ctx.fillText(mSubLines[mi], CANVAS_W / 2, CANVAS_H / 2 + mi * 14);
         }
         if (multiEnded) showReplayBtn();
+    }
+
+    // Draw received emote on MY canvas (top-right)
+    if (_emoteMyTimer > 0 && _emoteMyText) {
+        let ea = Math.min(1, _emoteMyTimer / 0.5);
+        ctx.globalAlpha = ea;
+        ctx.fillStyle = 'rgba(3,3,8,0.7)';
+        let ew = ctx.measureText ? 80 : 80;
+        ctx.font = '700 11px "Press Start 2P", monospace';
+        ew = ctx.measureText(_emoteMyText).width + 20;
+        ctx.fillRect(CANVAS_W - ew - 10, 10, ew, 28);
+        ctx.strokeStyle = '#ff0066';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(CANVAS_W - ew - 10, 10, ew, 28);
+        ctx.fillStyle = '#ff0066';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(_emoteMyText, CANVAS_W - ew / 2 - 10, 24);
+        ctx.globalAlpha = 1;
     }
 
     scheduleLoop();
@@ -2561,7 +2589,75 @@ function generateRoomCode() {
 }
 
 function showReplayBtn() {
-    document.getElementById('replay-btn').style.display = '';
+    let btn = document.getElementById('replay-btn');
+    if (isMulti && isHost) { btn.textContent = 'REPLAY'; }
+    else if (isRanked) { btn.textContent = 'PLAY AGAIN'; }
+    else { btn.textContent = 'MENU'; }
+    btn.style.display = '';
+}
+
+function resetGameState() {
+    grid = []; towers = []; enemies = []; projectiles = [];
+    gold = 160; lives = 20; score = 0; waveNum = 0;
+    waveActive = false; enemiesToSpawn = 0; spawnTimer = 0;
+    hoveredCell = null; selectedTower = null; nextWaveTimer = 0;
+    explosions = []; floatingTexts = []; waveDuration = 0;
+    waveSpawnRows = []; waveSpawnIdx = 0; gameOverPlayed = false;
+    gameSpeed = 1; placingType = -1; messageTimer = 0;
+    duelEnded = false; duelResultTitle = ''; duelResultSub = '';
+    opponentLives = 20; opponentScore = 0; opponentWave = 0;
+    opponentFinished = false; opponentFinalScore = 0; opponentFinalTime = 0;
+    gameStartTime = 0; gameEndTime = 0; rankedEloChange = null;
+    oppBoardData = null; _lastStatusSend = 0;
+    if (_duelDisconnectTimer) { clearInterval(_duelDisconnectTimer); _duelDisconnectTimer = null; }
+    _duelDisconnectCountdown = 0;
+    multiEnded = false; multiResultTitle = ''; multiResultSub = '';
+    multiStartTimer = 0; _lastMultiStatusSend = 0; _multiScoreSaved = false;
+    _emoteMyText = ''; _emoteMyTimer = 0; _emoteOppText = ''; _emoteOppTimer = 0;
+    for (let r = 0; r < GRID; r++) { grid[r] = []; for (let c = 0; c < GRID; c++) grid[r][c] = 0; }
+    let newEntry = generateEntryGroups();
+    setEntryGroups(newEntry);
+    let newExit = generateExitGroups();
+    setExitGroups(newExit);
+    document.getElementById('replay-btn').style.display = 'none';
+    document.getElementById('speed-btn').style.display = 'none';
+    document.getElementById('emote-bar').style.display = 'none';
+    resetWaveBar();
+    updateUI();
+}
+
+function onReplayClick() {
+    if (isMulti && isHost) { multiReplay(); }
+    else if (isRanked) { rankedReplay(); }
+    else { location.reload(); }
+}
+
+function multiReplay() {
+    resetGameState();
+    multiPlayers.forEach(function(p, id) {
+        p.lives = 20; p.score = 0; p.wave = 0;
+        p.boardData = null; p.alive = true;
+        p.finished = false; p.finalScore = 0; p.finalTime = 0;
+    });
+    multiConns.forEach(function(c) { if (c.open) c.send({ type: 'multi_back_to_lobby' }); });
+    document.getElementById('opp-panel').classList.remove('active');
+    document.getElementById('multi-player-list').style.display = 'none';
+    document.getElementById('menu-overlay').style.display = '';
+    document.getElementById('menu-multi-host').style.display = '';
+    document.getElementById('multi-chat-msgs-host').innerHTML = '';
+    updateMultiLobbyUI();
+    isDuel = false; isMulti = false;
+}
+
+function rankedReplay() {
+    if (conn) { conn.close(); conn = null; }
+    if (peer) { peer.destroy(); peer = null; }
+    resetGameState();
+    isDuel = false; isMulti = false; isRanked = true;
+    rankedMatchId = null;
+    document.getElementById('opp-panel').classList.remove('active');
+    document.getElementById('menu-overlay').style.display = '';
+    startRankedQueue();
 }
 
 function toggleSpeed() {
@@ -3141,6 +3237,8 @@ function startDuel() {
     duelStartTimer = 20; // 20s countdown before wave 1
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
+    document.getElementById('emote-bar').style.display = 'flex';
+    document.getElementById('multi-player-list').style.display = 'none';
     initOpponentCanvas();
     resizeGame();
 }
@@ -3193,6 +3291,10 @@ function handlePeerMessage(data) {
         opponentFinalScore = data.score;
         opponentFinalTime = data.time;
         checkDuelEnd();
+    } else if (data.type === 'emote') {
+        if (data.id >= 0 && data.id < EMOTES.length) {
+            showEmoteOnMyCanvas(EMOTES[data.id]);
+        }
     }
 }
 
@@ -3358,6 +3460,11 @@ function updateMultiLobbyUI() {
 // === MULTIPLAYER HOST MESSAGE HANDLER ===
 function handleMultiHostMessage(data, senderConn) {
     let senderId = senderConn.peer;
+    if (data.type === 'multi_chat') {
+        multiConns.forEach(function(c) { if (c.open && c.peer !== senderConn.peer) c.send(data); });
+        appendChatMsg('host', data.name, data.text);
+        return;
+    }
     if (data.type === 'multi_join') {
         if (multiPlayers.size >= 50) { senderConn.send({ type: 'lobby_full' }); senderConn.close(); return; }
         multiPlayers.set(senderId, { conn: senderConn, name: data.name || ('P' + multiPlayers.size), lives: 20, score: 0, wave: 0, boardData: null, alive: true });
@@ -3404,6 +3511,20 @@ function handleMultiHostMessage(data, senderConn) {
 
 // === MULTIPLAYER JOINER MESSAGE HANDLER ===
 function handleMultiJoinerMessage(data) {
+    if (data.type === 'multi_back_to_lobby') {
+        resetGameState();
+        isDuel = false; isMulti = false;
+        document.getElementById('opp-panel').classList.remove('active');
+        document.getElementById('multi-player-list').style.display = 'none';
+        document.getElementById('menu-overlay').style.display = '';
+        document.getElementById('menu-multi-lobby').style.display = '';
+        document.getElementById('multi-chat-msgs-lobby').innerHTML = '';
+        return;
+    }
+    if (data.type === 'multi_chat') {
+        appendChatMsg('lobby', data.name, data.text);
+        return;
+    }
     if (data.type === 'new_host') {
         _multiHostId = data.hostId;
         cleanupMigration();
@@ -3493,6 +3614,7 @@ function startMultiGame(playerRoster) {
     }
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
+    document.getElementById('emote-bar').style.display = 'none';
     document.getElementById('multi-player-list').style.display = 'block';
     initOpponentCanvas();
     resizeGame();
@@ -3847,6 +3969,73 @@ function drawOpponentBoard() {
     }
 
     ox.restore();
+
+    // Draw emote overlay on opponent canvas (sent confirmation)
+    if (_emoteOppTimer > 0 && _emoteOppText) {
+        let ea = Math.min(1, _emoteOppTimer / 0.5);
+        ox.globalAlpha = ea;
+        ox.fillStyle = 'rgba(3,3,8,0.6)';
+        ox.font = '700 10px "Press Start 2P", monospace';
+        let ow = oc.width, oh = oc.height;
+        let tw = ox.measureText(_emoteOppText).width + 20;
+        ox.fillRect(ow / 2 - tw / 2, oh / 2 - 14, tw, 28);
+        ox.strokeStyle = '#00f0ff';
+        ox.lineWidth = 1;
+        ox.strokeRect(ow / 2 - tw / 2, oh / 2 - 14, tw, 28);
+        ox.fillStyle = '#00f0ff';
+        ox.textAlign = 'center'; ox.textBaseline = 'middle';
+        ox.fillText(_emoteOppText, ow / 2, oh / 2);
+        ox.globalAlpha = 1;
+    }
+}
+
+// === EMOTES ===
+function sendEmote(id) {
+    if (!isDuel || duelEnded) return;
+    let now = Date.now();
+    if (now - _lastEmoteSend < 3000) return;
+    _lastEmoteSend = now;
+    if (conn && conn.open) conn.send({ type: 'emote', id: id });
+    showEmoteOnOppCanvas(EMOTES[id]);
+}
+
+function showEmoteOnOppCanvas(text) {
+    _emoteOppText = text;
+    _emoteOppTimer = 2.0;
+}
+
+function showEmoteOnMyCanvas(text) {
+    _emoteMyText = text;
+    _emoteMyTimer = 2.0;
+}
+
+// === MULTI CHAT ===
+function sendMultiChat(source) {
+    let inputId = source === 'host' ? 'multi-chat-input-host' : 'multi-chat-input-lobby';
+    let input = document.getElementById(inputId);
+    let text = (input.value || '').trim();
+    if (!text) return;
+    input.value = '';
+    let myName = getMultiName();
+    let msg = { type: 'multi_chat', name: myName, text: text };
+    if (isHost) {
+        multiConns.forEach(function(c) { if (c.open) c.send(msg); });
+        appendChatMsg('host', myName, text);
+    } else {
+        if (conn && conn.open) conn.send(msg);
+        appendChatMsg('lobby', myName, text);
+    }
+}
+
+function appendChatMsg(target, name, text) {
+    let msgsId = target === 'host' ? 'multi-chat-msgs-host' : 'multi-chat-msgs-lobby';
+    let el = document.getElementById(msgsId);
+    if (!el) return;
+    let div = document.createElement('div');
+    div.style.cssText = 'font-size:9px;padding:2px 0;color:#607888;word-break:break-word';
+    div.innerHTML = '<span style="color:#00f0ff;font-weight:700">' + escapeHtml(name) + '</span> ' + escapeHtml(text);
+    el.appendChild(div);
+    el.scrollTop = el.scrollHeight;
 }
 
 // === LEADERBOARD ===

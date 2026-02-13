@@ -414,6 +414,10 @@
         .mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
+        /* ── EMOTE BAR ── */
+        #emote-bar { display:flex; gap:4px; padding:6px 8px; background:#0c0410; border-top:1px solid #ff006620; flex-wrap:wrap; justify-content:center; }
+        .emote-btn { padding:4px 8px; background:#0a0e18; border:1px solid #1a2840; color:#607888; font-family:'JetBrains Mono',monospace; font-size:8px; cursor:pointer; border-radius:2px; text-transform:uppercase; letter-spacing:1px; transition:all .15s; }
+        .emote-btn:hover { border-color:#ff0066; color:#ff0066; }
         /* ── MULTI PLAYER LIST ── */
         #multi-player-list { display:none; flex:1; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; scrollbar-width:none; -ms-overflow-style:none; }
         #multi-player-list::-webkit-scrollbar { display:none; }
@@ -536,6 +540,13 @@
                 <div id="multi-code" style="font-family:'Press Start 2P',monospace;font-size:28px;color:#00f0ff;text-shadow:0 0 15px #00f0ff60;letter-spacing:12px;margin-bottom:12px">----</div>
                 <div id="multi-lobby-list" style="color:#607888;font-size:10px;letter-spacing:0.5px;margin-bottom:12px;min-height:20px"></div>
                 <button class="menu-btn" id="multi-start-btn" onclick="menuMultiStart()" disabled>START GAME</button>
+                <div id="multi-chat-host" style="margin-top:12px;border:1px solid #1a2840;border-radius:2px;padding:6px;max-width:220px;margin-left:auto;margin-right:auto">
+                    <div id="multi-chat-msgs-host" style="overflow-y:auto;max-height:70px;min-height:30px;margin-bottom:6px;scrollbar-width:thin;scrollbar-color:#1a2840 transparent"></div>
+                    <div style="display:flex;gap:4px">
+                        <input id="multi-chat-input-host" maxlength="100" placeholder="Message..." style="flex:1;padding:4px 6px;background:#0a0e18;border:1px solid #1a2840;color:#a0b8cc;font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:2px;outline:none" onkeydown="if(event.key==='Enter')sendMultiChat('host')">
+                        <button onclick="sendMultiChat('host')" style="padding:4px 8px;background:#0a0e18;border:1px solid #1a2840;color:#ff0066;font-size:10px;cursor:pointer;border-radius:2px">&#9654;</button>
+                    </div>
+                </div>
                 <button class="menu-btn-back" onclick="menuMultiCancel()">&#8592; Cancel</button>
             </div>
             <div id="menu-multi-join" style="display:none">
@@ -548,6 +559,13 @@
                 <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Lobby</div>
                 <div id="multi-lobby-players" style="color:#607888;font-size:10px;letter-spacing:0.5px;margin-bottom:12px;min-height:20px"></div>
                 <div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase">Waiting for host to start...</div>
+                <div id="multi-chat-lobby" style="margin-top:12px;border:1px solid #1a2840;border-radius:2px;padding:6px;max-width:220px;margin-left:auto;margin-right:auto">
+                    <div id="multi-chat-msgs-lobby" style="overflow-y:auto;max-height:70px;min-height:30px;margin-bottom:6px;scrollbar-width:thin;scrollbar-color:#1a2840 transparent"></div>
+                    <div style="display:flex;gap:4px">
+                        <input id="multi-chat-input-lobby" maxlength="100" placeholder="Message..." style="flex:1;padding:4px 6px;background:#0a0e18;border:1px solid #1a2840;color:#a0b8cc;font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:2px;outline:none" onkeydown="if(event.key==='Enter')sendMultiChat('lobby')">
+                        <button onclick="sendMultiChat('lobby')" style="padding:4px 8px;background:#0a0e18;border:1px solid #1a2840;color:#ff0066;font-size:10px;cursor:pointer;border-radius:2px">&#9654;</button>
+                    </div>
+                </div>
                 <button class="menu-btn-back" onclick="menuMultiLeave()">&#8592; Leave</button>
             </div>
         </div>
@@ -720,7 +738,7 @@
             <span id="msg"></span>
         </div>
         <canvas id="game"></canvas>
-        <button id="replay-btn" onclick="location.reload()" style="display:none">MENU</button>
+        <button id="replay-btn" onclick="onReplayClick()" style="display:none">MENU</button>
         <div id="wave-bar">
             <div id="wb-waves"></div>
             <button id="speed-btn" onclick="toggleSpeed()" style="display:none">x1</button>
@@ -734,6 +752,14 @@
             <span class="opp-stat">Score <b id="opp-score">0</b></span>
         </div>
         <canvas id="opp-canvas"></canvas>
+        <div id="emote-bar" style="display:none">
+            <button class="emote-btn" onclick="sendEmote(0)">GG</button>
+            <button class="emote-btn" onclick="sendEmote(1)">GL HF</button>
+            <button class="emote-btn" onclick="sendEmote(2)">WP</button>
+            <button class="emote-btn" onclick="sendEmote(3)">?</button>
+            <button class="emote-btn" onclick="sendEmote(4)">...</button>
+            <button class="emote-btn" onclick="sendEmote(5)">oops</button>
+        </div>
         <div id="multi-player-list"></div>
     </div>
     </div>
