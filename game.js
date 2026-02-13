@@ -90,215 +90,13 @@ function pickEntryRow(validRows, randFn) {
     return last.rows[Math.floor(rf() * last.rows.length)];
 }
 
-const TOWER_TYPES = [
-    // ── Tier 1 (cheap 15g) ── L1 = best DPS/gold
-    {
-        name: 'Cannon', desc: 'Versatile turret, fast fire rate.', bg: '#0a1020',
-        levels: [null,
-            { cost: 15, damage: 13, range: 3,   fireRate: 0.7,  color: '#5cf' },
-            { cost: 25, damage: 20, range: 3.2, fireRate: 0.65, color: '#5df' },
-            { cost: 40, damage: 29, range: 3.5, fireRate: 0.55, color: '#6ef' },
-            { cost: 55, damage: 40, range: 3.8, fireRate: 0.45, color: '#7ff' },
-            { cost: 75, damage: 66, range: 4.5, fireRate: 0.3,  color: '#8ff' }, // L5: machine gun
-        ],
-    },
-    // ── Tier 3 (expensive 30g) ──
-    {
-        name: 'Sniper', desc: 'Long range, high damage, slow fire.', bg: '#100a08',
-        levels: [null,
-            { cost: 72, damage: 50,  range: 6,   fireRate: 1.8, color: '#f90' },
-            { cost: 120, damage: 77,  range: 6.5, fireRate: 1.6, color: '#fa0' },
-            { cost: 168, damage: 110, range: 7,   fireRate: 1.4, color: '#fb0' },
-            { cost: 216, damage: 154, range: 7.5, fireRate: 1.2, color: '#fc0' },
-            { cost: 276,damage: 275, range: 9,   fireRate: 0.8, color: '#fd0' }, // L5: one-shot sniper
-        ],
-    },
-    // ── Tier 1 (cheap 10g) ──
-    {
-        name: 'Freeze', desc: 'Slows down hit enemies.', bg: '#081018', slow: true,
-        levels: [null,
-            { cost: 24, damage: 3,  range: 2.5, fireRate: 0.5,  color: '#0cf', slowFactor: 0.5,  slowDur: 1.5 },
-            { cost: 48, damage: 6,  range: 2.8, fireRate: 0.45, color: '#0df', slowFactor: 0.45, slowDur: 1.8 },
-            { cost: 84, damage: 8,  range: 3,   fireRate: 0.4,  color: '#0ef', slowFactor: 0.4,  slowDur: 2.0 },
-            { cost: 120, damage: 11, range: 3.3, fireRate: 0.35, color: '#0ff', slowFactor: 0.35, slowDur: 2.3 },
-            { cost: 168, damage: 20, range: 4,   fireRate: 0.25, color: '#2ff', slowFactor: 0.2,  slowDur: 3.5 }, // L5: deep freeze
-        ],
-    },
-    // ── Tier 2 (mid 25g) ──
-    {
-        name: 'Splash', desc: 'Area damage, long range.', bg: '#140810', splash: true,
-        levels: [null,
-            { cost: 60, damage: 11, range: 5,   fireRate: 1.2, color: '#f66', splashR: 1.6 },
-            { cost: 96, damage: 19, range: 5.5, fireRate: 1.1, color: '#f77', splashR: 1.8 },
-            { cost: 144, damage: 29, range: 6,   fireRate: 1.0, color: '#f88', splashR: 2.0 },
-            { cost: 192, damage: 42, range: 6.5, fireRate: 0.9, color: '#f99', splashR: 2.2 },
-            { cost: 252,damage: 83, range: 8,   fireRate: 0.7, color: '#faa', splashR: 3.5 }, // L5: mega splash
-        ],
-    },
-    // ── Tier 2 (mid 25g, ghost only) ──
-    {
-        name: 'Exorcist', desc: 'Very powerful, targets ghosts only.', bg: '#0c0a18', ghostOnly: true,
-        levels: [null,
-            { cost: 60, damage: 165,  range: 3.5, fireRate: 1.0, color: '#af0' },
-            { cost: 108, damage: 248,  range: 4,   fireRate: 0.9, color: '#bf0' },
-            { cost: 156, damage: 363, range: 4.5, fireRate: 0.8, color: '#cf0' },
-            { cost: 204, damage: 495, range: 5,   fireRate: 0.7, color: '#df0' },
-            { cost: 264,damage: 990, range: 6,   fireRate: 0.45,color: '#ef0' }, // L5: ghost annihilator
-        ],
-    },
-    // ── Tier 2 (mid 20g) ──
-    {
-        name: 'Tesla', desc: 'Electric aura, hits all nearby enemies.', bg: '#101008', aura: true,
-        levels: [null,
-            { cost: 48, damage: 8,  range: 1.6, fireRate: 0.3,  color: '#ff0' },
-            { cost: 84, damage: 12, range: 1.8, fireRate: 0.28, color: '#ff2' },
-            { cost: 132, damage: 18, range: 2.0, fireRate: 0.25, color: '#ff4' },
-            { cost: 180, damage: 24, range: 2.2, fireRate: 0.22, color: '#ff6' },
-            { cost: 228, damage: 50, range: 3.0, fireRate: 0.15, color: '#ff8' }, // L5: lightning storm
-        ],
-    },
-    // ── Tier 2 (mid 20g, support) ──
-    {
-        name: 'Booster', desc: 'Boosts adjacent towers.', bg: '#101810', booster: true,
-        levels: [null,
-            { cost: 48, damage: 0, range: 1.5, fireRate: 1, color: '#0f8', boostPct: 0.25 },
-            { cost: 72, damage: 0, range: 1.5, fireRate: 1, color: '#0fa', boostPct: 0.35 },
-            { cost: 108, damage: 0, range: 1.5, fireRate: 1, color: '#0fc', boostPct: 0.45 },
-            { cost: 156, damage: 0, range: 1.5, fireRate: 1, color: '#2ff', boostPct: 0.55 },
-            { cost: 204, damage: 0, range: 1.5, fireRate: 1, color: '#4ff', boostPct: 0.85 }, // L5: overcharge
-        ],
-    },
-    // ── Tier 1 (cheap 12g, one-shot) ──
-    {
-        name: 'Grenade', desc: 'Single explosion, then self-destructs.', bg: '#181008', grenade: true,
-        levels: [null,
-            { cost: 29, damage: 99,  range: 2.5, fireRate: 1, color: '#f80', splashR: 2.5 },
-            { cost: 53, damage: 154, range: 3,   fireRate: 1, color: '#f90', splashR: 3 },
-            { cost: 84, damage: 231, range: 3.5, fireRate: 1, color: '#fa0', splashR: 3.5 },
-            { cost: 120, damage: 352, range: 4,   fireRate: 1, color: '#fb0', splashR: 4 },
-            { cost: 156, damage: 770, range: 5,   fireRate: 1, color: '#fc0', splashR: 5.5 }, // L5: mega bomb
-        ],
-    },
-    // ── Tier 3 (expensive 30g) ──
-    {
-        name: 'Laser', desc: 'Beam across 3 tiles in a line.', bg: '#100818', laser: true,
-        levels: [null,
-            { cost: 72, damage: 24, range: 3, fireRate: 1.2, color: '#f0f' },
-            { cost: 120, damage: 39, range: 3, fireRate: 1.0, color: '#f2f' },
-            { cost: 168, damage: 55, range: 3, fireRate: 0.8, color: '#f4f' },
-            { cost: 216, damage: 77, range: 3, fireRate: 0.6, color: '#f6f' },
-            { cost: 276,damage: 154,range: 4, fireRate: 0.4, color: '#f8f' }, // L5: death beam
-        ],
-    },
-];
+let TOWER_TYPES = [];
 
-const ENEMY_TYPES = {
-    normal:   { speed: 1.8, color: '#d33', stroke: '#f66', reward: 5,  label: 'Normal', pts: 1 },
-    ghost:    { speed: 2.0, color: '#88f', stroke: '#aaf', reward: 6, label: 'Ghost', ghost: true, pts: 2 },
-    splitter: { speed: 2.2, color: '#4d4', stroke: '#6f6', reward: 4,  label: 'Splitter', splits: 3, splitHpRatio: 0.35, pts: 1 },
-    fast:     { speed: 3.5, color: '#ee0', stroke: '#ff8', reward: 4,  label: 'Fast', scale: 0.8, pts: 1 },
-    swarm:    { speed: 1.8, color: '#0bb', stroke: '#0ee', reward: 2,  label: 'Swarm', scale: 0.85, spawnInt: 0.15, pts: 1 },
-    shield:   { speed: 1.5, color: '#6ae', stroke: '#8cf', reward: 7, label: 'Shield', shield: 10, pts: 2 },
-    stealth:  { speed: 2.2, color: '#446', stroke: '#668', reward: 5, label: 'Stealth', stealth: true, scale: 0.85, pts: 2 },
-    regen:    { speed: 1.6, color: '#2a4', stroke: '#4e6', reward: 6, label: 'Regen', regenRate: 0.08, pts: 2 },
-    boss_normal:   { speed: 0.7, color: '#c40', stroke: '#e62', reward: 20,  label: 'Boss',       scale: 1.7, pts: 5 },
-    boss_ghost:    { speed: 0.6, color: '#66c', stroke: '#88e', reward: 22,  label: 'Boss Gho',  scale: 1.6, ghost: true, pts: 6 },
-    boss_splitter: { speed: 0.5, color: '#2a2', stroke: '#4e4', reward: 22,  label: 'Boss Spl',   scale: 1.6, splits: 4, splitHpRatio: 0.3, pts: 6 },
-    boss_fast:     { speed: 1.5, color: '#cc0', stroke: '#ee2', reward: 22,  label: 'Boss Fst',   scale: 1.4, pts: 6 },
-    boss_swarm:    { speed: 0.7, color: '#099', stroke: '#0cc', reward: 15,  label: 'Boss Swm',   scale: 1.6, spawnInt: 0.5, pts: 5 },
-    boss_shield:   { speed: 0.5, color: '#68a', stroke: '#8be', reward: 25,  label: 'Boss Shd',   scale: 1.7, shield: 30, pts: 7 },
-    boss_stealth:  { speed: 0.8, color: '#334', stroke: '#556', reward: 22,  label: 'Boss Stl',   scale: 1.5, stealth: true, pts: 6 },
-    boss_regen:    { speed: 0.5, color: '#1a3', stroke: '#3c5', reward: 24,  label: 'Boss Rgn',   scale: 1.7, regenRate: 0.02, pts: 7 },
-};
+let ENEMY_TYPES = {};
 
-const WAVES_RANKED = [
-    // --- Early (1-10) ---
-    { count: 6,  hp: 60,    type: 'normal' },
-    { count: 8,  hp: 80,    type: 'normal' },
-    { count: 5,  hp: 80,    type: 'ghost' },
-    { count: 10, hp: 55,    type: 'fast' },
-    { count: 15, hp: 40,    type: 'swarm' },
-    { count: 8,  hp: 100,   type: 'splitter' },
-    { count: 6,  hp: 160,   type: 'shield' },
-    { count: 10, hp: 180,   type: 'normal' },
-    { count: 2,  hp: 1600,  type: 'boss_normal' },
-    { count: 12, hp: 90,    type: 'stealth' },
-    // --- Mid-early (11-20) ---
-    { count: 8,  hp: 250,   type: 'ghost' },
-    { count: 25, hp: 130,   type: 'swarm' },
-    { count: 10, hp: 280,   type: 'splitter' },
-    { count: 10, hp: 340,   type: 'shield' },
-    { count: 10, hp: 340,   type: 'regen' },
-    { count: 16, hp: 220,   type: 'fast' },
-    { count: 2,  hp: 4000,  type: 'boss_ghost' },
-    { count: 30, hp: 180,   type: 'swarm' },
-    { count: 10, hp: 420,   type: 'ghost' },
-    { count: 12, hp: 380,   type: 'splitter' },
-    // --- Mid (21-30) ---
-    { count: 14, hp: 550,   type: 'normal' },
-    { count: 12, hp: 600,   type: 'shield' },
-    { count: 16, hp: 220,   type: 'stealth' },
-    { count: 32, hp: 280,   type: 'swarm' },
-    { count: 3,  hp: 7000,  type: 'boss_fast' },
-    { count: 12, hp: 520,   type: 'splitter' },
-    { count: 12, hp: 650,   type: 'regen' },
-    { count: 16, hp: 750,   type: 'normal' },
-    { count: 14, hp: 720,   type: 'shield' },
-    { count: 35, hp: 380,   type: 'swarm' },
-    // --- Mid-late (31-40) ---
-    { count: 20, hp: 650,   type: 'fast' },
-    { count: 14, hp: 950,   type: 'ghost' },
-    { count: 3,  hp: 16000, type: 'boss_splitter' },
-    { count: 14, hp: 950,   type: 'splitter' },
-    { count: 14, hp: 1200,  type: 'regen' },
-    { count: 16, hp: 1300,  type: 'shield' },
-    { count: 40, hp: 750,   type: 'swarm' },
-    { count: 20, hp: 600,   type: 'stealth' },
-    { count: 16, hp: 1300,  type: 'ghost' },
-    { count: 3,  hp: 24000, type: 'boss_swarm' },
-    // --- Late (41-45) ---
-    { count: 18, hp: 1900,  type: 'normal' },
-    { count: 16, hp: 1500,  type: 'splitter' },
-    { count: 18, hp: 2100,  type: 'shield' },
-    { count: 45, hp: 1100,  type: 'swarm' },
-    { count: 24, hp: 900,   type: 'stealth' },
-    // --- Endgame (46-50) ---
-    { count: 18, hp: 2600,  type: 'regen' },
-    { count: 22, hp: 3400,  type: 'normal' },
-    { count: 3,  hp: 55000, type: 'boss_shield' },
-    { count: 22, hp: 3400,  type: 'shield' },
-    { count: 8,  hp: 50000, type: 'boss_normal', types: ['boss_normal','boss_ghost','boss_splitter','boss_fast','boss_swarm','boss_shield','boss_stealth','boss_regen'] },
-];
-
-const WAVES_SOLO = (function() {
-    const regularTypes = ['normal','ghost','fast','swarm','splitter','shield','stealth','regen'];
-    const bossTypes = ['boss_normal','boss_ghost','boss_fast','boss_swarm','boss_splitter','boss_shield','boss_stealth','boss_regen'];
-    const waves = [];
-    for (let i = 1; i <= 100; i++) {
-        const isBoss = (i % 10 === 0);
-        if (isBoss) {
-            const bossIdx = Math.floor((i / 10 - 1) % bossTypes.length);
-            const bossCount = Math.min(2 + Math.floor(i / 30), 10);
-            const bossHp = Math.round(1200 * Math.pow(1.12, i));
-            if (i === 100) {
-                waves.push({ count: 10, hp: Math.round(5000 * Math.pow(1.12, 100)), type: 'boss_normal', types: bossTypes });
-            } else {
-                waves.push({ count: bossCount, hp: bossHp, type: bossTypes[bossIdx] });
-            }
-        } else {
-            const typeIdx = (i - 1) % regularTypes.length;
-            const type = regularTypes[typeIdx];
-            const isSwarm = (type === 'swarm');
-            const count = isSwarm ? Math.round(12 + i * 0.6) : Math.round(6 + i * 0.25);
-            const hp = Math.round((isSwarm ? 30 : 50) * Math.pow(1.1, i));
-            waves.push({ count, hp, type });
-        }
-    }
-    return waves;
-})();
-
-let WAVES = WAVES_SOLO;
-const SPAWN_INT = 0.7;
+let WAVES = [];
+let SPAWN_INT = 0.7;
+let _configLoaded = false;
 
 // === STATE ===
 const canvas = document.getElementById('game');
@@ -2775,9 +2573,9 @@ function toggleSpeed() {
 }
 
 function menuStartSolo() {
+    if (!_configLoaded) return;
     isDuel = false;
     isMulti = false;
-    WAVES = WAVES_SOLO;
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     document.getElementById('menu-overlay').style.display = 'none';
@@ -2811,6 +2609,43 @@ function fetchWithTimeout(url, opts, timeout) {
         throw err;
     });
 }
+// === LOAD GAME CONFIG FROM SERVER ===
+function loadGameConfig() {
+    fetchWithTimeout(SERVER_URL + '/api/game-config').then(function(r) {
+        if (!r.ok) throw new Error('Config fetch failed');
+        return r.json();
+    }).then(function(cfg) {
+        TOWER_TYPES = cfg.towers;
+        ENEMY_TYPES = cfg.enemies;
+        WAVES = cfg.waves;
+        if (cfg.constants) {
+            SPAWN_INT = cfg.constants.spawnInt || 0.7;
+            gold = cfg.constants.startGold || 160;
+            lives = cfg.constants.startLives || 20;
+        }
+        _configLoaded = true;
+        // Update tower button costs
+        for (let i = 0; i < TOWER_TYPES.length; i++) {
+            let btn = document.getElementById('tbtn-' + i);
+            if (btn) {
+                let costSpan = btn.querySelector('.cost');
+                if (costSpan) costSpan.textContent = TOWER_TYPES[i].levels[1].cost + 'g';
+            }
+        }
+        drawTowerIcons();
+        updateWaveBar();
+        updateUI();
+        // Hide loading overlay
+        let loadingEl = document.getElementById('config-loading');
+        if (loadingEl) loadingEl.style.display = 'none';
+    }).catch(function(err) {
+        console.error('Failed to load game config:', err);
+        let loadingEl = document.getElementById('config-loading');
+        if (loadingEl) loadingEl.textContent = 'Failed to load game data. Refresh to retry.';
+    });
+}
+loadGameConfig();
+
 let isRanked = false;
 let rankedMatchId = null;
 let rankedPollTimer = null;
@@ -3284,7 +3119,6 @@ function setupConnection() {
 
 function startDuel() {
     isDuel = true;
-    WAVES = WAVES_RANKED;
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     duelEnded = false;
@@ -3634,7 +3468,6 @@ function handleMultiJoinerMessage(data) {
 function startMultiGame(playerRoster) {
     isMulti = true;
     isDuel = false;
-    WAVES = WAVES_SOLO;
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     multiEnded = false;
