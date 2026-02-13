@@ -553,7 +553,7 @@
                 <button class="menu-btn" onclick="menuMultiShowJoin()">Join</button>
                 <div id="room-browser" style="margin-top:16px;max-width:280px;margin-left:auto;margin-right:auto">
                     <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">PARTIES EN ATTENTE</div>
-                    <div id="room-list" style="max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a2840 transparent">
+                    <div id="room-list" style="max-height:150px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a2840 transparent">
                         <div id="room-list-empty" style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">Aucune partie en cours</div>
                     </div>
                 </div>
@@ -580,7 +580,8 @@
                 <button class="menu-btn-back" onclick="menuMultiBackToMenu()">&#8592; Back</button>
             </div>
             <div id="menu-multi-lobby" style="display:none">
-                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Lobby</div>
+                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Room Code</div>
+                <div id="multi-lobby-code" style="font-family:'Press Start 2P',monospace;font-size:28px;color:#00f0ff;text-shadow:0 0 15px #00f0ff60;letter-spacing:12px;margin-bottom:12px">----</div>
                 <div id="multi-lobby-players" style="color:#607888;font-size:10px;letter-spacing:0.5px;margin-bottom:12px;min-height:20px"></div>
                 <div style="color:#405060;font-size:9px;letter-spacing:1px;text-transform:uppercase">Waiting for host to start...</div>
                 <div id="multi-chat-lobby" style="margin-top:12px;border:1px solid #1a2840;border-radius:2px;padding:6px;max-width:220px;margin-left:auto;margin-right:auto">
@@ -790,6 +791,6 @@
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=170"></script>
+    <script src="game.js?v=171"></script>
 </body>
 </html>

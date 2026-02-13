@@ -3538,6 +3538,7 @@ function menuMultiJoin() {
             });
             document.getElementById('menu-multi-join').style.display = 'none';
             document.getElementById('menu-multi-lobby').style.display = '';
+            document.getElementById('multi-lobby-code').textContent = code;
         });
         conn.on('error', function() {
             document.getElementById('multi-join-error').textContent = 'Connection failed';
@@ -3670,6 +3671,10 @@ function handleMultiJoinerMessage(data) {
         document.getElementById('menu-overlay').style.display = '';
         document.getElementById('menu-multi-lobby').style.display = '';
         document.getElementById('multi-chat-msgs-lobby').innerHTML = '';
+        if (conn && conn.peer) {
+            var rc = conn.peer.replace('tdmulti-', '');
+            document.getElementById('multi-lobby-code').textContent = rc;
+        }
         return;
     }
     if (data.type === 'multi_chat') {
