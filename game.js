@@ -182,7 +182,7 @@ function finalScore() { return score + lives * 10; }
 
 function killEnemy(e) {
     e.alive = false;
-    if (isMulti && lives <= 0) return; // Dead multi players: no more rewards
+    if (lives <= 0) return; // Dead players: no more rewards
     gold += e.reward;
     score += (ENEMY_TYPES[e.typeName] || {}).pts || 1;
     spawnGoldText(e.x, e.y, e.reward);
