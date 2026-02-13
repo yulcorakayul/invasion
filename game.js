@@ -2663,6 +2663,8 @@ async function authRegister() {
     let pass = document.getElementById('reg-pass').value;
     document.getElementById('auth-error-reg').textContent = '';
     if (!user || !email || !pass) { document.getElementById('auth-error-reg').textContent = 'All fields required'; return; }
+    if (user.length < 3 || user.length > 20) { document.getElementById('auth-error-reg').textContent = 'Username must be 3-20 characters'; return; }
+    if (!/^[a-zA-Z0-9_-]+$/.test(user)) { document.getElementById('auth-error-reg').textContent = 'Username: letters, numbers, _ and - only'; return; }
     try {
         let r = await fetchWithTimeout(SERVER_URL + '/api/register', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -3910,6 +3912,8 @@ async function saveSoloGuest() {
     let errEl = document.getElementById('solo-end-error');
     errEl.textContent = '';
     if (!name) { errEl.textContent = 'Enter a pseudo'; return; }
+    if (name.length < 3 || name.length > 20) { errEl.textContent = 'Name must be 3-20 characters'; return; }
+    if (!/^[a-zA-Z0-9_-]+$/.test(name)) { errEl.textContent = 'Letters, numbers, _ and - only'; return; }
     try {
         let r = await fetchWithTimeout(SERVER_URL + '/api/solo/guest-save', {
             method: 'POST',
