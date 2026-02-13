@@ -2673,6 +2673,8 @@ function multiReplay() {
     document.getElementById('multi-chat-msgs-host').innerHTML = '';
     updateMultiLobbyUI();
     isDuel = false; isMulti = false;
+    let code = document.getElementById('multi-code').textContent;
+    if (code && code !== '----') registerRoom(code);
 }
 
 function rankedReplay() {
@@ -3385,15 +3387,91 @@ function checkDuelEnd() {
     submitRankedResult(duelResultTitle === 'VICTORY' ? 'win' : (duelResultTitle === 'DEFEAT' ? 'loss' : 'draw'));
 }
 
+// === ROOM BROWSER ===
+let _roomHeartbeatInterval = null;
+let _roomListInterval = null;
+let _currentRoomCode = null;
+
+function registerRoom(code) {
+    _currentRoomCode = code;
+    fetchWithTimeout(SERVER_URL + '/api/rooms/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, hostName: getMultiName(), playerCount: 1, maxPlayers: 50 })
+    }).catch(function() {});
+    if (_roomHeartbeatInterval) clearInterval(_roomHeartbeatInterval);
+    _roomHeartbeatInterval = setInterval(function() {
+        fetchWithTimeout(SERVER_URL + '/api/rooms/heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: code, playerCount: multiPlayers.size || 1 })
+        }).catch(function() {});
+    }, 5000);
+}
+
+function unregisterRoom(code) {
+    if (_roomHeartbeatInterval) { clearInterval(_roomHeartbeatInterval); _roomHeartbeatInterval = null; }
+    _currentRoomCode = null;
+    fetchWithTimeout(SERVER_URL + '/api/rooms/unregister', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+    }).catch(function() {});
+}
+
+function startRoomListPolling() {
+    fetchRoomList();
+    if (_roomListInterval) clearInterval(_roomListInterval);
+    _roomListInterval = setInterval(fetchRoomList, 4000);
+}
+
+function stopRoomListPolling() {
+    if (_roomListInterval) { clearInterval(_roomListInterval); _roomListInterval = null; }
+}
+
+function fetchRoomList() {
+    fetchWithTimeout(SERVER_URL + '/api/rooms/list', null, 5000)
+        .then(function(r) { return r.json(); })
+        .then(function(rooms) {
+            var container = document.getElementById('room-list');
+            if (!container) return;
+            if (!rooms || rooms.length === 0) {
+                container.innerHTML = '<div style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">Aucune partie en cours</div>';
+                return;
+            }
+            var html = '';
+            for (var i = 0; i < rooms.length; i++) {
+                var r = rooms[i];
+                html += '<div class="room-row">'
+                    + '<span class="room-host">' + escapeHtml(r.hostName) + '</span>'
+                    + '<span class="room-count">' + r.playerCount + '/' + r.maxPlayers + '</span>'
+                    + '<button class="room-join" onclick="joinRoomFromBrowser(\'' + escapeHtml(r.code) + '\')">REJOINDRE</button>'
+                    + '</div>';
+            }
+            container.innerHTML = html;
+        })
+        .catch(function() {});
+}
+
+function joinRoomFromBrowser(code) {
+    document.getElementById('multi-join-code').value = code;
+    document.getElementById('menu-multi').style.display = 'none';
+    document.getElementById('menu-multi-join').style.display = '';
+    stopRoomListPolling();
+    menuMultiJoin();
+}
+
 // === MULTIPLAYER MENU ===
 function menuShowMulti() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-multi').style.display = '';
     if (currentUser) document.getElementById('multi-name').value = currentUser.username;
+    startRoomListPolling();
 }
 function menuMultiBack() {
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-main').style.display = '';
+    stopRoomListPolling();
 }
 const _rndNames = ['Shadow','Phantom','Blaze','Vortex','Neon','Cipher','Nova','Pulse','Flux','Drift','Spark','Glitch','Echo','Byte','Hexa','Pixel','Turbo','Zinc','Onyx','Razor','Storm','Frost','Volt','Chaos','Omega'];
 let _myRndName = _rndNames[Math.floor(Math.random() * _rndNames.length)] + Math.floor(Math.random() * 100);
@@ -3403,6 +3481,7 @@ function getMultiName() {
 }
 function menuMultiCreate() {
     if (typeof Peer === 'undefined') { showMessage('Connection error'); return; }
+    stopRoomListPolling();
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-multi-host').style.display = '';
     let code = generateRoomCode();
@@ -3418,6 +3497,7 @@ function menuMultiCreate() {
         isHost = true;
         multiPlayers.set(myPlayerId, { conn: null, name: myName, lives: 20, score: 0, wave: 0, boardData: null, alive: true });
         updateMultiLobbyUI();
+        registerRoom(code);
     });
     peer.on('connection', function(c) {
         c.on('open', function() {
@@ -3426,10 +3506,12 @@ function menuMultiCreate() {
         });
     });
     peer.on('error', function(err) {
+        unregisterRoom(code);
         document.getElementById('multi-lobby-list').textContent = 'Error: ' + err.type;
     });
 }
 function menuMultiShowJoin() {
+    stopRoomListPolling();
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-multi-join').style.display = '';
     setTimeout(function() { document.getElementById('multi-join-code').focus(); }, 100);
@@ -3471,20 +3553,27 @@ function menuMultiBackToMenu() {
     document.getElementById('menu-multi-join').style.display = 'none';
     document.getElementById('menu-multi').style.display = '';
     if (peer) { peer.destroy(); peer = null; conn = null; }
+    startRoomListPolling();
 }
 function menuMultiCancel() {
+    let code = document.getElementById('multi-code').textContent;
+    unregisterRoom(code);
     document.getElementById('menu-multi-host').style.display = 'none';
     document.getElementById('menu-multi').style.display = '';
     if (peer) { peer.destroy(); peer = null; }
     multiPlayers.clear(); multiConns = [];
+    startRoomListPolling();
 }
 function menuMultiLeave() {
     document.getElementById('menu-multi-lobby').style.display = 'none';
     document.getElementById('menu-multi').style.display = '';
     if (conn) conn.close();
     if (peer) { peer.destroy(); peer = null; conn = null; }
+    startRoomListPolling();
 }
 function menuMultiStart() {
+    let code = document.getElementById('multi-code').textContent;
+    unregisterRoom(code);
     let roster = [];
     multiPlayers.forEach(function(p, id) { roster.push({ id: id, name: p.name }); });
     _multiRoster = roster.slice();
@@ -3707,7 +3796,7 @@ function updateMultiPlayerListUI() {
         let myName = getMultiName();
         arr.push({ id: myPlayerId, name: myName + ' (You)', lives: lives, score: score, wave: waveNum, alive: lives > 0 });
     }
-    arr.sort(function(a, b) { return b.score - a.score || b.lives - a.lives; });
+    arr.sort(function(a, b) { if (a.alive !== b.alive) return a.alive ? -1 : 1; return b.score - a.score || b.lives - a.lives; });
     let html = '';
     for (let i = 0; i < arr.length; i++) {
         let p = arr[i];
@@ -3906,6 +3995,7 @@ function handleMultiDisconnect(peerId) {
     let p = multiPlayers.get(peerId);
     if (p) {
         p.alive = false;
+        p.lives = 0;
         multiConns = multiConns.filter(function(c) { return c.peer !== peerId; });
         if (isMulti) checkMultiEnd();
     }

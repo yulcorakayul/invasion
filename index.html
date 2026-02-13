@@ -438,6 +438,13 @@
         .mp-name { color:#a0b8cc; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .mp-score { color:#00ff88; font-weight:700; }
         .mp-lives { color:#ff6688; }
+        /* ── ROOM BROWSER ── */
+        .room-row { display:flex; align-items:center; gap:8px; padding:6px 10px; background:#0a0e18; border:1px solid #1a2840; border-radius:2px; margin-bottom:4px; transition:border-color .15s; }
+        .room-row:hover { border-color:#00f0ff40; }
+        .room-host { flex:1; color:#a0b8cc; font-size:10px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .room-count { color:#607888; font-size:9px; letter-spacing:0.5px; flex-shrink:0; }
+        .room-join { padding:3px 10px; background:transparent; border:1px solid #00f0ff; color:#00f0ff; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; cursor:pointer; border-radius:2px; transition:all .15s; flex-shrink:0; }
+        .room-join:hover { background:#00f0ff; color:#030308; box-shadow:0 0 10px #00f0ff60; }
         /* ── REPLAY BUTTON ── */
         #replay-btn { position:absolute; left:50%; transform:translateX(-50%); z-index:200; padding:12px 40px; background:rgba(3,3,8,0.9); border:2px solid #ff0066; color:#ff0066; font-family:'Press Start 2P',monospace; font-size:11px; font-weight:700; letter-spacing:3px; text-indent:3px; cursor:pointer; border-radius:3px; text-transform:uppercase; transition:all .2s; text-shadow:0 0 8px #ff006640; text-align:center; }
         #replay-btn:hover { background:#ff0066; color:#030308; box-shadow:0 0 20px #ff006660; }
@@ -544,6 +551,12 @@
                 <input id="multi-name" maxlength="12" placeholder="YOUR NAME" autocomplete="off" spellcheck="false" style="display:block;width:180px;margin:8px auto;padding:8px;background:#0a0e18;border:1px solid #1a2840;color:#00f0ff;font-family:'JetBrains Mono',monospace;font-size:10px;text-align:center;letter-spacing:2px;text-transform:uppercase;border-radius:2px;outline:none">
                 <button class="menu-btn" onclick="menuMultiCreate()">Create Room</button>
                 <button class="menu-btn" onclick="menuMultiShowJoin()">Join</button>
+                <div id="room-browser" style="margin-top:16px;max-width:280px;margin-left:auto;margin-right:auto">
+                    <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">PARTIES EN ATTENTE</div>
+                    <div id="room-list" style="max-height:180px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a2840 transparent">
+                        <div id="room-list-empty" style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">Aucune partie en cours</div>
+                    </div>
+                </div>
                 <button class="menu-btn-back" onclick="menuMultiBack()">&#8592; Back</button>
             </div>
             <div id="menu-multi-host" style="display:none">
@@ -777,6 +790,6 @@
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=168"></script>
+    <script src="game.js?v=170"></script>
 </body>
 </html>
