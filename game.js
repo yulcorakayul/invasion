@@ -3517,7 +3517,19 @@ function handleMultiHostMessage(data, senderConn) {
     }
     if (data.type === 'multi_join') {
         if (multiPlayers.size >= 50) { senderConn.send({ type: 'lobby_full' }); senderConn.close(); return; }
-        multiPlayers.set(senderId, { conn: senderConn, name: data.name || ('P' + multiPlayers.size), lives: 20, score: 0, wave: 0, boardData: null, alive: true });
+        // Duplicate name check — kick old connection if same name reconnects
+        let joinName = data.name || ('P' + multiPlayers.size);
+        let dupId = null;
+        multiPlayers.forEach(function(p, id) {
+            if (id !== senderId && p.name === joinName) dupId = id;
+        });
+        if (dupId) {
+            let oldPlayer = multiPlayers.get(dupId);
+            if (oldPlayer && oldPlayer.conn) { try { oldPlayer.conn.close(); } catch(e){} }
+            multiPlayers.delete(dupId);
+            multiConns = multiConns.filter(function(c) { return c.peer !== dupId; });
+        }
+        multiPlayers.set(senderId, { conn: senderConn, name: joinName, lives: 20, score: 0, wave: 0, boardData: null, alive: true });
         multiConns.push(senderConn);
         updateMultiLobbyUI();
         let roster = [];
