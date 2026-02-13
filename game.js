@@ -3269,9 +3269,8 @@ function handlePeerMessage(data) {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
         var duelCatchUp = data.waveNum !== undefined && data.waveNum > waveNum + 1;
         if (duelCatchUp) {
-            // Behind by multiple waves (tab was hidden): skip ahead cleanly
-            enemies = [];
-            projectiles = [];
+            // Behind by multiple waves (tab was hidden): skip ahead
+            // Keep existing enemies on field (they still deal damage), just stop spawning more
             enemiesToSpawn = 0;
             waveActive = false;
             nextWaveTimer = 0;
@@ -3603,9 +3602,8 @@ function handleMultiJoinerMessage(data) {
         if (data.waveNum !== undefined && data.waveNum <= waveNum) return;
         var catchingUp = data.waveNum !== undefined && data.waveNum > waveNum + 1;
         if (catchingUp) {
-            // Behind by multiple waves (tab was hidden): skip ahead cleanly
-            enemies = [];
-            projectiles = [];
+            // Behind by multiple waves (tab was hidden): skip ahead
+            // Keep existing enemies on field (they still deal damage), just stop spawning more
             enemiesToSpawn = 0;
             waveActive = false;
             nextWaveTimer = 0;
