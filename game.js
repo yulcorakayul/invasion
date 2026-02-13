@@ -1688,7 +1688,7 @@ function gameLoop(time) {
     }
 
     // Solo victory overlay
-    if (!isDuel && !isMulti && waveNum >= WAVES.length && !waveActive && enemies.length === 0 && lives > 0) {
+    if (!isDuel && !isMulti && WAVES.length > 0 && waveNum >= WAVES.length && !waveActive && enemies.length === 0 && lives > 0) {
         if (!_soloSaved) {
             _soloSaved = true;
             if (authToken) {
