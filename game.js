@@ -3138,7 +3138,7 @@ function startDuel() {
     duelResultTitle = '';
     duelResultSub = '';
     opponentFinished = false;
-    duelStartTimer = 15; // 15s countdown before wave 1
+    duelStartTimer = 20; // 20s countdown before wave 1
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
     initOpponentCanvas();
@@ -3487,7 +3487,7 @@ function startMultiGame(playerRoster) {
     multiResultTitle = '';
     multiResultSub = '';
     _multiScoreSaved = false;
-    multiStartTimer = 15;
+    multiStartTimer = 20;
     for (let i = 0; i < playerRoster.length; i++) {
         if (playerRoster[i].id !== myPlayerId) { selectedViewPlayer = playerRoster[i].id; break; }
     }
