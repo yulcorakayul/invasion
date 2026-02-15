@@ -567,14 +567,14 @@
                 <div id="multi-chat-host" style="margin-top:12px;border:1px solid #1a2840;border-radius:2px;padding:6px;max-width:220px;margin-left:auto;margin-right:auto">
                     <div id="multi-chat-msgs-host" style="overflow-y:auto;height:70px;margin-bottom:6px;scrollbar-width:thin;scrollbar-color:#1a2840 transparent"></div>
                     <div style="display:flex;gap:4px">
-                        <input id="multi-chat-input-host" maxlength="100" placeholder="Message..." style="flex:1;padding:4px 6px;background:#0a0e18;border:1px solid #1a2840;color:#a0b8cc;font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:2px;outline:none" onkeydown="if(event.key==='Enter')sendMultiChat('host')">
+                        <input id="multi-chat-input-host" maxlength="100" placeholder="Message..." style="flex:1;padding:4px 6px;background:#0a0e18;border:1px solid #1a2840;color:#a0b8cc;font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:2px;outline:none;caret-color:#a0b8cc" onkeydown="if(event.key==='Enter')sendMultiChat('host')">
                         <button onclick="sendMultiChat('host')" style="padding:4px 8px;background:#0a0e18;border:1px solid #1a2840;color:#ff0066;font-size:10px;cursor:pointer;border-radius:2px">&#9654;</button>
                     </div>
                 </div>
                 <button class="menu-btn-back" onclick="menuMultiCancel()">&#8592; Cancel</button>
             </div>
             <div id="menu-multi-join" style="display:none">
-                <input id="multi-join-code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" style="display:block;width:180px;margin:8px auto;padding:10px;background:#0a0e18;border:1px solid #1a2840;color:#00f0ff;font-family:'Press Start 2P',monospace;font-size:16px;text-align:center;letter-spacing:8px;text-transform:uppercase;border-radius:2px;outline:none">
+                <input id="multi-join-code" maxlength="4" placeholder="CODE" autocomplete="off" spellcheck="false" style="display:block;width:180px;margin:8px auto;padding:10px;background:#0a0e18;border:1px solid #1a2840;color:#00f0ff;font-family:'Press Start 2P',monospace;font-size:16px;text-align:center;letter-spacing:8px;text-transform:uppercase;border-radius:2px;outline:none;caret-color:#00f0ff">
                 <button class="menu-btn" onclick="menuMultiJoin()">Join</button>
                 <div id="multi-join-error" style="color:#ff0066;font-size:9px;letter-spacing:1px;text-transform:uppercase;display:none;margin-top:6px"></div>
                 <button class="menu-btn-back" onclick="menuMultiBackToMenu()">&#8592; Back</button>
@@ -587,7 +587,7 @@
                 <div id="multi-chat-lobby" style="margin-top:12px;border:1px solid #1a2840;border-radius:2px;padding:6px;max-width:220px;margin-left:auto;margin-right:auto">
                     <div id="multi-chat-msgs-lobby" style="overflow-y:auto;height:70px;margin-bottom:6px;scrollbar-width:thin;scrollbar-color:#1a2840 transparent"></div>
                     <div style="display:flex;gap:4px">
-                        <input id="multi-chat-input-lobby" maxlength="100" placeholder="Message..." style="flex:1;padding:4px 6px;background:#0a0e18;border:1px solid #1a2840;color:#a0b8cc;font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:2px;outline:none" onkeydown="if(event.key==='Enter')sendMultiChat('lobby')">
+                        <input id="multi-chat-input-lobby" maxlength="100" placeholder="Message..." style="flex:1;padding:4px 6px;background:#0a0e18;border:1px solid #1a2840;color:#a0b8cc;font-family:'JetBrains Mono',monospace;font-size:9px;border-radius:2px;outline:none;caret-color:#a0b8cc" onkeydown="if(event.key==='Enter')sendMultiChat('lobby')">
                         <button onclick="sendMultiChat('lobby')" style="padding:4px 8px;background:#0a0e18;border:1px solid #1a2840;color:#ff0066;font-size:10px;cursor:pointer;border-radius:2px">&#9654;</button>
                     </div>
                 </div>
