@@ -414,19 +414,28 @@
         .mute-btn.muted { color: #40252a; border-color: rgba(255, 0, 68, 0.15); background: rgba(255, 0, 68, 0.05); }
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
-        /* ── EMOTE BAR ── */
-        #emote-bar { display:flex; gap:4px; padding:6px 8px; border-top:1px solid #ff006620; align-items:center; justify-content:center; }
-        .emote-btn { padding:4px 6px; background:#0a0e18; border:1px solid #1a2840; font-size:28px; cursor:pointer; border-radius:3px; transition:all .15s; line-height:1; }
+        /* ── RANKED CHAT ── */
+        #ranked-emote-row { display:none; gap:3px; padding:4px 6px; justify-content:center; align-items:center; border-top:1px solid #ff006620; border-bottom:1px solid #ff006610; }
+        #ranked-mute-btn { margin-left:4px; padding:2px 4px; background:#0a0e18; border:1px solid #1a2840; color:#ff0066; font-size:18px; cursor:pointer; border-radius:3px; line-height:1; opacity:0.5; transition:all .15s; }
+        #ranked-mute-btn:hover { opacity:0.8; }
+        #ranked-mute-btn.muted { opacity:1; background:rgba(255,0,102,0.15); border-color:#ff0066; }
+        .emote-btn { padding:2px 4px; background:#0a0e18; border:1px solid #1a2840; font-size:18px; cursor:pointer; border-radius:3px; transition:all .15s; line-height:1; }
         .emote-btn:hover { border-color:#00f0ff; background:#0a1420; transform:scale(1.15); }
         .emote-btn:active { border-color:#00f0ff; background:#0a1a2a; box-shadow:0 0 8px #00f0ff40; }
-        #emote-mute-btn { margin-left:6px; padding:4px 6px; background:transparent; border:1px solid #ff006640; color:#ff0066; font-size:28px; cursor:pointer; border-radius:3px; transition:all .15s; line-height:1; opacity:0.5; }
-        #emote-mute-btn:hover { opacity:0.8; }
-        #emote-mute-btn.muted { opacity:1; background:rgba(255,0,102,0.15); border-color:#ff0066; }
-        #emote-display { display:none; flex:1; min-height:60px; position:relative; overflow:hidden; }
-        #emote-display .emote-pop { position:absolute; left:50%; top:40%; font-size:48px; transform:translate(-50%,-50%) scale(0.5); animation:emotePop 2.5s ease-out forwards; pointer-events:none; filter:drop-shadow(0 0 4px rgba(0,0,0,0.5)); }
-        #emote-display .emote-pop.mine { filter:drop-shadow(0 0 10px #00f0ff) drop-shadow(0 0 20px #00f0ffaa) drop-shadow(0 0 35px #00f0ff60); }
-        #emote-display .emote-pop.enemy { filter:drop-shadow(0 0 10px #ff0066) drop-shadow(0 0 20px #ff0066aa) drop-shadow(0 0 35px #ff006660); }
-        @keyframes emotePop { 0% { opacity:1; transform:translate(-50%,-50%) scale(0.5); } 20% { opacity:1; transform:translate(-50%,-50%) scale(1.2) translateY(-5px); } 40% { transform:translate(-50%,-50%) scale(1); } 100% { opacity:0; transform:translate(-50%,-50%) scale(1) translateY(-15px); } }
+        #ranked-chat-msgs { display:none; overflow-y:auto; padding:4px 8px; scrollbar-width:thin; scrollbar-color:#1a2840 transparent; }
+        #ranked-chat-msgs::-webkit-scrollbar { width:3px; }
+        #ranked-chat-msgs::-webkit-scrollbar-thumb { background:#1a2840; border-radius:2px; }
+        .rc-msg { font-size:9px; padding:2px 0; line-height:1.4; }
+        .rc-msg .rc-name { font-weight:700; letter-spacing:0.5px; text-transform:uppercase; }
+        .rc-msg .rc-name.mine { color:#00f0ff; }
+        .rc-msg .rc-name.enemy { color:#ff0066; }
+        .rc-msg .rc-text { color:#a0b8cc; }
+        .rc-msg.rc-emote { padding:1px 0; }
+        .rc-msg.rc-emote .rc-emoji { font-size:22px; vertical-align:middle; }
+        #ranked-chat-input-row { display:none; gap:4px; padding:4px 6px; border-top:1px solid #ff006610; }
+        #ranked-chat-input { flex:1; padding:3px 6px; background:#0a0e18; border:1px solid #1a2840; color:#a0b8cc; font-family:'JetBrains Mono',monospace; font-size:9px; border-radius:2px; outline:none; }
+        #ranked-chat-input:focus { border-color:#00f0ff40; }
+        #ranked-chat-input-row button { padding:3px 6px; background:#0a0e18; border:1px solid #1a2840; color:#ff0066; font-size:9px; cursor:pointer; border-radius:2px; }
         /* ── MULTI PLAYER LIST ── */
         #multi-player-list { display:none; flex:1; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; scrollbar-width:none; -ms-overflow-style:none; }
         #multi-player-list::-webkit-scrollbar { display:none; }
@@ -777,20 +786,24 @@
             <span class="opp-stat">Score <b id="opp-score">0</b></span>
         </div>
         <canvas id="opp-canvas"></canvas>
-        <div id="emote-bar" style="display:none">
+        <div id="ranked-emote-row" style="display:none">
             <button class="emote-btn" onclick="sendEmote(0)">👏</button>
             <button class="emote-btn" onclick="sendEmote(1)">🍀</button>
             <button class="emote-btn" onclick="sendEmote(2)">👍</button>
             <button class="emote-btn" onclick="sendEmote(3)">🤔</button>
             <button class="emote-btn" onclick="sendEmote(4)">😐</button>
             <button class="emote-btn" onclick="sendEmote(5)">💀</button>
-            <button id="emote-mute-btn" onclick="toggleEmoteMute()" title="Mute emotes">🔇</button>
+            <button id="ranked-mute-btn" onclick="toggleRankedMute()" title="Mute chat">🔇</button>
         </div>
-        <div id="emote-display"></div>
+        <div id="ranked-chat-msgs" style="display:none"></div>
+        <div id="ranked-chat-input-row" style="display:none">
+            <input id="ranked-chat-input" maxlength="100" placeholder="Message..." style="caret-color:#a0b8cc" onkeydown="if(event.key==='Enter')sendRankedChat()">
+            <button onclick="sendRankedChat()">&#9654;</button>
+        </div>
         <div id="multi-player-list"></div>
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=172"></script>
+    <script src="game.js?v=174"></script>
 </body>
 </html>

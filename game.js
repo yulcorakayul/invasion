@@ -2636,7 +2636,7 @@ function resetGameState() {
     _duelDisconnectCountdown = 0;
     multiEnded = false; multiResultTitle = ''; multiResultSub = '';
     multiStartTimer = 0; _lastMultiStatusSend = 0; _multiScoreSaved = false;
-    let ed = document.getElementById('emote-display'); if (ed) ed.innerHTML = '';
+    let rc = document.getElementById('ranked-chat-msgs'); if (rc) rc.innerHTML = '';
     _emoteSendTimes = [];
     _pendingWaveStarts = [];
     for (let r = 0; r < GRID; r++) { grid[r] = []; for (let c = 0; c < GRID; c++) grid[r][c] = 0; }
@@ -2646,8 +2646,7 @@ function resetGameState() {
     setExitGroups(newExit);
     document.getElementById('replay-btn').style.display = 'none';
     document.getElementById('speed-btn').style.display = 'none';
-    document.getElementById('emote-bar').style.display = 'none';
-    document.getElementById('emote-display').style.display = 'none';
+    showRankedChat(false);
     resetWaveBar();
     updateUI();
 }
@@ -3285,8 +3284,7 @@ function startDuel() {
     duelStartTimer = 20; // 20s countdown before wave 1
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
-    document.getElementById('emote-bar').style.display = 'flex';
-    document.getElementById('emote-display').style.display = 'flex';
+    showRankedChat(true);
     document.getElementById('multi-player-list').style.display = 'none';
     initOpponentCanvas();
     resizeGame();
@@ -3347,8 +3345,10 @@ function handlePeerMessage(data) {
         checkDuelEnd();
     } else if (data.type === 'emote') {
         if (data.id >= 0 && data.id < EMOTES.length) {
-            showEmotePopup(EMOTES[data.id], false);
+            appendRankedEmote(EMOTES[data.id], false);
         }
+    } else if (data.type === 'duel_chat') {
+        appendRankedMsg(data.name || 'Opp', data.text || '', false);
     }
 }
 
@@ -3778,8 +3778,7 @@ function startMultiGame(playerRoster) {
     }
     document.getElementById('menu-overlay').style.display = 'none';
     document.getElementById('opp-panel').classList.add('active');
-    document.getElementById('emote-bar').style.display = 'none';
-    document.getElementById('emote-display').style.display = 'none';
+    showRankedChat(false);
     document.getElementById('multi-player-list').style.display = 'block';
     initOpponentCanvas();
     resizeGame();
@@ -4137,43 +4136,99 @@ function drawOpponentBoard() {
     ox.restore();
 }
 
-// === EMOTES ===
+// === EMOTES & RANKED CHAT ===
+function showRankedChat(show) {
+    var d = show ? 'flex' : 'none';
+    var emoteRow = document.getElementById('ranked-emote-row');
+    var msgs = document.getElementById('ranked-chat-msgs');
+    var inputRow = document.getElementById('ranked-chat-input-row');
+    emoteRow.style.display = d;
+    msgs.style.display = show ? 'block' : 'none';
+    inputRow.style.display = d;
+    if (show) {
+        msgs.innerHTML = '';
+        // Compute available height for messages
+        setTimeout(function() {
+            var panel = document.getElementById('opp-panel');
+            var used = document.getElementById('opp-bar').offsetHeight
+                     + document.getElementById('opp-canvas').offsetHeight
+                     + emoteRow.offsetHeight
+                     + inputRow.offsetHeight;
+            msgs.style.height = (panel.offsetHeight - used) + 'px';
+        }, 50);
+    } else {
+        msgs.style.height = '';
+    }
+}
 function sendEmote(id) {
     if (!isDuel || duelEnded) return;
     let now = Date.now();
-    // Rate limit: max 3 emotes per 10s
     _emoteSendTimes = _emoteSendTimes.filter(function(t) { return now - t < 10000; });
     if (_emoteSendTimes.length >= 3) return;
     _emoteSendTimes.push(now);
     if (conn && conn.open) conn.send({ type: 'emote', id: id });
-    showEmotePopup(EMOTES[id], true);
+    appendRankedEmote(EMOTES[id], true);
 }
 
-function showEmotePopup(emoji, isMine) {
-    if (_emoteMuted) return;
-    let el = document.getElementById('emote-display');
-    if (!el) return;
-    let span = document.createElement('span');
-    span.className = 'emote-pop ' + (isMine ? 'mine' : 'enemy');
-    span.textContent = emoji;
-    el.appendChild(span);
-    setTimeout(function() { if (span.parentNode) span.parentNode.removeChild(span); }, 2500);
+function appendRankedEmote(emoji, isMine) {
+    if (_rankedChatMuted && !isMine) return;
+    let container = document.getElementById('ranked-chat-msgs');
+    if (!container) return;
+    let div = document.createElement('div');
+    div.className = 'rc-msg rc-emote';
+    let name = document.createElement('span');
+    name.className = 'rc-name ' + (isMine ? 'mine' : 'enemy');
+    name.textContent = isMine ? (currentUser ? currentUser.username : 'You') : 'Opp';
+    let emojiSpan = document.createElement('span');
+    emojiSpan.className = 'rc-emoji';
+    emojiSpan.textContent = ' ' + emoji;
+    div.appendChild(name);
+    div.appendChild(emojiSpan);
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
 }
 
-function toggleEmoteMute() {
-    _emoteMuted = !_emoteMuted;
-    let btn = document.getElementById('emote-mute-btn');
+function sendRankedChat() {
+    if (!isDuel || duelEnded) return;
+    let input = document.getElementById('ranked-chat-input');
+    let text = (input.value || '').trim();
+    if (!text) return;
+    input.value = '';
+    let myName = currentUser ? currentUser.username : 'You';
+    if (conn && conn.open) conn.send({ type: 'duel_chat', name: myName, text: text });
+    appendRankedMsg(myName, text, true);
+}
+
+function appendRankedMsg(name, text, isMine) {
+    if (_rankedChatMuted && !isMine) return;
+    let container = document.getElementById('ranked-chat-msgs');
+    if (!container) return;
+    let div = document.createElement('div');
+    div.className = 'rc-msg';
+    let nameSpan = document.createElement('span');
+    nameSpan.className = 'rc-name ' + (isMine ? 'mine' : 'enemy');
+    nameSpan.textContent = name;
+    let textSpan = document.createElement('span');
+    textSpan.className = 'rc-text';
+    textSpan.textContent = ': ' + text;
+    div.appendChild(nameSpan);
+    div.appendChild(textSpan);
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+let _rankedChatMuted = false;
+function toggleRankedMute() {
+    _rankedChatMuted = !_rankedChatMuted;
+    let btn = document.getElementById('ranked-mute-btn');
     if (btn) {
-        btn.classList.toggle('muted', _emoteMuted);
-        btn.textContent = _emoteMuted ? '\u{1F507}' : '\u{1F508}';
+        btn.classList.toggle('muted', _rankedChatMuted);
+        btn.textContent = _rankedChatMuted ? '\u{1F507}' : '\u{1F508}';
     }
-    let bar = document.getElementById('emote-bar');
-    if (bar) {
-        let btns = bar.querySelectorAll('.emote-btn');
-        for (let i = 0; i < btns.length; i++) btns[i].style.display = _emoteMuted ? 'none' : '';
-    }
-    let ed = document.getElementById('emote-display');
-    if (ed) ed.innerHTML = '';
+    document.getElementById('ranked-chat-msgs').style.display = _rankedChatMuted ? 'none' : 'block';
+    document.getElementById('ranked-chat-input-row').style.display = _rankedChatMuted ? 'none' : 'flex';
+    var emotes = document.getElementById('ranked-emote-row').querySelectorAll('.emote-btn');
+    for (var i = 0; i < emotes.length; i++) emotes[i].style.display = _rankedChatMuted ? 'none' : '';
 }
 
 // === MULTI CHAT ===
