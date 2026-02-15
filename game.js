@@ -3123,10 +3123,11 @@ function submitRankedResult(resultStr) {
             result: resultStr
         })
     }).then(function(r) { return r.json(); }).then(function(data) {
+        console.log('Ranked result:', data);
         if (data.eloChange !== undefined) rankedEloChange = data.eloChange;
         if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
         if (data.status === 'waiting') pollRankedResult(mid, 0);
-    }).catch(function() { showMessage('Result submit failed'); });
+    }).catch(function(e) { console.error('Result submit failed:', e); showMessage('Result submit failed'); });
 }
 
 function pollRankedResult(matchId, attempt) {
@@ -3135,6 +3136,7 @@ function pollRankedResult(matchId, attempt) {
         fetchWithTimeout(SERVER_URL + '/api/match/result/' + matchId, {
             headers: { 'Authorization': 'Bearer ' + authToken }
         }).then(function(r) { return r.json(); }).then(function(data) {
+            console.log('Ranked poll:', data);
             if (data.status === 'waiting') {
                 pollRankedResult(matchId, attempt + 1);
             } else {
@@ -3594,7 +3596,7 @@ function updateMultiLobbyUI() {
     multiPlayers.forEach(function(p, id) {
         count++;
         let isMe = id === myPlayerId;
-        html += '<div style="color:' + (isMe ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + (isMe ? p.name + ' (Host)' : p.name) + '</div>';
+        html += '<div style="color:' + (isMe ? '#00f0ff' : '#607888') + ';font-size:10px;padding:2px 0">' + escapeHtml(isMe ? p.name + ' (Host)' : p.name) + '</div>';
     });
     list.innerHTML = html;
     document.getElementById('multi-start-btn').disabled = count < 2;
