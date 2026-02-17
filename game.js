@@ -3102,15 +3102,111 @@ function showProfile() {
 function profShowTab(tab) {
     var tabs = document.querySelectorAll('.prof-tab');
     tabs.forEach(function(t) { t.classList.remove('active'); });
+    document.getElementById('prof-stats').style.display = 'none';
+    document.getElementById('prof-history').style.display = 'none';
+    document.getElementById('prof-settings').style.display = 'none';
     if (tab === 'stats') {
         tabs[0].classList.add('active');
         document.getElementById('prof-stats').style.display = '';
-        document.getElementById('prof-history').style.display = 'none';
-    } else {
+    } else if (tab === 'history') {
         tabs[1].classList.add('active');
-        document.getElementById('prof-stats').style.display = 'none';
         document.getElementById('prof-history').style.display = '';
+    } else {
+        tabs[2].classList.add('active');
+        document.getElementById('prof-settings').style.display = '';
+        renderKeybindings();
     }
+}
+
+// === KEYBINDINGS ===
+var KB_DEFAULTS = { nextWave: ' ', upgrade: 'u', sell: 's' };
+var keyBindings = JSON.parse(localStorage.getItem('tdpro_keybinds') || 'null') || Object.assign({}, KB_DEFAULTS);
+var _kbListening = null; // which action is being rebound
+
+function keyDisplayName(key) {
+    if (key === ' ') return 'SPACE';
+    if (key === 'rightclick') return 'RIGHT CLICK';
+    return key.toUpperCase();
+}
+
+function renderKeybindings() {
+    var list = document.getElementById('kb-list');
+    var actions = [
+        { id: 'nextWave', label: 'Next Wave' },
+        { id: 'upgrade', label: 'Upgrade' },
+        { id: 'sell', label: 'Sell' }
+    ];
+    list.innerHTML = '';
+    for (var i = 0; i < actions.length; i++) {
+        var a = actions[i];
+        var row = document.createElement('div');
+        row.className = 'kb-row';
+        row.innerHTML = '<span class="kb-label">' + a.label + '</span><button class="kb-btn" data-action="' + a.id + '">' + keyDisplayName(keyBindings[a.id]) + '</button>';
+        list.appendChild(row);
+    }
+    list.querySelectorAll('.kb-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { startListening(btn); });
+    });
+}
+
+function startListening(btn) {
+    if (_kbListening) {
+        _kbListening.classList.remove('listening');
+        _kbListening.textContent = keyDisplayName(keyBindings[_kbListening.dataset.action]);
+    }
+    _kbListening = btn;
+    btn.classList.add('listening');
+    btn.textContent = 'ESC = CANCEL';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (!_kbListening) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var key = e.key;
+    if (key === 'Escape') {
+        _kbListening.classList.remove('listening');
+        _kbListening.textContent = keyDisplayName(keyBindings[_kbListening.dataset.action]);
+        _kbListening = null;
+        return;
+    }
+    keyBindings[_kbListening.dataset.action] = key.length === 1 ? key.toLowerCase() : key;
+    localStorage.setItem('tdpro_keybinds', JSON.stringify(keyBindings));
+    _kbListening.classList.remove('listening');
+    _kbListening.textContent = keyDisplayName(key);
+    _kbListening = null;
+}, true);
+
+// Capture right-click during keybind listening
+document.addEventListener('contextmenu', function(e) {
+    if (_kbListening) {
+        e.preventDefault();
+        keyBindings[_kbListening.dataset.action] = 'rightclick';
+        localStorage.setItem('tdpro_keybinds', JSON.stringify(keyBindings));
+        _kbListening.classList.remove('listening');
+        _kbListening.textContent = 'RIGHT CLICK';
+        _kbListening = null;
+        return;
+    }
+    // In-game right-click action
+    if (document.getElementById('menu-overlay').style.display !== 'none') return;
+    var hasRightClick = false;
+    if (keyBindings.sell === 'rightclick' || keyBindings.upgrade === 'rightclick') {
+        var target = hoveredCell ? getTowerAt(hoveredCell.row, hoveredCell.col) : null;
+        if (target) {
+            selectedTower = target;
+            if (keyBindings.sell === 'rightclick') { sellSelected(); hasRightClick = true; }
+            else if (keyBindings.upgrade === 'rightclick') { upgradeSelected(); hasRightClick = true; }
+        }
+    }
+    if (keyBindings.nextWave === 'rightclick') { startWave(); hasRightClick = true; }
+    if (hasRightClick) e.preventDefault();
+});
+
+function resetKeybindings() {
+    keyBindings = Object.assign({}, KB_DEFAULTS);
+    localStorage.setItem('tdpro_keybinds', JSON.stringify(keyBindings));
+    renderKeybindings();
 }
 
 function hideProfile() {
@@ -4202,18 +4298,20 @@ document.addEventListener('keydown', function(e) {
     // Ignore shortcuts if menu is open or typing in input
     if (document.getElementById('menu-overlay').style.display !== 'none') return;
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
-    // Space = launch next wave
-    if (e.key === ' ' || e.code === 'Space') {
+    var k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === keyBindings.nextWave) {
         e.preventDefault();
         startWave();
     }
-    // U = upgrade selected tower
-    if (e.key === 'u' || e.key === 'U') {
-        if (selectedTower) upgradeSelected();
+    if (k === keyBindings.upgrade) {
+        var ut = hoveredCell ? getTowerAt(hoveredCell.row, hoveredCell.col) : null;
+        if (ut) { selectedTower = ut; upgradeSelected(); }
+        else if (selectedTower) upgradeSelected();
     }
-    // S = sell selected tower
-    if (e.key === 's' || e.key === 'S') {
-        if (selectedTower) sellSelected();
+    if (k === keyBindings.sell) {
+        var st = hoveredCell ? getTowerAt(hoveredCell.row, hoveredCell.col) : null;
+        if (st) { selectedTower = st; sellSelected(); }
+        else if (selectedTower) sellSelected();
     }
     // 1-9 = select tower type
     let num = parseInt(e.key);
