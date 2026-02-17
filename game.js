@@ -20,7 +20,9 @@ let CS = (function() {
     BARS_H = document.getElementById('wrap').offsetHeight;
     wb.removeChild(tmp);
     c.style.display = '';
-    return Math.max(18, Math.min(28, Math.floor((window.innerHeight - BARS_H - 10) / GRID)));
+    var hCS = Math.floor((window.innerHeight - BARS_H - 10) / GRID);
+    var wCS = Math.floor(window.innerWidth / (GRID + 2));
+    return Math.max(14, Math.min(28, Math.min(hCS, wCS)));
 })();
 
 let GX = CS;
@@ -786,6 +788,14 @@ function drawBoosterGlows() {
 }
 
 // === ENEMIES ===
+function getWaveHp(baseHp) {
+    if (waveNum > 60) return Math.floor(baseHp * 0.7);
+    if (waveNum > 30) return Math.floor(baseHp * 0.8);
+    return baseHp;
+}
+function applyWaveNerfs(enemy) {
+    if (waveNum > 30 && enemy.regenRate > 0) enemy.regenRate *= 0.5;
+}
 class Enemy {
     constructor(row, hp, typeName, spawnPos) {
         const et = ENEMY_TYPES[typeName];
@@ -1462,7 +1472,9 @@ function gameLoop(time) {
                 else spawnRow = pickEntryRow(valid);
             }
             if (spawnRow !== undefined) {
-                enemies.push(new Enemy(spawnRow, waveData.hp, spawnType));
+                var _e = new Enemy(spawnRow, getWaveHp(waveData.hp), spawnType);
+                applyWaveNerfs(_e);
+                enemies.push(_e);
                 enemiesToSpawn--;
                 spawnTimer = et.spawnInt || SPAWN_INT;
                 updateUI();
@@ -1491,7 +1503,9 @@ function gameLoop(time) {
                 const spreadY = (i - (e.splits - 1) / 2) * CS * 0.35;
                 const childY = Math.max(CS * 0.5, Math.min(GRID * CS - CS * 0.5, e.y + spreadY));
                 const childX = Math.min(e.x + CS, maxX); // jump 1 cell forward, clamped
-                newEnemies.push(new Enemy(0, childHp, e.typeName, { x: childX, y: childY }));
+                var _child = new Enemy(0, childHp, e.typeName, { x: childX, y: childY });
+                applyWaveNerfs(_child);
+                newEnemies.push(_child);
             }
         }
     }
@@ -1556,8 +1570,9 @@ function gameLoop(time) {
                 } else if (isDuel) {
                     startWave(true);
                 }
-            } else if (waveNum >= 1 && nextWaveTimer <= 0) {
-                nextWaveTimer = 1;
+            // Solo auto-advance: timer expired → start immediately
+            } else if (!isMulti && !isDuel && lives > 0 && waveNum < WAVES.length) {
+                if (nextWaveTimer <= 0) startWave(false);
             }
         }
         updateUI();
@@ -2211,7 +2226,7 @@ requestAnimationFrame(gameLoop);
 
 // === RESIZE ===
 function resizeGame() {
-    const newCS = Math.max(18, Math.min(28, Math.floor((window.innerHeight - BARS_H - 10) / GRID)));
+    const newCS = Math.max(14, Math.min(28, Math.floor(Math.min((window.innerHeight - BARS_H - 10) / GRID, window.innerWidth / (GRID + 2)))));
     if (newCS === CS) return;
     const ratio = newCS / CS;
     CS = newCS;
@@ -3314,7 +3329,7 @@ function handlePeerMessage(data) {
                 else { var v2 = getValidEntryRows(); if (v2.length) sr2 = v2[Math.floor(Math.random() * v2.length)]; }
                 var _fi2 = wd2.count - enemiesToSpawn;
                 var _ft2 = wd2.types ? wd2.types[_fi2 % wd2.types.length] : wd2.type;
-                if (sr2 !== undefined) enemies.push(new Enemy(sr2, wd2.hp, _ft2));
+                if (sr2 !== undefined) { var _e2 = new Enemy(sr2, getWaveHp(wd2.hp), _ft2); applyWaveNerfs(_e2); enemies.push(_e2); }
                 enemiesToSpawn--;
             }
         }
@@ -3649,7 +3664,7 @@ function handleMultiHostMessage(data, senderConn) {
                 else { let v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
                 const _fi = wd.count - enemiesToSpawn;
                 const _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
+                if (sr !== undefined) { let _e3 = new Enemy(sr, getWaveHp(wd.hp), _ft); applyWaveNerfs(_e3); enemies.push(_e3); }
                 enemiesToSpawn--;
             }
         }
@@ -3748,7 +3763,7 @@ function handleMultiJoinerMessage(data) {
                 else { var v = getValidEntryRows(); if (v.length) sr = v[Math.floor(Math.random() * v.length)]; }
                 var _fi = wd.count - enemiesToSpawn;
                 var _ft = wd.types ? wd.types[_fi % wd.types.length] : wd.type;
-                if (sr !== undefined) enemies.push(new Enemy(sr, wd.hp, _ft));
+                if (sr !== undefined) { var _e4 = new Enemy(sr, getWaveHp(wd.hp), _ft); applyWaveNerfs(_e4); enemies.push(_e4); }
                 enemiesToSpawn--;
             }
         }
