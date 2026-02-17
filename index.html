@@ -638,9 +638,9 @@
                 <button class="menu-btn" onclick="menuMultiCreate()">Create Room</button>
                 <button class="menu-btn" onclick="menuMultiShowJoin()">Join</button>
                 <div id="room-browser" style="margin-top:16px;max-width:280px;margin-left:auto;margin-right:auto">
-                    <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">PARTIES EN ATTENTE</div>
+                    <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">OPEN GAMES</div>
                     <div id="room-list" style="max-height:150px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1a2840 transparent">
-                        <div id="room-list-empty" style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">Aucune partie en cours</div>
+                        <div id="room-list-empty" style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">No games available</div>
                     </div>
                 </div>
                 <button class="menu-btn-back" onclick="menuMultiBack()">&#8592; Back</button>
@@ -745,7 +745,7 @@
         <div id="solo-end-box">
             <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">SAVE YOUR SCORE</div>
             <div id="solo-end-score">0</div>
-            <input class="auth-input" id="solo-guest-name" placeholder="ENTER A PSEUDO" maxlength="20" autocomplete="off" spellcheck="false">
+            <input class="auth-input" id="solo-guest-name" placeholder="ENTER A USERNAME" maxlength="20" autocomplete="off" spellcheck="false">
             <button class="menu-btn" onclick="saveSoloGuest()" style="width:200px">SAVE</button>
             <div class="solo-end-sep">&#8212; or &#8212;</div>
             <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">LOGIN TO YOUR ACCOUNT</div>
@@ -917,6 +917,6 @@
         </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=186"></script>
+    <script src="game.js?v=187"></script>
 </body>
 </html>

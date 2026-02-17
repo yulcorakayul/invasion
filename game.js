@@ -2645,7 +2645,7 @@ function showReplayBtn() {
     if (isMulti && isHost) {
         btn.textContent = 'REPLAY';
     } else if (isMulti && !isHost) {
-        btn.textContent = 'EN ATTENTE DE L\'H\u00D4TE';
+        btn.textContent = 'WAITING FOR HOST';
         btn.classList.add('waiting-host');
         btn.disabled = true;
     } else if (isRanked) {
@@ -3706,7 +3706,7 @@ function fetchRoomList() {
             var container = document.getElementById('room-list');
             if (!container) return;
             if (!rooms || rooms.length === 0) {
-                container.innerHTML = '<div style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">Aucune partie en cours</div>';
+                container.innerHTML = '<div style="color:#2a3a4a;font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:12px 0">No games available</div>';
                 return;
             }
             var html = '';
@@ -4612,7 +4612,7 @@ async function saveSoloGuest() {
     let name = document.getElementById('solo-guest-name').value.trim();
     let errEl = document.getElementById('solo-end-error');
     errEl.textContent = '';
-    if (!name) { errEl.textContent = 'Enter a pseudo'; return; }
+    if (!name) { errEl.textContent = 'Enter a username'; return; }
     if (name.length < 3 || name.length > 20) { errEl.textContent = 'Name must be 3-20 characters'; return; }
     if (!/^[a-zA-Z0-9_-]+$/.test(name)) { errEl.textContent = 'Letters, numbers, _ and - only'; return; }
     try {
