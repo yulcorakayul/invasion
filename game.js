@@ -1680,9 +1680,18 @@ function gameLoop(time) {
                 ctx.shadowColor = '#ff0066'; ctx.shadowBlur = 20;
                 ctx.fillText('GAME OVER', CANVAS_W / 2, CANVAS_H / 2 - 10);
                 ctx.shadowBlur = 0;
-                ctx.fillStyle = '#506070';
                 ctx.font = '10px "JetBrains Mono", monospace';
-                ctx.fillText('SCORE: ' + finalScore(), CANVAS_W / 2, CANVAS_H / 2 + 20);
+                var scoreLabel = 'SCORE: ';
+                var scoreVal = '' + finalScore();
+                var labelW = ctx.measureText(scoreLabel).width;
+                var valW = ctx.measureText(scoreVal).width;
+                var totalW = labelW + valW;
+                var startX = CANVAS_W / 2 - totalW / 2;
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#708090';
+                ctx.fillText(scoreLabel, startX, CANVAS_H / 2 + 20);
+                ctx.fillStyle = '#00ff88';
+                ctx.fillText(scoreVal, startX + labelW, CANVAS_H / 2 + 20);
             }
             showReplayBtn();
             scheduleLoop();
