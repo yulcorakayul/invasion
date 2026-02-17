@@ -2642,7 +2642,7 @@ function showReplayBtn() {
     } else if (isRanked) {
         btn.textContent = 'PLAY AGAIN';
     } else {
-        btn.textContent = 'MENU';
+        btn.textContent = 'REPLAY';
     }
     btn.style.display = 'block';
 }
@@ -2682,7 +2682,16 @@ function resetGameState() {
 function onReplayClick() {
     if (isMulti && isHost) { multiReplay(); }
     else if (isRanked) { rankedReplay(); }
-    else { location.reload(); }
+    else { soloReplay(); }
+}
+
+function soloReplay() {
+    resetGameState();
+    _soloSaved = false;
+    loadGameConfig();
+    initGrid();
+    document.getElementById('wave').textContent = '0/' + WAVES.length;
+    resetWaveBar();
 }
 
 function multiReplay() {
