@@ -312,7 +312,7 @@
             position: fixed;
             top: 12px;
             right: 12px;
-            z-index: 9999;
+            z-index: 10000;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -482,8 +482,13 @@
         #legal-box h2 { font-family:'Press Start 2P',monospace; font-size:10px; color:#00f0ff; letter-spacing:3px; margin-bottom:14px; }
         #legal-box h3 { color:#607888; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; margin:14px 0 6px; }
         #legal-box p { color:#405060; font-size:9px; line-height:1.7; letter-spacing:0.3px; margin:0 0 8px; }
+        /* ── PROFILE TABS ── */
+        .prof-tabs { display:flex; gap:4px; justify-content:center; margin-bottom:14px; }
+        .prof-tab { padding:5px 14px; background:transparent; border:1px solid #1a2840; border-radius:2px; color:#405060; font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:all .15s; text-transform:uppercase; }
+        .prof-tab:hover { border-color:#00f0ff60; color:#00f0ff; }
+        .prof-tab.active { border-color:#00f0ff; color:#00f0ff; background:rgba(0,240,255,0.1); }
         /* ── MATCH HISTORY ── */
-        #prof-history { max-height:150px; overflow-y:auto; margin-top:12px; scrollbar-width:thin; scrollbar-color:#1a2840 transparent; }
+        #prof-history { max-height:200px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:#1a2840 transparent; }
         .mh-row { display:flex; align-items:center; gap:6px; padding:4px 6px; border-bottom:1px solid #0a1828; font-size:9px; letter-spacing:0.5px; }
         .mh-row:last-child { border-bottom:none; }
         .mh-result { font-weight:700; width:24px; text-align:center; flex-shrink:0; }
@@ -650,7 +655,7 @@
             </div>
         </div>
     </div>
-    <div id="top-bar">
+    <div id="top-bar" style="display:none">
         <button id="login-btn" class="tb-btn" onclick="showLoginOverlay()" title="Login">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
             <span>Login</span>
@@ -674,14 +679,19 @@
     <div id="profile-overlay">
         <div id="profile-box">
             <div class="profile-value name" id="prof-name">---</div>
-            <div style="max-width:220px;margin:0 auto">
-                <div class="profile-stat-row"><span class="profile-stat-label">ELO</span><span class="profile-stat-val" id="prof-elo" style="color:#ff0066">---</span></div>
-                <div class="profile-stat-row"><span class="profile-stat-label">Games Played</span><span class="profile-stat-val" id="prof-played">0</span></div>
-                <div class="profile-stat-row"><span class="profile-stat-label">Solo Best Wave</span><span class="profile-stat-val" id="prof-wave" style="color:#00f0ff">0</span></div>
-                <div class="profile-stat-row"><span class="profile-stat-label">Solo Best Score</span><span class="profile-stat-val" id="prof-score" style="color:#00ff88">0</span></div>
+            <div class="prof-tabs">
+                <button class="prof-tab active" onclick="profShowTab('stats')">Stats</button>
+                <button class="prof-tab" onclick="profShowTab('history')">History</button>
             </div>
-            <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-top:14px;margin-bottom:4px">Match History</div>
-            <div id="prof-history"><div style="color:#2a3a4a;font-size:9px;padding:8px 0;text-align:center;letter-spacing:1px">No matches yet</div></div>
+            <div id="prof-stats">
+                <div style="max-width:220px;margin:0 auto">
+                    <div class="profile-stat-row"><span class="profile-stat-label">ELO</span><span class="profile-stat-val" id="prof-elo" style="color:#ff0066">---</span></div>
+                    <div class="profile-stat-row"><span class="profile-stat-label">Games Played</span><span class="profile-stat-val" id="prof-played">0</span></div>
+                    <div class="profile-stat-row"><span class="profile-stat-label">Solo Best Wave</span><span class="profile-stat-val" id="prof-wave" style="color:#00f0ff">0</span></div>
+                    <div class="profile-stat-row"><span class="profile-stat-label">Solo Best Score</span><span class="profile-stat-val" id="prof-score" style="color:#00ff88">0</span></div>
+                </div>
+            </div>
+            <div id="prof-history" style="display:none"><div style="color:#2a3a4a;font-size:9px;padding:8px 0;text-align:center;letter-spacing:1px">No matches yet</div></div>
             <button class="menu-btn-back" onclick="hideProfile();authLogout()" style="margin-top:16px;color:#ff0066">Logout</button>
             <button class="menu-btn-back" onclick="hideProfile()">&#8592; Close</button>
         </div>
@@ -875,6 +885,6 @@
         </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=178"></script>
+    <script src="game.js?v=180"></script>
 </body>
 </html>

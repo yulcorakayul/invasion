@@ -2683,6 +2683,7 @@ function multiReplay() {
     document.getElementById('opp-panel').classList.remove('active');
     document.getElementById('multi-player-list').style.display = 'none';
     document.getElementById('menu-overlay').style.display = '';
+    document.getElementById('top-bar').style.display = '';
     document.getElementById('menu-multi-host').style.display = '';
     document.getElementById('multi-chat-msgs-host').innerHTML = '';
     updateMultiLobbyUI();
@@ -2699,6 +2700,7 @@ function rankedReplay() {
     rankedMatchId = null;
     document.getElementById('opp-panel').classList.remove('active');
     document.getElementById('menu-overlay').style.display = '';
+    document.getElementById('top-bar').style.display = '';
     startRankedQueue();
 }
 
@@ -2718,6 +2720,7 @@ function menuStartSolo() {
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     document.getElementById('menu-overlay').style.display = 'none';
+    document.getElementById('top-bar').style.display = '';
     document.getElementById('speed-btn').style.display = '';
 }
 
@@ -3001,8 +3004,23 @@ function showProfile() {
     document.getElementById('prof-played').textContent = currentUser.gamesPlayed || 0;
     document.getElementById('prof-wave').textContent = currentUser.bestWave || 0;
     document.getElementById('prof-score').textContent = currentUser.bestScore || 0;
+    profShowTab('stats');
     document.getElementById('profile-overlay').style.display = 'flex';
     loadMatchHistory();
+}
+
+function profShowTab(tab) {
+    var tabs = document.querySelectorAll('.prof-tab');
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    if (tab === 'stats') {
+        tabs[0].classList.add('active');
+        document.getElementById('prof-stats').style.display = '';
+        document.getElementById('prof-history').style.display = 'none';
+    } else {
+        tabs[1].classList.add('active');
+        document.getElementById('prof-stats').style.display = 'none';
+        document.getElementById('prof-history').style.display = '';
+    }
 }
 
 function hideProfile() {
@@ -3020,8 +3038,11 @@ function loadMatchHistory() {
             return;
         }
         box.innerHTML = '';
+        var shown = 0;
         data.forEach(function(m) {
             if (m.status === 'cancelled') return;
+            if (shown >= 20) return;
+            shown++;
             var row = document.createElement('div');
             row.className = 'mh-row';
             var res = m.result === 'win' ? 'W' : m.result === 'loss' ? 'L' : 'D';
@@ -3202,6 +3223,7 @@ function pollRankedResult(matchId, attempt) {
 async function menuShowDuel() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-duel').style.display = '';
+    document.getElementById('top-bar').style.display = '';
     if (authToken) {
         let ok = await loadProfile();
         if (ok) { showLoggedMenu(); } else { showAuthMenu(); }
@@ -3213,16 +3235,19 @@ async function menuShowDuel() {
 function menuBack() {
     document.getElementById('menu-duel').style.display = 'none';
     document.getElementById('menu-main').style.display = '';
+    document.getElementById('top-bar').style.display = 'none';
 }
 
 function menuShowRules() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-rules').style.display = '';
+    document.getElementById('top-bar').style.display = '';
 }
 
 function menuBackFromRules() {
     document.getElementById('menu-rules').style.display = 'none';
     document.getElementById('menu-main').style.display = '';
+    document.getElementById('top-bar').style.display = 'none';
 }
 
 function menuCreateRoom() {
@@ -3521,12 +3546,14 @@ function joinRoomFromBrowser(code) {
 function menuShowMulti() {
     document.getElementById('menu-main').style.display = 'none';
     document.getElementById('menu-multi').style.display = '';
+    document.getElementById('top-bar').style.display = '';
     if (currentUser) document.getElementById('multi-name').value = currentUser.username;
     startRoomListPolling();
 }
 function menuMultiBack() {
     document.getElementById('menu-multi').style.display = 'none';
     document.getElementById('menu-main').style.display = '';
+    document.getElementById('top-bar').style.display = 'none';
     stopRoomListPolling();
 }
 const _rndNames = ['Shadow','Phantom','Blaze','Vortex','Neon','Cipher','Nova','Pulse','Flux','Drift','Spark','Glitch','Echo','Byte','Hexa','Pixel','Turbo','Zinc','Onyx','Razor','Storm','Frost','Volt','Chaos','Omega'];
@@ -3726,6 +3753,7 @@ function handleMultiJoinerMessage(data) {
         document.getElementById('opp-panel').classList.remove('active');
         document.getElementById('multi-player-list').style.display = 'none';
         document.getElementById('menu-overlay').style.display = '';
+        document.getElementById('top-bar').style.display = '';
         document.getElementById('menu-multi-lobby').style.display = '';
         document.getElementById('multi-chat-msgs-lobby').innerHTML = '';
         if (conn && conn.peer) {
