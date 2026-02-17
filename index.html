@@ -475,6 +475,31 @@
         .patch-list { list-style:none; padding:0; margin:0 0 4px; }
         .patch-list li { color:#607888; font-size:9px; line-height:1.7; letter-spacing:0.3px; padding-left:12px; position:relative; }
         .patch-list li::before { content:'›'; position:absolute; left:0; color:#ff006680; }
+        /* ── MOBILE ── */
+        @media (max-width: 600px) {
+            #menu-overlay,
+            #login-overlay,
+            #profile-overlay,
+            #lb-overlay,
+            #solo-end-overlay,
+            #patch-overlay.active {
+                overflow-y: auto;
+                align-items: flex-start;
+                padding: 40px 0 30px;
+            }
+            #menu-title { font-size: 18px; letter-spacing: 5px; }
+            #menu-sub { margin-bottom: 24px; }
+            #menu-box, #login-box, #profile-box, #lb-box, #solo-end-box {
+                padding: 0 16px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .menu-btn { width: 80%; max-width: 220px; }
+            .auth-input { width: 80%; max-width: 200px; }
+            #join-code { width: 60%; max-width: 180px; }
+            #multi-name { width: 60% !important; max-width: 180px; }
+            #menu-links { flex-wrap: wrap; }
+        }
     </style>
 </head>
 <body>
@@ -804,6 +829,6 @@
     </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=174"></script>
+    <script src="game.js?v=175"></script>
 </body>
 </html>
