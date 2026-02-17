@@ -3002,10 +3002,47 @@ function showProfile() {
     document.getElementById('prof-wave').textContent = currentUser.bestWave || 0;
     document.getElementById('prof-score').textContent = currentUser.bestScore || 0;
     document.getElementById('profile-overlay').style.display = 'flex';
+    loadMatchHistory();
 }
 
 function hideProfile() {
     document.getElementById('profile-overlay').style.display = 'none';
+}
+
+function loadMatchHistory() {
+    if (!authToken) return;
+    fetchWithTimeout(SERVER_URL + '/api/match/history', {
+        headers: { 'Authorization': 'Bearer ' + authToken }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        var box = document.getElementById('prof-history');
+        if (!Array.isArray(data) || data.length === 0) {
+            box.innerHTML = '<div style="color:#2a3a4a;font-size:9px;padding:8px 0;text-align:center;letter-spacing:1px">No matches yet</div>';
+            return;
+        }
+        box.innerHTML = '';
+        data.forEach(function(m) {
+            if (m.status === 'cancelled') return;
+            var row = document.createElement('div');
+            row.className = 'mh-row';
+            var res = m.result === 'win' ? 'W' : m.result === 'loss' ? 'L' : 'D';
+            var resCls = m.result || '';
+            var oppName = m.opponent ? m.opponent.username : '???';
+            var elo = m.eloChange || 0;
+            var eloStr = elo >= 0 ? '+' + elo : '' + elo;
+            var eloCls = elo >= 0 ? 'pos' : 'neg';
+            row.innerHTML = '<span class="mh-result ' + resCls + '">' + res + '</span>'
+                + '<span class="mh-opp">' + escapeHtml(oppName) + '</span>'
+                + '<span class="mh-elo ' + eloCls + '">' + eloStr + '</span>';
+            box.appendChild(row);
+        });
+    }).catch(function() {});
+}
+
+function showLegal() {
+    document.getElementById('legal-overlay').className = 'active';
+}
+function hideLegal() {
+    document.getElementById('legal-overlay').className = '';
 }
 
 async function startRankedQueue() {
@@ -3146,7 +3183,7 @@ function submitRankedResult(resultStr) {
 }
 
 function pollRankedResult(matchId, attempt) {
-    if (attempt >= 10) return;
+    if (attempt >= 30) return; // poll up to 3.5 min for server auto-resolve
     setTimeout(function() {
         fetchWithTimeout(SERVER_URL + '/api/match/result/' + matchId, {
             headers: { 'Authorization': 'Bearer ' + authToken }
@@ -3159,7 +3196,7 @@ function pollRankedResult(matchId, attempt) {
                 if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
             }
         }).catch(function() {});
-    }, 2000);
+    }, attempt < 10 ? 2000 : 7000); // fast first 20s, then slower
 }
 
 async function menuShowDuel() {
