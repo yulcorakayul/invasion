@@ -575,7 +575,22 @@
                         <button class="menu-btn" onclick="authLogin()">LOGIN</button>
                         <div id="auth-error"></div>
                         <button class="menu-btn-back" onclick="showRegisterView()">No account? Register</button>
+                        <button class="menu-btn-back" onclick="showResetView()">Forgot password?</button>
                         <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                    </div>
+                    <div id="auth-reset-view" style="display:none">
+                        <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Reset Password</div>
+                        <div id="reset-step1">
+                            <input class="auth-input" id="reset-email" placeholder="YOUR EMAIL" autocomplete="off" spellcheck="false">
+                            <button class="menu-btn" onclick="requestReset()">SEND CODE</button>
+                        </div>
+                        <div id="reset-step2" style="display:none">
+                            <input class="auth-input" id="reset-token" placeholder="RESET CODE" autocomplete="off" spellcheck="false">
+                            <input class="auth-input" id="reset-newpass" type="password" placeholder="NEW PASSWORD" maxlength="50">
+                            <button class="menu-btn" onclick="confirmReset()">RESET</button>
+                        </div>
+                        <div id="auth-error-reset"></div>
+                        <button class="menu-btn-back" onclick="showLoginView()">&#8592; Back to Login</button>
                     </div>
                     <div id="auth-register-view" style="display:none">
                         <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Register</div>
@@ -885,6 +900,6 @@
         </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=181"></script>
+    <script src="game.js?v=182"></script>
 </body>
 </html>

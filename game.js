@@ -2845,14 +2845,63 @@ async function authLogin() {
 
 function showLoginView() {
     document.getElementById('auth-register-view').style.display = 'none';
+    document.getElementById('auth-reset-view').style.display = 'none';
     document.getElementById('auth-login-view').style.display = '';
     document.getElementById('auth-error').textContent = '';
 }
 
 function showRegisterView() {
     document.getElementById('auth-login-view').style.display = 'none';
+    document.getElementById('auth-reset-view').style.display = 'none';
     document.getElementById('auth-register-view').style.display = '';
     document.getElementById('auth-error-reg').textContent = '';
+}
+
+function showResetView() {
+    document.getElementById('auth-login-view').style.display = 'none';
+    document.getElementById('auth-register-view').style.display = 'none';
+    document.getElementById('auth-reset-view').style.display = '';
+    document.getElementById('reset-step1').style.display = '';
+    document.getElementById('reset-step2').style.display = 'none';
+    document.getElementById('auth-error-reset').textContent = '';
+}
+
+async function requestReset() {
+    var email = document.getElementById('reset-email').value.trim();
+    document.getElementById('auth-error-reset').textContent = '';
+    if (!email) { document.getElementById('auth-error-reset').textContent = 'Email required'; return; }
+    try {
+        var r = await fetchWithTimeout(SERVER_URL + '/api/request-reset', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('auth-error-reset').textContent = data.error || 'Error'; return; }
+        document.getElementById('reset-step1').style.display = 'none';
+        document.getElementById('reset-step2').style.display = '';
+        document.getElementById('auth-error-reset').textContent = 'Code sent — check your email';
+        document.getElementById('auth-error-reset').style.color = '#00ff88';
+    } catch (e) { document.getElementById('auth-error-reset').textContent = 'Server unreachable'; }
+}
+
+async function confirmReset() {
+    var token = document.getElementById('reset-token').value.trim();
+    var newPass = document.getElementById('reset-newpass').value;
+    document.getElementById('auth-error-reset').textContent = '';
+    document.getElementById('auth-error-reset').style.color = '';
+    if (!token || !newPass) { document.getElementById('auth-error-reset').textContent = 'Code and new password required'; return; }
+    if (newPass.length < 6) { document.getElementById('auth-error-reset').textContent = 'Password must be at least 6 characters'; return; }
+    try {
+        var r = await fetchWithTimeout(SERVER_URL + '/api/reset-password', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, newPassword: newPass })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('auth-error-reset').textContent = data.error || 'Error'; return; }
+        document.getElementById('auth-error-reset').textContent = 'Password reset! You can login now';
+        document.getElementById('auth-error-reset').style.color = '#00ff88';
+        setTimeout(function() { showLoginView(); }, 2000);
+    } catch (e) { document.getElementById('auth-error-reset').textContent = 'Server unreachable'; }
 }
 
 function authLogout() {
@@ -2869,8 +2918,18 @@ async function loadProfile() {
         let r = await fetchWithTimeout(SERVER_URL + '/api/profile', { headers: { 'Authorization': 'Bearer ' + authToken } });
         if (!r.ok) { authToken = null; localStorage.removeItem('tdpro_token'); return false; }
         currentUser = await r.json();
+        refreshToken();
         return true;
     } catch (e) { return false; }
+}
+
+function refreshToken() {
+    if (!authToken) return;
+    fetchWithTimeout(SERVER_URL + '/api/refresh', {
+        method: 'POST', headers: { 'Authorization': 'Bearer ' + authToken }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.token) { authToken = data.token; localStorage.setItem('tdpro_token', authToken); }
+    }).catch(function() {});
 }
 
 function showLoggedMenu() {
@@ -2924,9 +2983,9 @@ function showPatchNotes() {
             let html = '<h2>PATCH NOTES</h2>';
             for (let i = 0; i < notes.length; i++) {
                 let n = notes[i];
-                html += '<div class="patch-version">' + n.version + '</div><ul class="patch-list">';
+                html += '<div class="patch-version">' + escapeHtml(n.version) + '</div><ul class="patch-list">';
                 for (let j = 0; j < n.items.length; j++) {
-                    html += '<li>' + n.items[j] + '</li>';
+                    html += '<li>' + escapeHtml(n.items[j]) + '</li>';
                 }
                 html += '</ul>';
             }
@@ -3204,12 +3263,12 @@ function submitRankedResult(resultStr) {
 }
 
 function pollRankedResult(matchId, attempt) {
-    if (attempt >= 30) return; // poll up to 3.5 min for server auto-resolve
+    if (attempt >= 25) return;
+    // Backoff: 2s for first 10, 5s for next 15 → covers ~2.5min (server auto-resolve at 2min)
     setTimeout(function() {
         fetchWithTimeout(SERVER_URL + '/api/match/result/' + matchId, {
             headers: { 'Authorization': 'Bearer ' + authToken }
         }).then(function(r) { return r.json(); }).then(function(data) {
-            console.log('Ranked poll:', data);
             if (data.status === 'waiting') {
                 pollRankedResult(matchId, attempt + 1);
             } else {
@@ -3217,7 +3276,7 @@ function pollRankedResult(matchId, attempt) {
                 if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
             }
         }).catch(function() {});
-    }, attempt < 10 ? 2000 : 7000); // fast first 20s, then slower
+    }, attempt < 10 ? 2000 : 5000);
 }
 
 async function menuShowDuel() {
@@ -3353,6 +3412,8 @@ function setupConnection() {
 }
 
 function startDuel() {
+    if (rankedPollTimer) { clearInterval(rankedPollTimer); rankedPollTimer = null; }
+    stopRoomListPolling();
     isDuel = true;
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
@@ -3400,9 +3461,9 @@ function handlePeerMessage(data) {
         duelStartTimer = 0;
         startWave(false); // don't echo back
     } else if (data.type === 'status') {
-        opponentLives = data.lives;
-        opponentScore = data.score;
-        opponentWave = data.wave;
+        opponentLives = Math.max(0, Math.min(20, parseInt(data.lives) || 0));
+        opponentScore = Math.max(0, Math.min(999999, parseInt(data.score) || 0));
+        opponentWave = Math.max(0, Math.min(WAVES.length, parseInt(data.wave) || 0));
         if (data.tw) {
             oppBoardData = { towers: data.tw, enemies: data.en };
             drawOpponentBoard();
@@ -3419,8 +3480,8 @@ function handlePeerMessage(data) {
         }
     } else if (data.type === 'game_complete') {
         opponentFinished = true;
-        opponentFinalScore = data.score;
-        opponentFinalTime = data.time;
+        opponentFinalScore = Math.max(0, Math.min(999999, parseInt(data.score) || 0));
+        opponentFinalTime = Math.max(0, parseInt(data.time) || 0);
         checkDuelEnd();
     } else if (data.type === 'emote') {
         if (data.id >= 0 && data.id < EMOTES.length) {
@@ -3712,9 +3773,11 @@ function handleMultiHostMessage(data, senderConn) {
     } else if (data.type === 'my_status') {
         let p = multiPlayers.get(senderId);
         if (p) {
-            p.lives = data.lives; p.score = data.score; p.wave = data.wave;
+            p.lives = Math.max(0, Math.min(20, parseInt(data.lives) || 0));
+            p.score = Math.max(0, Math.min(999999, parseInt(data.score) || 0));
+            p.wave = Math.max(0, Math.min(WAVES.length, parseInt(data.wave) || 0));
             if (data.tw) p.boardData = { towers: data.tw, enemies: data.en };
-            p.alive = data.lives > 0;
+            p.alive = p.lives > 0;
         }
     } else if (data.type === 'multi_wave_request') {
         // A joiner requested to launch the next wave — host starts it for everyone
@@ -3740,7 +3803,7 @@ function handleMultiHostMessage(data, senderConn) {
         checkMultiEnd();
     } else if (data.type === 'multi_game_complete') {
         let p3 = multiPlayers.get(senderId);
-        if (p3) { p3.finished = true; p3.finalScore = data.score; p3.finalTime = data.time; }
+        if (p3) { p3.finished = true; p3.finalScore = Math.max(0, Math.min(999999, parseInt(data.score) || 0)); p3.finalTime = Math.max(0, parseInt(data.time) || 0); }
         checkMultiEnd();
     }
 }
@@ -3803,11 +3866,14 @@ function handleMultiJoinerMessage(data) {
         data.players.forEach(function(p) {
             if (p.id === myPlayerId) return;
             let ex = multiPlayers.get(p.id);
+            var cl = Math.max(0, Math.min(20, parseInt(p.lives) || 0));
+            var cs = Math.max(0, Math.min(999999, parseInt(p.score) || 0));
+            var cw = Math.max(0, Math.min(WAVES.length, parseInt(p.wave) || 0));
             if (ex) {
-                ex.lives = p.lives; ex.score = p.score; ex.wave = p.wave; ex.alive = p.alive;
+                ex.lives = cl; ex.score = cs; ex.wave = cw; ex.alive = p.alive;
                 if (p.tw) ex.boardData = { towers: p.tw, enemies: p.en };
             } else {
-                multiPlayers.set(p.id, { conn: null, name: p.name, lives: p.lives, score: p.score, wave: p.wave, boardData: p.tw ? { towers: p.tw, enemies: p.en } : null, alive: p.alive });
+                multiPlayers.set(p.id, { conn: null, name: p.name, lives: cl, score: cs, wave: cw, boardData: p.tw ? { towers: p.tw, enemies: p.en } : null, alive: p.alive });
             }
         });
         updateMultiPlayerListUI();
@@ -3846,6 +3912,7 @@ function handleMultiJoinerMessage(data) {
 
 // === START MULTI GAME ===
 function startMultiGame(playerRoster) {
+    stopRoomListPolling();
     isMulti = true;
     isDuel = false;
     resetWaveBar();
