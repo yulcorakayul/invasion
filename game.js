@@ -2441,6 +2441,19 @@ function playSfx(type) {
             o.connect(g); g.connect(sfxGain);
             o.start(t + i * 0.2); o.stop(t + i * 0.2 + 0.3);
         }
+    } else if (type === 'matchfound') {
+        // Alert double-beep
+        for (let i = 0; i < 2; i++) {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'sine';
+            o.frequency.setValueAtTime(880, t + i * 0.2);
+            o.frequency.setValueAtTime(1100, t + i * 0.2 + 0.08);
+            g.gain.setValueAtTime(0.35, t + i * 0.2);
+            g.gain.exponentialRampToValueAtTime(0.001, t + i * 0.2 + 0.15);
+            o.connect(g); g.connect(sfxGain);
+            o.start(t + i * 0.2); o.stop(t + i * 0.2 + 0.15);
+        }
     } else if (type === 'victory') {
         // Ascending fanfare
         const notes = [523, 659, 784, 1047];
@@ -3175,8 +3188,9 @@ async function pollRankedStatus() {
 }
 
 function connectRankedMatch(data) {
+    initAudio();
+    playSfx('matchfound');
     rankedMatchId = data.matchId;
-    isRanked = true;
     rankedEloChange = null;
     let peerCode = data.peerCode;
     document.getElementById('ranked-status').textContent = 'Opponent found! Connecting...';
