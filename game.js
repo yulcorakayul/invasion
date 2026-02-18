@@ -2651,6 +2651,10 @@ function generateRoomCode() {
 var _cgStopped = false;
 function showReplayBtn() {
     if (!_cgStopped) { cgGameplayStop(); _cgStopped = true; }
+    if (typeof gtag === 'function') {
+        var mode = isRanked ? 'ranked' : isMulti ? 'multi' : 'solo';
+        gtag('event', 'game_over', { game_mode: mode, wave_reached: waveNum, score: finalScore() });
+    }
     let btn = document.getElementById('replay-btn');
     let cvs = document.getElementById('game');
     // Position above center of canvas
