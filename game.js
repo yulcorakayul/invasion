@@ -2778,6 +2778,7 @@ function menuStartSolo() {
     loadGameConfig();
     isDuel = false;
     isMulti = false;
+    isRanked = false;
     resetWaveBar();
     document.getElementById('wave').textContent = '0/' + WAVES.length;
     document.getElementById('menu-overlay').style.display = 'none';
@@ -3349,6 +3350,7 @@ async function pollRankedStatus() {
 function connectRankedMatch(data) {
     initAudio();
     playSfx('matchfound');
+    isRanked = true;
     rankedMatchId = data.matchId;
     rankedEloChange = null;
     let peerCode = data.peerCode;
