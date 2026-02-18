@@ -3412,6 +3412,7 @@ function cancelRankedQueue() {
 }
 
 function submitRankedResult(resultStr) {
+    console.log('submitRankedResult:', resultStr, 'matchId:', rankedMatchId, 'isRanked:', isRanked);
     if (!isRanked || !authToken || !rankedMatchId) return;
     var mid = rankedMatchId;
     fetchWithTimeout(SERVER_URL + '/api/match/result', {
@@ -3448,7 +3449,7 @@ function pollRankedResult(matchId, attempt) {
                 if (data.eloChange !== undefined) rankedEloChange = data.eloChange;
                 if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
             }
-        }).catch(function() {});
+        }).catch(function() { pollRankedResult(matchId, attempt + 1); });
     }, attempt < 10 ? 2000 : 5000);
 }
 
