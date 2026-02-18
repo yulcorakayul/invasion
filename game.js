@@ -4500,6 +4500,7 @@ function sendRankedChat() {
     if (!text) return;
     input.value = '';
     let myName = currentUser ? currentUser.username : 'You';
+    text = filterProfanity(text);
     if (conn && conn.open) conn.send({ type: 'duel_chat', name: myName, text: text });
     appendRankedMsg(myName, text, true);
 }
@@ -4515,7 +4516,7 @@ function appendRankedMsg(name, text, isMine) {
     nameSpan.textContent = name;
     let textSpan = document.createElement('span');
     textSpan.className = 'rc-text';
-    textSpan.textContent = ': ' + text;
+    textSpan.textContent = ': ' + filterProfanity(text);
     div.appendChild(nameSpan);
     div.appendChild(textSpan);
     container.appendChild(div);
@@ -4536,6 +4537,19 @@ function toggleRankedMute() {
     for (var i = 0; i < emotes.length; i++) emotes[i].style.display = _rankedChatMuted ? 'none' : '';
 }
 
+// === CHAT PROFANITY FILTER ===
+var _profanityList = [
+    'fuck','shit','ass','bitch','dick','cock','pussy','nigger','nigga','faggot','retard',
+    'whore','slut','cunt','bastard','damn','stfu','wtf','kys','rape','nazi',
+    'fag','twat','wanker','prick','asshole','motherfucker','bullshit','dumbass',
+    'dipshit','jackass','goddamn','hijo de puta','puta','merde','connard','enculé',
+    'nique','fdp','ntm','pd','tg','salope','pute'
+];
+var _profanityRegex = new RegExp('\\b(' + _profanityList.join('|') + ')\\b', 'gi');
+function filterProfanity(text) {
+    return text.replace(_profanityRegex, function(m) { return m[0] + '*'.repeat(m.length - 1); });
+}
+
 // === MULTI CHAT ===
 function sendMultiChat(source) {
     let inputId = source === 'host' ? 'multi-chat-input-host' : 'multi-chat-input-lobby';
@@ -4544,6 +4558,7 @@ function sendMultiChat(source) {
     if (!text) return;
     input.value = '';
     let myName = getMultiName();
+    text = filterProfanity(text);
     let msg = { type: 'multi_chat', name: myName, text: text };
     if (isHost) {
         multiConns.forEach(function(c) { if (c.open) c.send(msg); });
@@ -4560,7 +4575,7 @@ function appendChatMsg(target, name, text) {
     if (!el) return;
     let div = document.createElement('div');
     div.style.cssText = 'font-size:9px;padding:2px 0;color:#607888;word-break:break-word';
-    div.innerHTML = '<span style="color:#00f0ff;font-weight:700">' + escapeHtml(name) + '</span> ' + escapeHtml(text);
+    div.innerHTML = '<span style="color:#00f0ff;font-weight:700">' + escapeHtml(name) + '</span> ' + escapeHtml(filterProfanity(text));
     el.appendChild(div);
     el.scrollTop = el.scrollHeight;
 }
