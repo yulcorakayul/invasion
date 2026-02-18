@@ -1,4 +1,19 @@
 // === CONFIG ===
+// CrazyGames SDK wrapper (safe to call even when SDK is not loaded)
+var CG = window.CrazyGames && window.CrazyGames.SDK ? window.CrazyGames.SDK : null;
+function cgGameplayStart() { if (CG) try { CG.game.gameplayStart(); } catch(e) {} }
+function cgGameplayStop() { if (CG) try { CG.game.gameplayStop(); } catch(e) {} }
+function cgRequestAd(type, onDone) {
+    if (!CG) { if (onDone) onDone(); return; }
+    try {
+        CG.ad.requestAd(type, {
+            adStarted: function() { if (masterGain) masterGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05); },
+            adFinished: function() { if (masterGain) masterGain.gain.setTargetAtTime(1, audioCtx.currentTime, 0.05); if (onDone) onDone(); },
+            adError: function() { if (masterGain) masterGain.gain.setTargetAtTime(1, audioCtx.currentTime, 0.05); if (onDone) onDone(); }
+        });
+    } catch(e) { if (onDone) onDone(); }
+}
+
 function escapeHtml(s) { let d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 const PEER_CONFIG = { config: { iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -2633,7 +2648,9 @@ function generateRoomCode() {
     return code;
 }
 
+var _cgStopped = false;
 function showReplayBtn() {
+    if (!_cgStopped) { cgGameplayStop(); _cgStopped = true; }
     let btn = document.getElementById('replay-btn');
     let cvs = document.getElementById('game');
     // Position above center of canvas
@@ -2662,7 +2679,7 @@ function resetGameState() {
     waveActive = false; enemiesToSpawn = 0; spawnTimer = 0;
     hoveredCell = null; selectedTower = null; nextWaveTimer = 0;
     explosions = []; floatingTexts = []; waveDuration = 0;
-    waveSpawnRows = []; waveSpawnIdx = 0; gameOverPlayed = false;
+    waveSpawnRows = []; waveSpawnIdx = 0; gameOverPlayed = false; _cgStopped = false;
     gameSpeed = 1; placingType = -1; messageTimer = 0;
     duelEnded = false; duelResultTitle = ''; duelResultSub = '';
     opponentLives = 20; opponentScore = 0; opponentWave = 0;
@@ -2695,15 +2712,20 @@ function onReplayClick() {
 }
 
 function soloReplay() {
-    resetGameState();
-    _soloSaved = false;
-    loadGameConfig();
-    initGrid();
-    document.getElementById('wave').textContent = '0/' + WAVES.length;
-    resetWaveBar();
+    cgGameplayStop();
+    cgRequestAd('midgame', function() {
+        cgGameplayStart();
+        resetGameState();
+        _soloSaved = false;
+        loadGameConfig();
+        initGrid();
+        document.getElementById('wave').textContent = '0/' + WAVES.length;
+        resetWaveBar();
+    });
 }
 
 function multiReplay() {
+    cgGameplayStop();
     resetGameState();
     multiPlayers.forEach(function(p, id) {
         p.lives = 20; p.score = 0; p.wave = 0;
@@ -2724,6 +2746,7 @@ function multiReplay() {
 }
 
 function rankedReplay() {
+    cgGameplayStop();
     if (conn) { conn.close(); conn = null; }
     if (peer) { peer.destroy(); peer = null; }
     resetGameState();
@@ -2745,6 +2768,7 @@ function toggleSpeed() {
 
 function menuStartSolo() {
     if (!_configLoaded) return;
+    cgGameplayStart();
     loadGameConfig();
     isDuel = false;
     isMulti = false;
@@ -3540,6 +3564,7 @@ function setupConnection() {
 }
 
 function startDuel() {
+    cgGameplayStart();
     if (rankedPollTimer) { clearInterval(rankedPollTimer); rankedPollTimer = null; }
     stopRoomListPolling();
     isDuel = true;
@@ -4040,6 +4065,7 @@ function handleMultiJoinerMessage(data) {
 
 // === START MULTI GAME ===
 function startMultiGame(playerRoster) {
+    cgGameplayStart();
     stopRoomListPolling();
     isMulti = true;
     isDuel = false;
