@@ -1254,7 +1254,10 @@ function startWave(sync) {
     const et = ENEMY_TYPES[w.type];
     const si = et.spawnInt || SPAWN_INT;
     const maxTrav = computeMaxTraversal(et.speed, !!et.ghost);
-    waveDuration = (w.count - 1) * si + maxTrav;
+    var baseDuration = (w.count - 1) * si + maxTrav;
+    // Scale timer: wave 1 = x1, last wave = x2 (proportional)
+    var timerScale = 1 + (waveNum - 1) / Math.max(1, WAVES.length - 1);
+    waveDuration = baseDuration * timerScale;
     nextWaveTimer = waveDuration;
     showMessage('Wave ' + waveNum + ' launched');
     playSfx('wave');
@@ -1575,13 +1578,13 @@ function gameLoop(time) {
                     if (isMulti) multiStartTimer = 0;
                     startWave(false);
                 }
-            // Normal auto-advance
+            // Normal auto-advance (duel/multi: immediate on kill-all)
             } else if ((isMulti || isDuel) && lives > 0 && waveNum < WAVES.length) {
                 if (isMulti && isHost) {
-                    startWave(true); // host broadcasts to all
+                    startWave(true);
                 } else if (isMulti && !isHost) {
                     if (conn && conn.open) conn.send({ type: 'multi_wave_request', waveNum: waveNum + 1 });
-                    else startWave(false); // host gone, continue locally
+                    else startWave(false);
                 } else if (isDuel) {
                     startWave(true);
                 }
@@ -1598,6 +1601,22 @@ function gameLoop(time) {
         if (nextWaveTimer <= 0) {
             nextWaveTimer = 0;
             if (waveNum < WAVES.length && lives > 0) {
+                // In duel/multi: if wave still active when timer expires, flush remaining spawns and force next wave
+                if ((isDuel || isMulti) && waveActive) {
+                    if (enemiesToSpawn > 0) {
+                        var wd3 = WAVES[waveNum - 1];
+                        while (enemiesToSpawn > 0) {
+                            var sr3;
+                            if (waveSpawnIdx < waveSpawnRows.length) sr3 = waveSpawnRows[waveSpawnIdx++];
+                            else { var v3 = getValidEntryRows(); if (v3.length) sr3 = v3[Math.floor(Math.random() * v3.length)]; }
+                            var _fi3 = wd3.count - enemiesToSpawn;
+                            var _ft3 = wd3.types ? wd3.types[_fi3 % wd3.types.length] : wd3.type;
+                            if (sr3 !== undefined) { var _e3 = new Enemy(sr3, getWaveHp(wd3.hp), _ft3); applyWaveNerfs(_e3); enemies.push(_e3); }
+                            enemiesToSpawn--;
+                        }
+                    }
+                    waveActive = false;
+                }
                 // Multi joiners: wait for host sync, unless host disconnected
                 if (isMulti && !isHost && conn && conn.open) { /* wait for host sync */ }
                 else startWave(isDuel || (isMulti && isHost));
