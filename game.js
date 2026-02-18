@@ -2649,9 +2649,11 @@ function generateRoomCode() {
 }
 
 var _cgStopped = false;
+var _gaGameOverSent = false;
 function showReplayBtn() {
     if (!_cgStopped) { cgGameplayStop(); _cgStopped = true; }
-    if (typeof gtag === 'function') {
+    if (typeof gtag === 'function' && !_gaGameOverSent) {
+        _gaGameOverSent = true;
         var mode = isRanked ? 'ranked' : isMulti ? 'multi' : 'solo';
         gtag('event', 'game_over', { game_mode: mode, wave_reached: waveNum, score: finalScore() });
     }
@@ -2683,7 +2685,7 @@ function resetGameState() {
     waveActive = false; enemiesToSpawn = 0; spawnTimer = 0;
     hoveredCell = null; selectedTower = null; nextWaveTimer = 0;
     explosions = []; floatingTexts = []; waveDuration = 0;
-    waveSpawnRows = []; waveSpawnIdx = 0; gameOverPlayed = false; _cgStopped = false;
+    waveSpawnRows = []; waveSpawnIdx = 0; gameOverPlayed = false; _cgStopped = false; _gaGameOverSent = false;
     gameSpeed = 1; placingType = -1; messageTimer = 0;
     duelEnded = false; duelResultTitle = ''; duelResultSub = '';
     opponentLives = 20; opponentScore = 0; opponentWave = 0;
