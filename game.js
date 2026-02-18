@@ -14,7 +14,7 @@ function cgRequestAd(type, onDone) {
     } catch(e) { if (onDone) onDone(); }
 }
 
-function escapeHtml(s) { let d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function escapeHtml(s) { let d = document.createElement('div'); d.textContent = s; return d.innerHTML.replace(/'/g, '&#39;'); }
 const PEER_CONFIG = { config: { iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
@@ -4637,7 +4637,7 @@ async function loadLeaderboard(type) {
             if (type === 'elo') val = '<span class="lb-val" style="color:' + (i === 0 ? '#ffaa00' : '#ff0066') + '">' + u.elo + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + u.gamesPlayed + 'G</span>';
             else if (type === 'solo') val = '<span class="lb-val" style="color:#00ff88">' + u.bestScore + '</span><span style="color:#405060;font-size:9px;margin-left:6px">W' + u.bestWave + '</span>';
             else val = '<span class="lb-val">' + u.gamesPlayed + '</span><span style="color:#405060;font-size:9px;margin-left:6px">' + (u.gamesWon || 0) + 'W</span>';
-            return '<div class="lb-row"><span class="lb-rank ' + rankClass + '">' + (i + 1) + '</span><span class="lb-name">' + u.username + '</span>' + val + '</div>';
+            return '<div class="lb-row"><span class="lb-rank ' + rankClass + '">' + (i + 1) + '</span><span class="lb-name">' + escapeHtml(u.username) + '</span>' + val + '</div>';
         }).join('');
     } catch (err) {
         loadEl.style.display = 'none';
