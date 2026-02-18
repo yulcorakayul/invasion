@@ -2967,6 +2967,21 @@ function authLogout() {
     updateProfileBtn();
 }
 
+function confirmDeleteAccount() {
+    if (!authToken) return;
+    var ok = confirm('Are you sure you want to delete your account? This action is permanent and cannot be undone.');
+    if (!ok) return;
+    var ok2 = confirm('This will permanently delete all your data (stats, matches, elo). Continue?');
+    if (!ok2) return;
+    fetchWithTimeout(SERVER_URL + '/api/delete-account', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + authToken }
+    }).then(function(r) {
+        if (r.ok) { alert('Account deleted.'); authLogout(); }
+        else r.json().then(function(d) { alert(d.error || 'Error'); });
+    }).catch(function() { alert('Server error'); });
+}
+
 async function loadProfile() {
     if (!authToken) return false;
     try {
