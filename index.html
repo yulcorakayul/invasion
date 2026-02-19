@@ -418,8 +418,7 @@
         /* ── OPPONENT CANVAS ── */
         #opp-canvas { display:block; opacity:0.35; }
         /* ── RANKED CHAT ── */
-        #ranked-emote-row { display:none; gap:3px; padding:4px 6px; justify-content:center; align-items:center; border-top:1px solid #ff006620; border-bottom:1px solid #ff006610; }
-        #ranked-mute-btn { margin-left:4px; padding:2px 4px; background:#0a0e18; border:1px solid #1a2840; color:#ff0066; font-size:18px; cursor:pointer; border-radius:3px; line-height:1; opacity:0.5; transition:all .15s; }
+        #ranked-mute-btn { width:22px; height:22px; display:flex; align-items:center; justify-content:center; padding:0; background:#0a0e18; border:1px solid #1a2840; color:#ff0066; font-size:13px; cursor:pointer; border-radius:2px; line-height:1; opacity:0.5; transition:all .15s; flex-shrink:0; }
         #ranked-mute-btn:hover { opacity:0.8; }
         #ranked-mute-btn.muted { opacity:1; background:rgba(255,0,102,0.15); border-color:#ff0066; }
         .emote-btn { padding:2px 4px; background:#0a0e18; border:1px solid #1a2840; font-size:18px; cursor:pointer; border-radius:3px; transition:all .15s; line-height:1; }
@@ -435,10 +434,13 @@
         .rc-msg .rc-text { color:#a0b8cc; }
         .rc-msg.rc-emote { padding:1px 0; }
         .rc-msg.rc-emote .rc-emoji { font-size:22px; vertical-align:middle; }
-        #ranked-chat-input-row { display:none; gap:4px; padding:4px 6px; border-top:1px solid #ff006610; }
-        #ranked-chat-input { flex:1; padding:3px 6px; background:#0a0e18; border:1px solid #1a2840; color:#a0b8cc; font-family:'JetBrains Mono',monospace; font-size:9px; border-radius:2px; outline:none; }
+        #ranked-chat-input-row { display:none; gap:4px; padding:4px 6px; border-top:1px solid #ff006610; align-items:center; flex-wrap:nowrap; }
+        #ranked-chat-input { flex:1; height:22px; padding:0 6px; background:#0a0e18; border:1px solid #1a2840; color:#a0b8cc; font-family:'JetBrains Mono',monospace; font-size:9px; border-radius:2px; outline:none; }
         #ranked-chat-input:focus { border-color:#00f0ff40; }
-        #ranked-chat-input-row button { padding:3px 6px; background:#0a0e18; border:1px solid #1a2840; color:#ff0066; font-size:9px; cursor:pointer; border-radius:2px; }
+        #ranked-chat-input-row button { width:22px; height:22px; display:flex; align-items:center; justify-content:center; padding:0; background:#0a0e18; border:1px solid #1a2840; color:#ff0066; font-size:13px; cursor:pointer; border-radius:2px; line-height:1; flex-shrink:0; }
+        #emote-picker-btn { font-size:13px; }
+        #emote-picker { position:absolute; bottom:100%; right:0; margin-bottom:4px; display:grid; grid-template-columns:repeat(4,1fr); gap:3px; padding:6px; background:#0c0a18; border:1px solid #1a2840; border-radius:4px; box-shadow:0 -4px 12px rgba(0,0,0,0.6); z-index:10; }
+        #emote-picker .emote-btn { font-size:20px; padding:4px 6px; }
         /* ── MULTI PLAYER LIST ── */
         #multi-player-list { display:none; flex:1; overflow-y:auto; border-top:1px solid #ff006620; background:#0c0410; scrollbar-width:none; -ms-overflow-style:none; }
         #multi-player-list::-webkit-scrollbar { display:none; }
@@ -579,7 +581,7 @@
                     </div>
                     <button class="menu-btn" onclick="startRankedQueue()">FIND OPPONENT</button>
                     <button class="menu-btn" style="border-color:#405060;color:#607888" onclick="authLogout()">LOGOUT</button>
-                    <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                    <button class="menu-btn-back" onclick="menuBack()" style="margin-top:16px">&#8592; Back</button>
                 </div>
                 <div id="menu-duel-auth" style="display:none">
                     <div id="auth-login-view">
@@ -588,9 +590,11 @@
                         <input class="auth-input" id="login-pass" type="password" placeholder="PASSWORD" maxlength="50">
                         <button class="menu-btn" onclick="authLogin()">LOGIN</button>
                         <div id="auth-error"></div>
-                        <button class="menu-btn-back" onclick="showRegisterView()">No account? Register</button>
-                        <button class="menu-btn-back" onclick="showResetView()">Forgot password?</button>
-                        <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                        <div style="display:flex;justify-content:center;gap:12px;margin-top:8px">
+                            <button class="menu-btn-back" onclick="showRegisterView()" style="margin:0">No account? Register</button>
+                            <button class="menu-btn-back" onclick="showResetView()" style="margin:0">Forgot password?</button>
+                        </div>
+                        <button class="menu-btn-back" onclick="menuBack()" style="display:block;margin:6px auto 0">&#8592; Back</button>
                     </div>
                     <div id="auth-reset-view" style="display:none">
                         <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Reset Password</div>
@@ -614,7 +618,7 @@
                         <button class="menu-btn" onclick="authRegister()">REGISTER</button>
                         <div id="auth-error-reg"></div>
                         <button class="menu-btn-back" onclick="showLoginView()">Already have an account? Login</button>
-                        <button class="menu-btn-back" onclick="menuBack()">&#8592; Back</button>
+                        <button class="menu-btn-back" onclick="menuBack()" style="display:block;margin:4px auto 0">&#8592; Back</button>
                     </div>
                 </div>
             </div>
@@ -770,8 +774,11 @@
                 <input class="auth-input" id="topbar-login-pass" type="password" placeholder="PASSWORD" maxlength="50">
                 <button class="menu-btn" onclick="topbarLogin()" style="width:200px">LOGIN</button>
                 <div id="login-box-error"></div>
-                <button class="menu-btn-back" onclick="showTopbarRegister()">No account? Register</button>
-                <button class="menu-btn-back" onclick="hideLoginOverlay()">&#8592; Close</button>
+                <div style="display:flex;justify-content:center;gap:12px;margin-top:8px">
+                    <button class="menu-btn-back" onclick="showTopbarRegister()" style="margin:0">No account? Register</button>
+                    <button class="menu-btn-back" onclick="showTopbarReset()" style="margin:0">Forgot password?</button>
+                </div>
+                <button class="menu-btn-back" onclick="hideLoginOverlay()" style="display:block;margin:6px auto 0">&#8592; Close</button>
             </div>
             <div id="login-box-register" style="display:none">
                 <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">REGISTER</div>
@@ -781,7 +788,21 @@
                 <button class="menu-btn" onclick="topbarRegister()" style="width:200px">REGISTER</button>
                 <div id="login-box-reg-error"></div>
                 <button class="menu-btn-back" onclick="showTopbarLogin()">Already have an account? Login</button>
-                <button class="menu-btn-back" onclick="hideLoginOverlay()">&#8592; Close</button>
+                <button class="menu-btn-back" onclick="hideLoginOverlay()" style="display:block;margin:4px auto 0">&#8592; Close</button>
+            </div>
+            <div id="login-box-reset" style="display:none">
+                <div style="color:#405060;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">RESET PASSWORD</div>
+                <div id="topbar-reset-step1">
+                    <input class="auth-input" id="topbar-reset-email" placeholder="YOUR EMAIL" autocomplete="off" spellcheck="false">
+                    <button class="menu-btn" onclick="topbarRequestReset()" style="width:200px">SEND CODE</button>
+                </div>
+                <div id="topbar-reset-step2" style="display:none">
+                    <input class="auth-input" id="topbar-reset-token" placeholder="RESET CODE" autocomplete="off" spellcheck="false">
+                    <input class="auth-input" id="topbar-reset-newpass" type="password" placeholder="NEW PASSWORD" maxlength="50">
+                    <button class="menu-btn" onclick="topbarConfirmReset()" style="width:200px">RESET</button>
+                </div>
+                <div id="login-box-reset-error"></div>
+                <button class="menu-btn-back" onclick="showTopbarLogin()">&#8592; Back to Login</button>
             </div>
         </div>
     </div>
@@ -882,19 +903,24 @@
             <span class="opp-stat">Score <b id="opp-score">0</b></span>
         </div>
         <canvas id="opp-canvas"></canvas>
-        <div id="ranked-emote-row" style="display:none">
-            <button class="emote-btn" onclick="sendEmote(0)">👏</button>
-            <button class="emote-btn" onclick="sendEmote(1)">🍀</button>
-            <button class="emote-btn" onclick="sendEmote(2)">👍</button>
-            <button class="emote-btn" onclick="sendEmote(3)">🤔</button>
-            <button class="emote-btn" onclick="sendEmote(4)">😐</button>
-            <button class="emote-btn" onclick="sendEmote(5)">💀</button>
-            <button id="ranked-mute-btn" onclick="toggleRankedMute()" title="Mute chat">🔇</button>
-        </div>
         <div id="ranked-chat-msgs" style="display:none"></div>
         <div id="ranked-chat-input-row" style="display:none">
-            <input id="ranked-chat-input" maxlength="100" placeholder="Message..." style="caret-color:#a0b8cc" onkeydown="if(event.key==='Enter')sendRankedChat()">
+            <input id="ranked-chat-input" maxlength="100" placeholder="Message..." style="caret-color:#a0b8cc" onkeydown="if(event.key==='Enter'){sendRankedChat();hideEmotePicker();}">
+            <div style="position:relative">
+                <button id="emote-picker-btn" onclick="toggleEmotePicker()" title="Emotes">😊</button>
+                <div id="emote-picker" style="display:none">
+                    <button class="emote-btn" onclick="sendEmote(0);hideEmotePicker()">👏</button>
+                    <button class="emote-btn" onclick="sendEmote(1);hideEmotePicker()">🍀</button>
+                    <button class="emote-btn" onclick="sendEmote(2);hideEmotePicker()">👍</button>
+                    <button class="emote-btn" onclick="sendEmote(3);hideEmotePicker()">🤔</button>
+                    <button class="emote-btn" onclick="sendEmote(4);hideEmotePicker()">😐</button>
+                    <button class="emote-btn" onclick="sendEmote(5);hideEmotePicker()">💀</button>
+                    <button class="emote-btn" onclick="sendEmote(6);hideEmotePicker()">😄</button>
+                    <button class="emote-btn" onclick="sendEmote(7);hideEmotePicker()">😂</button>
+                </div>
+            </div>
             <button onclick="sendRankedChat()">&#9654;</button>
+            <button id="ranked-mute-btn" onclick="toggleRankedMute()" title="Mute chat">🔈</button>
         </div>
         <div id="multi-player-list"></div>
     </div>
@@ -923,6 +949,6 @@
         </div>
     </div>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
-    <script src="game.js?v=198"></script>
+    <script src="game.js?v=199"></script>
 </body>
 </html>

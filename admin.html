@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invasion Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>body { margin: 0; }</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+const INVASION_URL = 'https://invasion-server-production.up.railway.app';
+const ADMIN_SECRET_PATH = 'panel-x7k9m2p4';
+const API_URL = `${INVASION_URL}/api/${ADMIN_SECRET_PATH}`;
+
+// Icons
+const Icon = (char) => ({ className, style, ...props }) => React.createElement('span', { className, style: { ...style, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }, ...props }, char);
+const Plus = Icon('+'); const Trash2 = Icon('\u{1F5D1}'); const Edit = Icon('\u270F'); const Save = Icon('\u{1F4BE}');
+const X = Icon('\u2715'); const RefreshCw = Icon('\u21BB'); const Download = Icon('\u2B07'); const BookOpen = Icon('\u{1F4D6}');
+const FileText = Icon('\u{1F4C4}'); const Lock = Icon('\u{1F512}'); const LogOut = Icon('\u21AA');
+
+// API helper with auto re-login
+const apiCall = async (endpoint, options = {}) => {
+  const token = sessionStorage.getItem('invasionAdminToken');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': 'Bearer ' + token }),
+    ...options.headers
+  };
+  const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  if (res.status === 401 && !options._retried) {
+    const pwd = prompt('Session expired. Enter admin password:');
+    if (pwd) {
+      await doLogin(pwd);
+      return apiCall(endpoint, { ...options, _retried: true });
+    }
+  }
+  return res;
+};
+
+const doLogin = async (password) => {
+  const res = await fetch(`${API_URL}/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password })
+  });
+  const data = await res.json();
+  if (res.ok && data.token) {
+    sessionStorage.setItem('invasionAdminToken', data.token);
+    return true;
+  }
+  return false;
+};
+
+function App() {
+  const [isAuth, setIsAuth] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState(null);
+  const [activeTab, setActiveTab] = useState('patchnotes');
+  const [message, setMessage] = useState(null);
+
+  // Patch Notes state
+  const [patchNotes, setPatchNotes] = useState([]);
+  const [showNewPatch, setShowNewPatch] = useState(false);
+  const [newPatch, setNewPatch] = useState({ version: '', items: [''] });
+  const [editingPatchId, setEditingPatchId] = useState(null);
+  const [showBulkImport, setShowBulkImport] = useState(false);
+  const [bulkImportText, setBulkImportText] = useState('');
+
+  // Game Config state
+  const [gameConfig, setGameConfig] = useState(null);
+  const [gameConfigSaving, setGameConfigSaving] = useState(false);
+
+  const showMsg = (type, text) => {
+    setMessage({ type, text });
+    setTimeout(() => setMessage(null), 3000);
+  };
+
+  // Check existing token on load
+  useEffect(() => {
+    const token = sessionStorage.getItem('invasionAdminToken');
+    if (token) {
+      fetch(`${API_URL}/verify`, { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(r => { if (r.ok) { setIsAuth(true); } else { sessionStorage.removeItem('invasionAdminToken'); } })
+        .catch(() => {});
+    }
+  }, []);
+
+  // Fetch data when authenticated
+  useEffect(() => {
+    if (isAuth) { fetchPatchNotes(); fetchGameConfig(); }
+  }, [isAuth]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError(null);
+    try {
+      const ok = await doLogin(passwordInput);
+      if (ok) {
+        setIsAuth(true);
+        setPasswordInput('');
+      } else {
+        setLoginError('Invalid password');
+      }
+    } catch {
+      setLoginError('Server unreachable');
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('invasionAdminToken');
+    setIsAuth(false);
+  };
+
+  // === PATCH NOTES ===
+  const fetchPatchNotes = async () => {
+    try {
+      const res = await apiCall('/patchnotes');
+      if (res.status === 401) return;
+      const data = await res.json();
+      setPatchNotes(data);
+    } catch (err) { console.error('Fetch patchnotes error:', err); }
+  };
+
+  // === GAME CONFIG ===
+  const fetchGameConfig = async () => {
+    try {
+      const res = await fetch(`${INVASION_URL}/api/game-config`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setGameConfig(data);
+    } catch (err) { console.error('Fetch game config error:', err); }
+  };
+
+  const saveGameConfig = async () => {
+    if (!gameConfig) return;
+    setGameConfigSaving(true);
+    try {
+      const res = await apiCall('/game-config', {
+        method: 'PUT',
+        body: JSON.stringify({
+          towers: gameConfig.towers,
+          enemies: gameConfig.enemies,
+          waves: gameConfig.waves,
+          constants: gameConfig.constants
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setGameConfig(data);
+        showMsg('success', 'Game config saved (v' + data.version + ')');
+      } else {
+        const data = await res.json();
+        showMsg('error', data.error || 'Error');
+      }
+    } catch (err) { showMsg('error', err.message); }
+    setGameConfigSaving(false);
+  };
+
+  // === LOGIN PAGE ===
+  if (!isAuth) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 w-96 shadow-2xl">
+          <div className="text-center mb-6">
+            <Lock className="text-4xl text-rose-400 mb-2" />
+            <h1 className="text-2xl font-bold text-white">Invasion Admin</h1>
+            <p className="text-slate-500 text-sm mt-1">tdinvasion.com</p>
+          </div>
+          {loginError && (
+            <div className="bg-red-500/20 border border-red-500/40 text-red-300 px-4 py-2 rounded-lg text-sm mb-4">
+              {loginError}
+            </div>
+          )}
+          <form onSubmit={handleLogin}>
+            <input
+              type="password"
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              placeholder="Admin password"
+              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white mb-4 focus:outline-none focus:border-rose-500"
+              autoFocus
+            />
+            <button type="submit" className="w-full px-4 py-3 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-bold transition-all">
+              Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // === MAIN PANEL ===
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Toast */}
+      {message && (
+        <div className={`fixed top-4 right-4 z-50 px-6 py-3 rounded-xl font-bold text-sm shadow-lg ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+          {message.text}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="bg-slate-800 border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <h1 className="text-xl font-bold text-rose-400">Invasion Admin</h1>
+          <div className="flex gap-2">
+            <button onClick={() => setActiveTab('patchnotes')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'patchnotes' ? 'bg-rose-500 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}>Patch Notes</button>
+            <button onClick={() => setActiveTab('gameconfig')} className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'gameconfig' ? 'bg-rose-500 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}>Game Config</button>
+          </div>
+        </div>
+        <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl text-sm">
+          <LogOut className="w-4 h-4" /> Logout
+        </button>
+      </div>
+
+      <div className="max-w-6xl mx-auto p-6">
+
+        {/* === PATCH NOTES TAB === */}
+        {activeTab === 'patchnotes' && (<>
+          <div className="flex items-center gap-4 mb-6">
+            <button
+              onClick={() => { setShowNewPatch(!showNewPatch); setShowBulkImport(false); setEditingPatchId(null); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${showNewPatch ? 'bg-slate-700 text-slate-300' : 'bg-rose-500 hover:bg-rose-400 text-white'}`}
+            >
+              {showNewPatch ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+              {showNewPatch ? 'Cancel' : 'New Version'}
+            </button>
+            <button
+              onClick={() => { setShowBulkImport(!showBulkImport); setShowNewPatch(false); setBulkImportText(''); }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold transition-all ${showBulkImport ? 'bg-slate-700 text-slate-300' : 'bg-cyan-600 hover:bg-cyan-500 text-white'}`}
+            >
+              {showBulkImport ? <X className="w-5 h-5" /> : <Download className="w-5 h-5" />}
+              {showBulkImport ? 'Cancel' : 'Import JSON'}
+            </button>
+            <button onClick={fetchPatchNotes} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
+              <RefreshCw className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Bulk import form */}
+          {showBulkImport && (
+            <div className="bg-slate-800 border border-cyan-500/30 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-bold text-cyan-400 mb-2">Import patch note (JSON)</h3>
+              <p className="text-slate-500 text-xs mb-3">Format: {"{"} "version": "v1.6 — ...", "items": ["item 1", "item 2"] {"}"}</p>
+              <textarea
+                value={bulkImportText}
+                onChange={(e) => setBulkImportText(e.target.value)}
+                placeholder='{ "version": "v1.7 — Feb 2025", "items": ["New feature", "Bug fix"] }'
+                rows={6}
+                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white font-mono text-sm resize-y"
+              />
+              <button
+                onClick={async () => {
+                  try {
+                    const parsed = JSON.parse(bulkImportText);
+                    const version = parsed.version;
+                    const items = Array.isArray(parsed.items) ? parsed.items.filter(i => typeof i === 'string' && i.trim()) : null;
+                    if (!version || !items || items.length === 0) { showMsg('error', 'Invalid JSON: version and items[] required'); return; }
+                    const res = await apiCall('/patchnotes', { method: 'POST', body: JSON.stringify({ version, items }) });
+                    if (res.ok) { showMsg('success', 'Patch note imported'); setBulkImportText(''); setShowBulkImport(false); fetchPatchNotes(); }
+                    else { const data = await res.json(); showMsg('error', data.error || 'Error'); }
+                  } catch (err) { showMsg('error', 'Invalid JSON: ' + err.message); }
+                }}
+                className="mt-4 flex items-center gap-2 px-6 py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold"
+              >
+                <Save className="w-5 h-5" /> Import
+              </button>
+            </div>
+          )}
+
+          {/* New patch form */}
+          {showNewPatch && (
+            <div className="bg-slate-800 border border-rose-500/30 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-bold text-rose-400 mb-4">New version</h3>
+              <div className="grid gap-4">
+                <div>
+                  <label className="block text-slate-400 text-sm mb-2">Version (e.g. v1.6 — March 2025)</label>
+                  <input type="text" value={newPatch.version} onChange={(e) => setNewPatch({ ...newPatch, version: e.target.value })} placeholder="v1.6 — March 2025" className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-sm mb-2">Items</label>
+                  {newPatch.items.map((item, idx) => (
+                    <div key={idx} className="flex gap-2 mb-2">
+                      <input type="text" value={item} onChange={(e) => { const items = [...newPatch.items]; items[idx] = e.target.value; setNewPatch({ ...newPatch, items }); }} placeholder={`Item ${idx + 1}`} className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
+                      {newPatch.items.length > 1 && (
+                        <button onClick={() => setNewPatch({ ...newPatch, items: newPatch.items.filter((_, i) => i !== idx) })} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={() => setNewPatch({ ...newPatch, items: [...newPatch.items, ''] })} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white mt-1">
+                    <Plus className="w-4 h-4" /> Add item
+                  </button>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  const items = newPatch.items.filter(i => i.trim());
+                  if (!newPatch.version || items.length === 0) { showMsg('error', 'Version and at least one item required'); return; }
+                  try {
+                    const res = await apiCall('/patchnotes', { method: 'POST', body: JSON.stringify({ version: newPatch.version, items }) });
+                    if (res.ok) { showMsg('success', 'Patch note created'); setNewPatch({ version: '', items: [''] }); setShowNewPatch(false); fetchPatchNotes(); }
+                    else { const data = await res.json(); showMsg('error', data.error || 'Error'); }
+                  } catch (err) { showMsg('error', err.message); }
+                }}
+                className="mt-4 flex items-center gap-2 px-6 py-3 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-bold"
+              >
+                <Save className="w-5 h-5" /> Create patch note
+              </button>
+            </div>
+          )}
+
+          {/* Patch notes list */}
+          <div className="space-y-4">
+            {patchNotes.map((patch) => (
+              <div key={patch.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                {editingPatchId === patch.id ? (
+                  <div className="space-y-4">
+                    <input type="text" value={patch.version} onChange={(e) => setPatchNotes(patchNotes.map(p => p.id === patch.id ? { ...p, version: e.target.value } : p))} className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
+                    {patch.items.map((item, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input type="text" value={item} onChange={(e) => { const items = [...patch.items]; items[idx] = e.target.value; setPatchNotes(patchNotes.map(p => p.id === patch.id ? { ...p, items } : p)); }} className="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white" />
+                        {patch.items.length > 1 && (
+                          <button onClick={() => { const items = patch.items.filter((_, i) => i !== idx); setPatchNotes(patchNotes.map(p => p.id === patch.id ? { ...p, items } : p)); }} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                        )}
+                      </div>
+                    ))}
+                    <button onClick={() => { const items = [...patch.items, '']; setPatchNotes(patchNotes.map(p => p.id === patch.id ? { ...p, items } : p)); }} className="flex items-center gap-1 text-sm text-slate-400 hover:text-white"><Plus className="w-4 h-4" /> Add item</button>
+                    <div className="flex gap-2">
+                      <button onClick={async () => { try { await apiCall(`/patchnotes/${patch.id}`, { method: 'PUT', body: JSON.stringify({ version: patch.version, items: patch.items.filter(i => i.trim()) }) }); showMsg('success', 'Patch note updated'); setEditingPatchId(null); fetchPatchNotes(); } catch (err) { showMsg('error', err.message); } }} className="flex items-center gap-2 px-4 py-2 bg-rose-500 hover:bg-rose-400 text-white rounded-lg"><Save className="w-4 h-4" /> Save</button>
+                      <button onClick={() => { setEditingPatchId(null); fetchPatchNotes(); }} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg"><X className="w-4 h-4" /> Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="text-rose-400 font-bold text-sm mb-2">{patch.version}</div>
+                      <ul className="list-disc list-inside text-slate-300 text-sm space-y-1">
+                        {patch.items.map((item, idx) => (<li key={idx}>{item}</li>))}
+                      </ul>
+                    </div>
+                    <div className="flex items-center gap-2 ml-4">
+                      <button onClick={() => { navigator.clipboard.writeText(JSON.stringify({ version: patch.version, items: patch.items }, null, 2)).then(() => showMsg('success', 'JSON copied')); }} className="p-2 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/20 rounded-lg" title="Copy JSON"><FileText className="w-4 h-4" /></button>
+                      <button onClick={() => setEditingPatchId(patch.id)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg" title="Edit"><Edit className="w-4 h-4" /></button>
+                      <button onClick={async () => { if (window.confirm('Delete this patch note?')) { await apiCall(`/patchnotes/${patch.id}`, { method: 'DELETE' }); showMsg('success', 'Patch note deleted'); fetchPatchNotes(); } }} className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {patchNotes.length === 0 && (<div className="text-center text-slate-500 py-12">No patch notes</div>)}
+          </div>
+        </>)}
+
+        {/* === GAME CONFIG TAB === */}
+        {activeTab === 'gameconfig' && (<>
+          {!gameConfig ? (
+            <div className="text-center text-slate-500 py-12">Loading...</div>
+          ) : (<>
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-slate-400 text-sm">Version: <span className="text-white font-bold">{gameConfig.version}</span></span>
+              <button onClick={saveGameConfig} disabled={gameConfigSaving} className="flex items-center gap-2 px-6 py-2 bg-rose-500 hover:bg-rose-400 text-white rounded-xl font-bold disabled:opacity-50">
+                <Save className="w-5 h-5" />{gameConfigSaving ? 'Saving...' : 'Save'}
+              </button>
+              <button onClick={() => { const blob = new Blob([JSON.stringify(gameConfig, null, 2)], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'game-config-v' + gameConfig.version + '.json'; a.click(); }} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
+                <Download className="w-4 h-4" /> Export JSON
+              </button>
+              <label className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl cursor-pointer">
+                <BookOpen className="w-4 h-4" /> Import JSON
+                <input type="file" accept=".json" className="hidden" onChange={(e) => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); if (d.towers && d.enemies && d.waves && d.constants) { setGameConfig({...gameConfig, towers: d.towers, enemies: d.enemies, waves: d.waves, constants: d.constants}); showMsg('success', 'JSON imported (not saved yet)'); } else { showMsg('error', 'Invalid JSON'); } } catch { showMsg('error', 'Invalid file'); } }; r.readAsText(f); e.target.value = ''; }} />
+              </label>
+              <button onClick={fetchGameConfig} className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Constants */}
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-bold text-rose-400 mb-3">Constants</h3>
+              <div className="flex gap-6">
+                <label className="flex items-center gap-2 text-sm text-slate-300">Start Gold<input type="number" value={gameConfig.constants.startGold} onChange={(e) => setGameConfig({...gameConfig, constants: {...gameConfig.constants, startGold: Number(e.target.value)}})} className="w-20 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-center" /></label>
+                <label className="flex items-center gap-2 text-sm text-slate-300">Start Lives<input type="number" value={gameConfig.constants.startLives} onChange={(e) => setGameConfig({...gameConfig, constants: {...gameConfig.constants, startLives: Number(e.target.value)}})} className="w-20 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-center" /></label>
+                <label className="flex items-center gap-2 text-sm text-slate-300">Spawn Interval<input type="number" step="0.1" value={gameConfig.constants.spawnInt} onChange={(e) => setGameConfig({...gameConfig, constants: {...gameConfig.constants, spawnInt: Number(e.target.value)}})} className="w-20 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-center" /></label>
+              </div>
+            </div>
+
+            {/* Towers */}
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-bold text-rose-400 mb-3">Towers ({gameConfig.towers.length})</h3>
+              <div className="space-y-4">
+                {gameConfig.towers.map((tower, ti) => (
+                  <div key={ti} className="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                    <div className="flex items-center gap-4 mb-2">
+                      <span className="text-white font-bold">{tower.name}</span>
+                      <span className="text-slate-400 text-sm">{tower.desc}</span>
+                      <div className="ml-auto flex gap-1">
+                        {tower.slow && <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 rounded text-xs">slow</span>}
+                        {tower.splash && <span className="px-2 py-0.5 bg-red-500/20 text-red-400 rounded text-xs">splash</span>}
+                        {tower.ghostOnly && <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">ghost only</span>}
+                        {tower.aura && <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-400 rounded text-xs">aura</span>}
+                        {tower.booster && <span className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">booster</span>}
+                        {tower.grenade && <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded text-xs">grenade</span>}
+                        {tower.laser && <span className="px-2 py-0.5 bg-pink-500/20 text-pink-400 rounded text-xs">laser</span>}
+                      </div>
+                    </div>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-slate-500">
+                          <th className="text-left py-1 px-1">Lv</th>
+                          <th className="text-right py-1 px-1">Cost</th>
+                          <th className="text-right py-1 px-1">Damage</th>
+                          <th className="text-right py-1 px-1">Range</th>
+                          <th className="text-right py-1 px-1">Fire Rate</th>
+                          {tower.slow && <><th className="text-right py-1 px-1">Slow%</th><th className="text-right py-1 px-1">SlowDur</th></>}
+                          {(tower.splash || tower.grenade) && <th className="text-right py-1 px-1">SplashR</th>}
+                          {tower.booster && <th className="text-right py-1 px-1">Boost%</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tower.levels.filter(l => l !== null).map((lv, li) => {
+                          const lvIdx = li + 1;
+                          return (
+                            <tr key={li} className="text-slate-300 border-t border-slate-800">
+                              <td className="py-1 px-1 text-slate-500">{lvIdx}</td>
+                              <td className="py-1 px-1 text-right"><input type="number" value={lv.cost} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, cost: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              <td className="py-1 px-1 text-right"><input type="number" value={lv.damage} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, damage: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              <td className="py-1 px-1 text-right"><input type="number" step="0.1" value={lv.range} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, range: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              <td className="py-1 px-1 text-right"><input type="number" step="0.01" value={lv.fireRate} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, fireRate: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              {tower.slow && (<>
+                                <td className="py-1 px-1 text-right"><input type="number" step="0.05" value={lv.slowFactor} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, slowFactor: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                                <td className="py-1 px-1 text-right"><input type="number" step="0.1" value={lv.slowDur} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, slowDur: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              </>)}
+                              {(tower.splash || tower.grenade) && (
+                                <td className="py-1 px-1 text-right"><input type="number" step="0.1" value={lv.splashR} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, splashR: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              )}
+                              {tower.booster && (
+                                <td className="py-1 px-1 text-right"><input type="number" step="0.05" value={lv.boostPct} onChange={(e) => { const t = [...gameConfig.towers]; t[ti] = {...t[ti], levels: [...t[ti].levels]}; t[ti].levels[lvIdx] = {...lv, boostPct: Number(e.target.value)}; setGameConfig({...gameConfig, towers: t}); }} className="w-16 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                              )}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Enemies */}
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-bold text-rose-400 mb-3">Enemies ({Object.keys(gameConfig.enemies).length})</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(gameConfig.enemies).map(([key, enemy]) => (
+                  <div key={key} className="bg-slate-900 border border-slate-700 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-3 h-3 rounded-full" style={{background: enemy.color}} />
+                      <span className="text-white font-bold text-sm">{enemy.label}</span>
+                      <span className="text-slate-500 text-xs">({key})</span>
+                      {enemy.ghost && <span className="px-1.5 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">ghost</span>}
+                      {enemy.stealth && <span className="px-1.5 py-0.5 bg-slate-500/20 text-slate-400 rounded text-xs">stealth</span>}
+                      {enemy.splits && <span className="px-1.5 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">splits:{enemy.splits}</span>}
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-xs">
+                      <label className="text-slate-400">Speed<input type="number" step="0.1" value={enemy.speed} onChange={(e) => { const en = {...gameConfig.enemies}; en[key] = {...en[key], speed: Number(e.target.value)}; setGameConfig({...gameConfig, enemies: en}); }} className="w-full px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-center mt-0.5" /></label>
+                      <label className="text-slate-400">Reward<input type="number" value={enemy.reward} onChange={(e) => { const en = {...gameConfig.enemies}; en[key] = {...en[key], reward: Number(e.target.value)}; setGameConfig({...gameConfig, enemies: en}); }} className="w-full px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-center mt-0.5" /></label>
+                      <label className="text-slate-400">Points<input type="number" value={enemy.pts} onChange={(e) => { const en = {...gameConfig.enemies}; en[key] = {...en[key], pts: Number(e.target.value)}; setGameConfig({...gameConfig, enemies: en}); }} className="w-full px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-center mt-0.5" /></label>
+                      {enemy.shield !== undefined && <label className="text-slate-400">Shield<input type="number" value={enemy.shield} onChange={(e) => { const en = {...gameConfig.enemies}; en[key] = {...en[key], shield: Number(e.target.value)}; setGameConfig({...gameConfig, enemies: en}); }} className="w-full px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-center mt-0.5" /></label>}
+                      {enemy.regenRate !== undefined && <label className="text-slate-400">RegenRate<input type="number" step="0.01" value={enemy.regenRate} onChange={(e) => { const en = {...gameConfig.enemies}; en[key] = {...en[key], regenRate: Number(e.target.value)}; setGameConfig({...gameConfig, enemies: en}); }} className="w-full px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-center mt-0.5" /></label>}
+                      {enemy.scale !== undefined && <label className="text-slate-400">Scale<input type="number" step="0.05" value={enemy.scale} onChange={(e) => { const en = {...gameConfig.enemies}; en[key] = {...en[key], scale: Number(e.target.value)}; setGameConfig({...gameConfig, enemies: en}); }} className="w-full px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-center mt-0.5" /></label>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Waves */}
+            <div className="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-6">
+              <h3 className="text-lg font-bold text-rose-400 mb-3">Waves ({gameConfig.waves.length})</h3>
+              <div className="max-h-96 overflow-y-auto" style={{scrollbarWidth:'thin', scrollbarColor:'#334155 transparent'}}>
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-slate-800">
+                    <tr className="text-slate-500">
+                      <th className="text-left py-1 px-2">#</th>
+                      <th className="text-left py-1 px-2">Type</th>
+                      <th className="text-right py-1 px-2">Count</th>
+                      <th className="text-right py-1 px-2">HP</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {gameConfig.waves.map((wave, wi) => (
+                      <tr key={wi} className={`border-t border-slate-800 ${(wi + 1) % 10 === 0 ? 'bg-rose-500/10' : ''}`}>
+                        <td className="py-1 px-2 text-slate-500">{wi + 1}</td>
+                        <td className="py-1 px-2">
+                          <select value={wave.type} onChange={(e) => { const w = [...gameConfig.waves]; w[wi] = {...w[wi], type: e.target.value}; setGameConfig({...gameConfig, waves: w}); }} className="px-1 py-0.5 bg-slate-700 border border-slate-600 rounded text-white text-xs">
+                            {Object.keys(gameConfig.enemies).map(k => <option key={k} value={k}>{k}</option>)}
+                          </select>
+                        </td>
+                        <td className="py-1 px-2 text-right"><input type="number" value={wave.count} onChange={(e) => { const w = [...gameConfig.waves]; w[wi] = {...w[wi], count: Number(e.target.value)}; setGameConfig({...gameConfig, waves: w}); }} className="w-14 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                        <td className="py-1 px-2 text-right"><input type="number" value={wave.hp} onChange={(e) => { const w = [...gameConfig.waves]; w[wi] = {...w[wi], hp: Number(e.target.value)}; setGameConfig({...gameConfig, waves: w}); }} className="w-20 px-1 py-0.5 bg-slate-800 border border-slate-700 rounded text-white text-right text-xs" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>)}
+        </>)}
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

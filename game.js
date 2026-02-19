@@ -187,7 +187,7 @@ let _migrationConnHandler = null;
 let _migrationTimer = null;
 
 // === EMOTE STATE ===
-const EMOTES = ['\u{1F44F}', '\u{1F340}', '\u{1F44D}', '\u{1F914}', '\u{1F612}', '\u{1F480}'];
+const EMOTES = ['\u{1F44F}', '\u{1F340}', '\u{1F44D}', '\u{1F914}', '\u{1F612}', '\u{1F480}', '\u{1F604}', '\u{1F602}'];
 let _emoteSendTimes = [];
 let _emoteMuted = false;
 
@@ -3096,14 +3096,63 @@ function hidePatchNotes() {
 
 function showTopbarRegister() {
     document.getElementById('login-box-login').style.display = 'none';
+    document.getElementById('login-box-reset').style.display = 'none';
     document.getElementById('login-box-register').style.display = '';
     document.getElementById('login-box-reg-error').textContent = '';
 }
 
 function showTopbarLogin() {
     document.getElementById('login-box-register').style.display = 'none';
+    document.getElementById('login-box-reset').style.display = 'none';
     document.getElementById('login-box-login').style.display = '';
     document.getElementById('login-box-error').textContent = '';
+}
+
+function showTopbarReset() {
+    document.getElementById('login-box-login').style.display = 'none';
+    document.getElementById('login-box-register').style.display = 'none';
+    document.getElementById('login-box-reset').style.display = '';
+    document.getElementById('topbar-reset-step1').style.display = '';
+    document.getElementById('topbar-reset-step2').style.display = 'none';
+    document.getElementById('login-box-reset-error').textContent = '';
+}
+
+async function topbarRequestReset() {
+    var email = document.getElementById('topbar-reset-email').value.trim();
+    document.getElementById('login-box-reset-error').textContent = '';
+    if (!email) { document.getElementById('login-box-reset-error').textContent = 'Email required'; return; }
+    try {
+        var r = await fetchWithTimeout(SERVER_URL + '/api/request-reset', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('login-box-reset-error').textContent = data.error || 'Error'; return; }
+        document.getElementById('topbar-reset-step1').style.display = 'none';
+        document.getElementById('topbar-reset-step2').style.display = '';
+        document.getElementById('login-box-reset-error').textContent = 'Code sent — check your email';
+        document.getElementById('login-box-reset-error').style.color = '#00ff88';
+    } catch (e) { document.getElementById('login-box-reset-error').textContent = 'Server unreachable'; }
+}
+
+async function topbarConfirmReset() {
+    var token = document.getElementById('topbar-reset-token').value.trim();
+    var newPass = document.getElementById('topbar-reset-newpass').value;
+    document.getElementById('login-box-reset-error').textContent = '';
+    document.getElementById('login-box-reset-error').style.color = '';
+    if (!token || !newPass) { document.getElementById('login-box-reset-error').textContent = 'Code and new password required'; return; }
+    if (newPass.length < 6) { document.getElementById('login-box-reset-error').textContent = 'Password must be at least 6 characters'; return; }
+    try {
+        var r = await fetchWithTimeout(SERVER_URL + '/api/reset-password', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: token, newPassword: newPass })
+        });
+        var data = await r.json();
+        if (!r.ok) { document.getElementById('login-box-reset-error').textContent = data.error || 'Error'; return; }
+        document.getElementById('login-box-reset-error').textContent = 'Password reset! You can login now';
+        document.getElementById('login-box-reset-error').style.color = '#00ff88';
+        setTimeout(function() { showTopbarLogin(); }, 2000);
+    } catch (e) { document.getElementById('login-box-reset-error').textContent = 'Server unreachable'; }
 }
 
 async function topbarLogin() {
@@ -4486,27 +4535,31 @@ function drawOpponentBoard() {
 
 // === EMOTES & RANKED CHAT ===
 function showRankedChat(show) {
-    var d = show ? 'flex' : 'none';
-    var emoteRow = document.getElementById('ranked-emote-row');
     var msgs = document.getElementById('ranked-chat-msgs');
     var inputRow = document.getElementById('ranked-chat-input-row');
-    emoteRow.style.display = d;
     msgs.style.display = show ? 'block' : 'none';
-    inputRow.style.display = d;
+    inputRow.style.display = show ? 'flex' : 'none';
+    hideEmotePicker();
     if (show) {
         msgs.innerHTML = '';
-        // Compute available height for messages
         setTimeout(function() {
             var panel = document.getElementById('opp-panel');
             var used = document.getElementById('opp-bar').offsetHeight
                      + document.getElementById('opp-canvas').offsetHeight
-                     + emoteRow.offsetHeight
                      + inputRow.offsetHeight;
             msgs.style.height = (panel.offsetHeight - used) + 'px';
         }, 50);
     } else {
         msgs.style.height = '';
     }
+}
+function toggleEmotePicker() {
+    var p = document.getElementById('emote-picker');
+    if (p) p.style.display = p.style.display === 'none' ? 'grid' : 'none';
+}
+function hideEmotePicker() {
+    var p = document.getElementById('emote-picker');
+    if (p) p.style.display = 'none';
 }
 function sendEmote(id) {
     if (!isDuel || duelEnded) return;
@@ -4569,15 +4622,24 @@ function appendRankedMsg(name, text, isMine) {
 let _rankedChatMuted = false;
 function toggleRankedMute() {
     _rankedChatMuted = !_rankedChatMuted;
-    let btn = document.getElementById('ranked-mute-btn');
+    var btn = document.getElementById('ranked-mute-btn');
     if (btn) {
         btn.classList.toggle('muted', _rankedChatMuted);
         btn.textContent = _rankedChatMuted ? '\u{1F507}' : '\u{1F508}';
     }
     document.getElementById('ranked-chat-msgs').style.display = _rankedChatMuted ? 'none' : 'block';
-    document.getElementById('ranked-chat-input-row').style.display = _rankedChatMuted ? 'none' : 'flex';
-    var emotes = document.getElementById('ranked-emote-row').querySelectorAll('.emote-btn');
-    for (var i = 0; i < emotes.length; i++) emotes[i].style.display = _rankedChatMuted ? 'none' : '';
+    // Hide input/emotes/send but keep mute button visible
+    var row = document.getElementById('ranked-chat-input-row');
+    if (row) {
+        var input = document.getElementById('ranked-chat-input');
+        var picker = document.getElementById('emote-picker-btn');
+        var sendBtn = row.querySelector('button[onclick="sendRankedChat()"]');
+        var pickerWrap = picker ? picker.parentElement : null;
+        if (input) input.style.display = _rankedChatMuted ? 'none' : '';
+        if (pickerWrap) pickerWrap.style.display = _rankedChatMuted ? 'none' : '';
+        if (sendBtn) sendBtn.style.display = _rankedChatMuted ? 'none' : '';
+    }
+    hideEmotePicker();
 }
 
 // === CHAT PROFANITY FILTER ===
