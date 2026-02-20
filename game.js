@@ -3507,8 +3507,8 @@ function submitRankedResult(resultStr) {
 }
 
 function pollRankedResult(matchId, attempt) {
-    if (attempt >= 25) return;
-    // Backoff: 2s for first 10, 5s for next 15 → covers ~2.5min (server auto-resolve at 2min)
+    if (attempt >= 15) return;
+    // Poll every 3s for up to 45s (server auto-resolve at 30s)
     setTimeout(function() {
         fetchWithTimeout(SERVER_URL + '/api/match/result/' + matchId, {
             headers: { 'Authorization': 'Bearer ' + authToken }
@@ -3520,7 +3520,7 @@ function pollRankedResult(matchId, attempt) {
                 if (data.newElo !== undefined && currentUser) currentUser.elo = data.newElo;
             }
         }).catch(function() { pollRankedResult(matchId, attempt + 1); });
-    }, attempt < 10 ? 2000 : 5000);
+    }, 3000);
 }
 
 async function menuShowDuel() {
