@@ -156,9 +156,12 @@ let serverState = null;
 let waiting = false;
 let lastCdSound = -1;
 
+// If served from GitHub Pages, connect to Railway server; otherwise connect to same host
+const WS_HOST = (location.hostname === 'tdinvasion.com' || location.hostname.endsWith('.github.io'))
+  ? 'invasion-server-production.up.railway.app' : location.host;
+
 function connectWS() {
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const url = proto + '//' + location.host + '/battle/ws';
+  const url = 'wss://' + WS_HOST + '/battle/ws';
   ws = new WebSocket(url);
   ws.onopen = () => {
     console.log('[WS] Connected');
