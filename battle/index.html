@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BATTLE.io</title>
+<title>BATTLE</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#111;overflow:hidden;font-family:'Segoe UI',Tahoma,sans-serif;cursor:crosshair}
@@ -19,7 +19,7 @@ canvas{display:block}
 const {useState,useEffect,useRef,useCallback}=React;
 
 // ═══════════════ CONSTANTS (must match server) ═══════════════
-const MAP=6000, MAX_P=100, P_RAD=15, B_RAD=4, B_SPD=450, B_RNG=1280;
+const MAP=4500, MAX_P=50, P_RAD=15, B_RAD=4, B_SPD=450, B_RNG=1280;
 const P_SPD=280, CD=0.4, GRID=80, SAFE=100, SHRINK=120;
 const BOOST_SPD=600, BOOST_DUR=0.18, BOOST_CD=1.5;
 const MAG=5, RELOAD=3;
@@ -153,15 +153,15 @@ const SFX={
 let ws = null;
 let myId = -1;
 let serverState = null;
+let prevServerState = null;
+let stateTime = 0;      // time when current state arrived
+let prevStateTime = 0;   // time when previous state arrived
 let waiting = false;
 let lastCdSound = -1;
 
-// If served from GitHub Pages, connect to Railway server; otherwise connect to same host
-const WS_HOST = (location.hostname === 'tdinvasion.com' || location.hostname.endsWith('.github.io'))
-  ? 'battleio-production.up.railway.app' : location.host;
-
 function connectWS() {
-  const url = 'wss://' + WS_HOST + '/battle/ws';
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const url = proto + '//' + location.host + '/battle/ws';
   ws = new WebSocket(url);
   ws.onopen = () => {
     console.log('[WS] Connected');
@@ -177,7 +177,10 @@ function connectWS() {
       } else if(msg.t === 'wait') {
         waiting = true;
       } else if(msg.t === 'state') {
+        prevServerState = serverState;
+        prevStateTime = stateTime;
         serverState = msg;
+        stateTime = performance.now();
         // Process audio events
         if(msg.ev && myId >= 0) {
           const me = msg.p.find(p => p[0] === myId);
@@ -443,7 +446,7 @@ function Lobby({count,timer}){
       <div style={{textAlign:'center',color:'#fff'}}>
         <h1 style={{fontSize:'4.5rem',fontWeight:900,letterSpacing:'-2px',marginBottom:24,
           background:'linear-gradient(135deg,#00ff88,#00bbff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
-          BATTLE.io
+          BATTLE
         </h1>
         <p style={{fontSize:'0.85rem',color:'#888',marginBottom:10}}>Choose your character</p>
         <div style={{display:'flex',gap:12,justifyContent:'center',marginBottom:20}}>
@@ -518,9 +521,9 @@ function Rules({onClose}){
         boxShadow:'0 8px 40px rgba(0,0,0,0.5)'}}>
         <h2 style={{margin:'0 0 14px',fontSize:'1.3rem',color:'#fff',
           background:'linear-gradient(135deg,#00ff88,#00bbff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
-          BATTLE.io &mdash; Rules
+          BATTLE &mdash; Rules
         </h2>
-        <p><b style={{color:'#fff'}}>Goal:</b> Be the last one standing among 100 players.</p>
+        <p><b style={{color:'#fff'}}>Goal:</b> Be the last one standing among {MAX_P} players.</p>
         <p style={{margin:'8px 0 0'}}><b style={{color:'#fff'}}>Controls:</b></p>
         <ul style={{margin:'2px 0 0 18px',padding:0}}>
           <li><b>Mouse</b> &mdash; move toward cursor (farther = faster, max speed at 180px)</li>
@@ -551,7 +554,7 @@ function WaitingScreen(){
       <div style={{textAlign:'center',color:'#fff'}}>
         <h1 style={{fontSize:'3rem',fontWeight:900,marginBottom:16,
           background:'linear-gradient(135deg,#00ff88,#00bbff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
-          BATTLE.io
+          BATTLE
         </h1>
         <p style={{color:'#aaa',fontSize:'1.1rem'}}>Game in progress...</p>
         <p style={{color:'#777',fontSize:'0.9rem',marginTop:8}}>You will join the next round automatically.</p>
@@ -729,13 +732,71 @@ function App(){
 
       if(dirty) rr();
 
+      // ─── INTERPOLATION ───
+      // Build interpolated player data for smooth rendering
+      const now=performance.now();
+      const tickMs=stateTime-prevStateTime;
+      const elapsed=now-stateTime;
+      const t=(tickMs>0)?Math.min(elapsed/tickMs,1.5):1;
+
+      function lerpPlayer(cur,prev){
+        if(!prev) return cur.slice();
+        const out=cur.slice();
+        // Interpolate x,y (indices 2,3) and angle (index 4)
+        out[2]=prev[2]+(cur[2]-prev[2])*t;
+        out[3]=prev[3]+(cur[3]-prev[3])*t;
+        // Angle interpolation (handle wrapping)
+        let da=cur[4]-prev[4];
+        if(da>Math.PI)da-=Math.PI*2;
+        if(da<-Math.PI)da+=Math.PI*2;
+        out[4]=prev[4]+da*t;
+        return out;
+      }
+
+      let interpPlayers=null;
+      if(st&&st.p&&prevServerState&&prevServerState.p){
+        const prevMap=new Map();
+        for(const pp of prevServerState.p) prevMap.set(pp[0],pp);
+        interpPlayers=st.p.map(cur=>lerpPlayer(cur,prevMap.get(cur[0])));
+      } else if(st&&st.p){
+        interpPlayers=st.p;
+      }
+
+      // Interpolate projectiles
+      let interpProj=null;
+      if(st&&st.b){
+        const dt2=elapsed/1000;
+        interpProj=st.b.map(pr=>[pr[0]+pr[2]*dt2, pr[1]+pr[3]*dt2, pr[2], pr[3], pr[4]]);
+      }
+
+      // Client-side prediction for local player
+      if(interpPlayers&&myId>=0){
+        const m=mouse.current;
+        const mx=m.x-W/2,my2=m.y-H/2;
+        const rawDist=Math.sqrt(mx*mx+my2*my2);
+        const normDist=Math.min(1,rawDist/180);
+        const ang=Math.atan2(my2,mx);
+        const myIdx=interpPlayers.findIndex(p=>p[0]===myId);
+        if(myIdx>=0&&interpPlayers[myIdx][1]){
+          const mp=interpPlayers[myIdx];
+          const predDt=elapsed/1000;
+          if(normDist>0.02){
+            const base=Math.min(P_SPD,normDist*P_SPD);
+            const sp=mp[9]>0?BOOST_SPD:base;
+            mp[2]+=Math.cos(ang)*sp*predDt;
+            mp[3]+=Math.sin(ang)*sp*predDt;
+            mp[4]=ang;
+          }
+        }
+      }
+
       // ─── RENDER ───
       ctx.fillStyle='#1a1a2e';
       ctx.fillRect(0,0,W,H);
 
-      if(st&&st.p){
+      if(interpPlayers){
         // Find my player for camera
-        const myPd=myId>=0?st.p.find(p=>p[0]===myId):null;
+        const myPd=myId>=0?interpPlayers.find(p=>p[0]===myId):null;
         const camX=myPd?myPd[2]:MAP/2;
         const camY=myPd?myPd[3]:MAP/2;
         const cam={x:camX-W/2,y:camY-H/2};
@@ -744,14 +805,14 @@ function App(){
         if(st.bnd) rZone(ctx,st.bnd,cam,W,H,st.time||0);
 
         // Render other players first, then me on top
-        for(const pd of st.p){
+        for(const pd of interpPlayers){
           if(pd[0]===myId)continue;
           rPlayer(ctx,pd,cam,false);
         }
         if(myPd) rPlayer(ctx,myPd,cam,true);
 
-        // Projectiles
-        if(st.b) rProj(ctx,st.b,cam);
+        // Projectiles (interpolated)
+        if(interpProj) rProj(ctx,interpProj,cam);
 
         // Update & render particles (client-side)
         const dt=1/60;
@@ -797,7 +858,7 @@ function App(){
           <div style={{textAlign:'center',color:'#fff'}}>
             <h1 style={{fontSize:'4.5rem',fontWeight:900,letterSpacing:'-2px',marginBottom:24,
               background:'linear-gradient(135deg,#00ff88,#00bbff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
-              BATTLE.io
+              BATTLE
             </h1>
             <p style={{color:'#888'}}>Connecting to server...</p>
           </div>
