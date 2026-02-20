@@ -2712,6 +2712,7 @@ function resetGameState() {
     gameStartTime = 0; gameEndTime = 0; rankedEloChange = null;
     oppBoardData = null; _lastStatusSend = 0;
     if (_duelDisconnectTimer) { clearInterval(_duelDisconnectTimer); _duelDisconnectTimer = null; }
+    if (_peerHeartbeatTimer) { clearInterval(_peerHeartbeatTimer); _peerHeartbeatTimer = null; }
     _duelDisconnectCountdown = 0;
     multiEnded = false; multiResultTitle = ''; multiResultSub = '';
     multiStartTimer = 0; _lastMultiStatusSend = 0; _multiScoreSaved = false;
@@ -3628,31 +3629,49 @@ function menuCancelHost() {
 
 let _duelDisconnectTimer = null;
 let _duelDisconnectCountdown = 0;
+let _lastPeerDataTime = 0;
+let _peerHeartbeatTimer = null;
+
+function _triggerDuelDisconnect() {
+    if (duelEnded || _duelDisconnectTimer) return;
+    _duelDisconnectCountdown = 5;
+    showMessage('Opponent disconnected — win in 5s...');
+    _duelDisconnectTimer = setInterval(function() {
+        _duelDisconnectCountdown--;
+        if (_duelDisconnectCountdown <= 0) {
+            clearInterval(_duelDisconnectTimer);
+            _duelDisconnectTimer = null;
+            if (!duelEnded) {
+                duelEnded = true;
+                duelResultTitle = 'VICTORY';
+                duelResultSub = 'Opponent disconnected';
+                playSfx('victory');
+                submitRankedResult('win');
+            }
+        } else {
+            showMessage('Opponent disconnected — win in ' + _duelDisconnectCountdown + 's...');
+        }
+    }, 1000);
+}
 
 function setupConnection() {
-    conn.on('data', handlePeerMessage);
-    conn.on('close', function() {
-        if (!duelEnded) {
-            _duelDisconnectCountdown = 8;
-            showMessage('Opponent disconnected — win in 8s...');
-            _duelDisconnectTimer = setInterval(function() {
-                _duelDisconnectCountdown--;
-                if (_duelDisconnectCountdown <= 0) {
-                    clearInterval(_duelDisconnectTimer);
-                    _duelDisconnectTimer = null;
-                    if (!duelEnded) {
-                        duelEnded = true;
-                        duelResultTitle = 'VICTORY';
-                        duelResultSub = 'Opponent disconnected';
-                        playSfx('victory');
-                        submitRankedResult('win');
-                    }
-                } else {
-                    showMessage('Opponent disconnected — win in ' + _duelDisconnectCountdown + 's...');
-                }
-            }, 1000);
-        }
+    _lastPeerDataTime = Date.now();
+    conn.on('data', function(data) {
+        _lastPeerDataTime = Date.now();
+        handlePeerMessage(data);
     });
+    conn.on('close', function() { _triggerDuelDisconnect(); });
+    conn.on('error', function() { _triggerDuelDisconnect(); });
+    // Heartbeat: if no data received for 5s, treat as disconnect
+    if (_peerHeartbeatTimer) clearInterval(_peerHeartbeatTimer);
+    _peerHeartbeatTimer = setInterval(function() {
+        if (duelEnded) { clearInterval(_peerHeartbeatTimer); _peerHeartbeatTimer = null; return; }
+        if (Date.now() - _lastPeerDataTime > 5000) {
+            clearInterval(_peerHeartbeatTimer);
+            _peerHeartbeatTimer = null;
+            _triggerDuelDisconnect();
+        }
+    }, 1000);
 }
 
 function startDuel() {
