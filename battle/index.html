@@ -158,7 +158,7 @@ let lastCdSound = -1;
 
 // If served from GitHub Pages, connect to Railway server; otherwise connect to same host
 const WS_HOST = (location.hostname === 'tdinvasion.com' || location.hostname.endsWith('.github.io'))
-  ? 'invasion-server-production.up.railway.app' : location.host;
+  ? 'battleio-production.up.railway.app' : location.host;
 
 function connectWS() {
   const url = 'wss://' + WS_HOST + '/battle/ws';
