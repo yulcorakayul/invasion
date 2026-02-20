@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BATTLE.io</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#111;overflow:hidden;font-family:'Segoe UI',Tahoma,sans-serif;cursor:crosshair}
+canvas{display:block}
+</style>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+// ═══════════════ CONSTANTS ═══════════════
+const MAP=6000, MAX_P=100, P_RAD=15, B_RAD=4, B_SPD=450, B_RNG=1280;
+const P_SPD=280, CD=0.4, GRID=80, SAFE=100, SHRINK=120;
+const BOT_VIS=500, BOT_ERR=0.18;
+const BOOST_SPD=600, BOOST_DUR=0.18, BOOST_CD=1.5;
+const MAG=5, RELOAD=3;
+
+const NAMES=[
+"Shadow","Phantom","Ninja","Viper","Storm","Blaze","Frost","Thunder",
+"Hawk","Wolf","Lion","Eagle","Cobra","Tiger","Bear","Fox","Raven",
+"Shark","Panther","Reaper","Ghost","Sniper","Ace","Blade","Arrow",
+"Flash","Spark","Doom","Fury","Rage","Chaos","Void","Hex","Jinx",
+"Pixel","Nova","Atlas","Titan","Zeus","Mars","Apollo","Loki","Thor",
+"Odin","Crypt","Drift","Edge","Flux","Glitch","Havoc",
+"Icon","Karma","Myth","Neon","Omega","Pulse","Quest","Rogue",
+"Surge","Toxic","Ultra","Volt","Warp","Xeno","Yeti","Zeal",
+"Blitz","Crash","Drake","Ember","Fang","Grim","Haze","Iris",
+"Jade","Knox","Luna","Mist","Nash","Onyx","Pike","Rex",
+"Scar","Tusk","Axel","Bolt","Claw","Dusk","Echo","Fuse",
+"Grip","Hunt","Iron","Jolt","Kite","Lynx","Maze","Nuke",
+"Orb","Pyro","Rift","Sage","Thorn","Vale","Wisp","Zap","Crow"
+];
+
+// ═══════════════ UTILITIES ═══════════════
+const dist=(x1,y1,x2,y2)=>Math.sqrt((x2-x1)**2+(y2-y1)**2);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rndCol=()=>`hsl(${Math.random()*360|0},70%,55%)`;
+
+// ═══════════════ SKINS ═══════════════
+const SKINS=[
+  {id:'default',label:'Default',file:null},
+  {id:'leh',label:'Leh',file:'leh.jpg'},
+  {id:'trump',label:'Trump',file:'trump.jpg'},
+];
+const skinCache={};
+let playerSkinId='default';
+
+function loadSkins(){
+  SKINS.forEach(s=>{
+    if(!s.file)return;
+    const img=new Image();
+    img.onload=()=>{skinCache[s.id]=img;};
+    img.src=s.file;
+  });
+}
+loadSkins();
+
+// ═══════════════ AUDIO (Web Audio API) ═══════════════
+const SFX={
+  ctx:null, vol:0.7, px:0, py:0,
+  init(){if(!this.ctx)try{this.ctx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}},
+  _g(v,dur){
+    if(this.vol<=0||!this.ctx)return null;
+    const g=this.ctx.createGain();g.connect(this.ctx.destination);
+    const fv=v*this.vol;
+    g.gain.setValueAtTime(Math.max(0.001,fv),this.ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,this.ctx.currentTime+dur);
+    return g;
+  },
+  _vol(x,y,range=700){
+    if(!this.ctx)return 0;
+    const d=dist(this.px,this.py,x,y);
+    if(d>range)return 0;
+    return(1-d/range)*0.35;
+  },
+  shoot(x,y){
+    const v=this._vol(x,y,800); if(!v)return;
+    const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this._g(v,0.07);
+    if(!g)return;
+    o.connect(g);o.frequency.setValueAtTime(900,t);
+    o.frequency.exponentialRampToValueAtTime(250,t+0.07);
+    o.start(t);o.stop(t+0.07);
+  },
+  kill(x,y){
+    const v=this._vol(x,y,900); if(!v)return;
+    const t=this.ctx.currentTime;
+    // low boom
+    const o=this.ctx.createOscillator(),g=this._g(v*1.4,0.22);
+    if(!g)return;
+    o.type='sawtooth';o.connect(g);
+    o.frequency.setValueAtTime(180,t);o.frequency.exponentialRampToValueAtTime(35,t+0.22);
+    o.start(t);o.stop(t+0.22);
+    // noise burst
+    const len=this.ctx.sampleRate*0.12;
+    const buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.max(0,1-i/len);
+    const n=this.ctx.createBufferSource(),g2=this._g(v*0.7,0.12);
+    if(!g2)return;
+    n.buffer=buf;n.connect(g2);n.start(t);n.stop(t+0.12);
+  },
+  reload(x,y){
+    const v=this._vol(x,y,800); if(!v)return;
+    const t=this.ctx.currentTime;
+    const o=this.ctx.createOscillator(),g=this._g(v*0.8,0.35);
+    if(!g)return;
+    o.type='triangle';o.connect(g);
+    o.frequency.setValueAtTime(600,t);
+    o.frequency.exponentialRampToValueAtTime(150,t+0.35);
+    o.start(t);o.stop(t+0.35);
+  },
+  boost(){
+    if(this.vol<=0||!this.ctx)return;
+    const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this._g(0.12,0.1);
+    if(!g)return;
+    o.connect(g);o.frequency.setValueAtTime(250,t);
+    o.frequency.exponentialRampToValueAtTime(550,t+0.08);
+    o.start(t);o.stop(t+0.1);
+  },
+  tick(){
+    if(this.vol<=0||!this.ctx)return;
+    const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this._g(0.18,0.12);
+    if(!g)return;
+    o.connect(g);o.frequency.setValueAtTime(440,t);
+    o.start(t);o.stop(t+0.12);
+  },
+  go(){
+    if(this.vol<=0||!this.ctx)return;
+    const t=this.ctx.currentTime,o=this.ctx.createOscillator(),g=this._g(0.25,0.25);
+    if(!g)return;
+    o.connect(g);o.frequency.setValueAtTime(660,t);
+    o.start(t);o.stop(t+0.25);
+  },
+  win(){
+    if(this.vol<=0||!this.ctx)return;
+    const t=this.ctx.currentTime;
+    [523,659,784,1047].forEach((f,i)=>{
+      const o=this.ctx.createOscillator(),g=this._g(0.2,0.35);
+      if(!g)return;
+      o.connect(g);o.frequency.setValueAtTime(f,t+i*0.13);
+      g.gain.setValueAtTime(0.001,t+i*0.13);
+      g.gain.linearRampToValueAtTime(0.2,t+i*0.13+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+i*0.13+0.35);
+      o.start(t+i*0.13);o.stop(t+i*0.13+0.35);
+    });
+  },
+  lose(){
+    if(this.vol<=0||!this.ctx)return;
+    const t=this.ctx.currentTime;
+    [400,300,180].forEach((f,i)=>{
+      const o=this.ctx.createOscillator(),g=this._g(0.15,0.3);
+      if(!g)return;
+      o.type='sawtooth';o.connect(g);o.frequency.setValueAtTime(f,t+i*0.18);
+      g.gain.setValueAtTime(0.001,t+i*0.18);
+      g.gain.linearRampToValueAtTime(0.15,t+i*0.18+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001,t+i*0.18+0.3);
+      o.start(t+i*0.18);o.stop(t+i*0.18+0.3);
+    });
+  },
+};
+
+// ═══════════════ GAME INIT ═══════════════
+function mkPlayer(id,human){
+  const pad=400;
+  return{
+    id,human,
+    x:pad+Math.random()*(MAP-pad*2),
+    y:pad+Math.random()*(MAP-pad*2),
+    ang:Math.random()*Math.PI*2,
+    alive:true,
+    col:human?'#00ff88':rndCol(),
+    name:human?'You':NAMES[id%NAMES.length]+(id>=NAMES.length?id:''),
+    cd:0,kills:0,baseCD:CD,
+    ammo:MAG,reloading:0,
+    boost:0,boostCd:0,
+    tx:MAP/2,ty:MAP/2,mt:0,sd:0.5+Math.random()*0.8,
+  };
+}
+
+function mkGame(){
+  const players=[];
+  for(let i=0;i<MAX_P;i++) players.push(mkPlayer(i,i===0));
+  return{
+    players,proj:[],parts:[],
+    bnd:{l:0,t:0,r:MAP,b:MAP},
+    state:'LOBBY',lobbyN:1,lobbyT:0,cdT:3,
+    time:0,lt:0,alive:MAX_P,
+  };
+}
+
+// ═══════════════ GAME ACTIONS ═══════════════
+function fire(g,p){
+  if(p.cd>0||p.ammo<=0||p.reloading>0)return;
+  p.cd=p.baseCD;
+  p.ammo--;
+  if(p.ammo<=0) p.reloading=RELOAD;
+  const c=Math.cos(p.ang),s=Math.sin(p.ang);
+  g.proj.push({
+    x:p.x+c*(P_RAD+B_RAD+2),y:p.y+s*(P_RAD+B_RAD+2),
+    vx:c*B_SPD,vy:s*B_SPD,oid:p.id,d:0,
+  });
+  SFX.shoot(p.x,p.y);
+  if(p.ammo<=0) SFX.reload(p.x,p.y);
+}
+
+function boom(g,p){
+  for(let i=0;i<18;i++){
+    const a=Math.random()*Math.PI*2,sp=60+Math.random()*180;
+    const life=0.35+Math.random()*0.4;
+    g.parts.push({
+      x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+      col:p.col,life,ml:life,r:2+Math.random()*4,
+    });
+  }
+}
+
+// ═══════════════ UPDATE FUNCTIONS ═══════════════
+function updHuman(p,g,m,dt){
+  if(!p.alive)return;
+  const W=window.innerWidth,H=window.innerHeight;
+  const mx=m.x-W/2,my=m.y-H/2;
+  const d=Math.sqrt(mx*mx+my*my);
+
+  // boost timers
+  p.boostCd=Math.max(0,p.boostCd-dt);
+  if(m.boost&&p.boostCd<=0&&p.boost<=0){
+    p.boost=BOOST_DUR;
+    p.boostCd=BOOST_CD;
+    SFX.boost();
+  }
+  p.boost=Math.max(0,p.boost-dt);
+
+  if(d>3){
+    const base=Math.min(P_SPD,d/180*P_SPD);
+    const sp=p.boost>0?BOOST_SPD:base;
+    p.x+=(mx/d)*sp*dt;
+    p.y+=(my/d)*sp*dt;
+    p.ang=Math.atan2(my,mx);
+  }
+  // boost trail particles
+  if(p.boost>0){
+    for(let i=0;i<2;i++){
+      const a=p.ang+Math.PI+(Math.random()-0.5)*0.8;
+      const sp=40+Math.random()*80;
+      g.parts.push({
+        x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+        col:'#00ddff',life:0.2+Math.random()*0.15,ml:0.35,r:2+Math.random()*3,
+      });
+    }
+  }
+  p.cd=Math.max(0,p.cd-dt);
+  if(p.reloading>0){p.reloading=Math.max(0,p.reloading-dt);if(p.reloading<=0)p.ammo=MAG;}
+  const b=g.bnd;
+  p.x=clamp(p.x,b.l+P_RAD,b.r-P_RAD);
+  p.y=clamp(p.y,b.t+P_RAD,b.b-P_RAD);
+  if(m.dn&&p.cd<=0) fire(g,p);
+}
+
+function updBot(bot,g,dt){
+  if(!bot.alive)return;
+  const b=g.bnd;
+  bot.cd=Math.max(0,bot.cd-dt);
+  if(bot.reloading>0){bot.reloading=Math.max(0,bot.reloading-dt);if(bot.reloading<=0)bot.ammo=MAG;}
+  bot.mt-=dt; bot.sd-=dt;
+
+  if(bot.mt<=0){
+    bot.mt=1+Math.random()*2.5;
+    const cx=(b.l+b.r)/2,cy=(b.t+b.b)/2;
+    const w=b.r-b.l,h=b.b-b.t;
+    bot.tx=clamp(cx+(Math.random()-0.5)*w*0.6,b.l+SAFE,b.r-SAFE);
+    bot.ty=clamp(cy+(Math.random()-0.5)*h*0.6,b.t+SAFE,b.b-SAFE);
+  }
+
+  const bd=120;
+  if(bot.x-b.l<bd) bot.tx=Math.max(bot.tx,bot.x+200);
+  if(b.r-bot.x<bd) bot.tx=Math.min(bot.tx,bot.x-200);
+  if(bot.y-b.t<bd) bot.ty=Math.max(bot.ty,bot.y+200);
+  if(b.b-bot.y<bd) bot.ty=Math.min(bot.ty,bot.y-200);
+
+  // dodge projectiles
+  for(const pr of g.proj){
+    if(pr.oid===bot.id)continue;
+    const dd=dist(bot.x,bot.y,pr.x,pr.y);
+    if(dd<130){
+      const pa=Math.atan2(pr.vy,pr.vx);
+      const da=pa+(Math.random()>0.5?1:-1)*Math.PI/2;
+      bot.tx=bot.x+Math.cos(da)*200;
+      bot.ty=bot.y+Math.sin(da)*200;
+      bot.mt=0.3;
+      break;
+    }
+  }
+
+  const dx=bot.tx-bot.x,dy=bot.ty-bot.y;
+  const d=Math.sqrt(dx*dx+dy*dy);
+  if(d>5){
+    const sp=Math.min(P_SPD*0.9,d/180*P_SPD);
+    bot.x+=(dx/d)*sp*dt;
+    bot.y+=(dy/d)*sp*dt;
+    bot.ang=Math.atan2(dy,dx);
+  }
+
+  if(bot.cd<=0&&bot.sd<=0){
+    let cls=null,cd2=BOT_VIS;
+    for(const p of g.players){
+      if(p===bot||!p.alive)continue;
+      const dd=dist(bot.x,bot.y,p.x,p.y);
+      if(dd<cd2){cd2=dd;cls=p;}
+    }
+    if(cls){
+      const aa=Math.atan2(cls.y-bot.y,cls.x-bot.x);
+      bot.ang=aa+(Math.random()-0.5)*BOT_ERR*2;
+      fire(g,bot);
+      bot.sd=0.3+Math.random()*0.7;
+    }
+  }
+
+  bot.x=clamp(bot.x,b.l+P_RAD,b.r-P_RAD);
+  bot.y=clamp(bot.y,b.t+P_RAD,b.b-P_RAD);
+}
+
+function updProj(g,dt){
+  const b=g.bnd;
+  for(let i=g.proj.length-1;i>=0;i--){
+    const p=g.proj[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.d+=B_SPD*dt;
+    if(p.d>B_RNG||p.x<b.l||p.x>b.r||p.y<b.t||p.y>b.b)
+      g.proj.splice(i,1);
+  }
+}
+
+function collisions(g){
+  for(let i=g.proj.length-1;i>=0;i--){
+    const pr=g.proj[i];
+    for(const p of g.players){
+      if(!p.alive||p.id===pr.oid)continue;
+      if(dist(pr.x,pr.y,p.x,p.y)<P_RAD+B_RAD){
+        p.alive=false;
+        g.proj.splice(i,1);
+        boom(g,p);
+        g.alive--;
+        SFX.kill(p.x,p.y);
+        // reward killer
+        const killer=g.players[pr.oid];
+        if(killer&&killer.alive){
+          killer.kills++;
+          killer.baseCD=Math.max(0.08,killer.baseCD-0.1);
+          killer.boostCd=0;
+        }
+        break;
+      }
+    }
+  }
+}
+
+function updShrink(g,dt){
+  if(g.alive<=1)return;
+  const W=window.innerWidth,H=window.innerHeight;
+  const ratio=Math.max(0,(g.alive-2)/(MAX_P-2));
+  const tW=W+(MAP-W)*ratio, tH=H+(MAP-H)*ratio;
+  const b=g.bnd;
+  const cW=b.r-b.l,cH=b.b-b.t;
+
+  const alive=g.players.filter(p=>p.alive);
+  let mnX=1e9,mxX=-1e9,mnY=1e9,mxY=-1e9;
+  for(const p of alive){
+    if(p.x<mnX)mnX=p.x; if(p.x>mxX)mxX=p.x;
+    if(p.y<mnY)mnY=p.y; if(p.y>mxY)mxY=p.y;
+  }
+
+  const sm=SHRINK*dt;
+
+  if(cW>tW+1){
+    const rm=Math.min(cW-tW,sm);
+    const mL=mnX-b.l,mR=b.r-mxX,tot=mL+mR;
+    if(tot>SAFE*2){
+      let dL=rm*(mL/tot),dR=rm*(mR/tot);
+      dL=Math.min(dL,Math.max(0,mL-SAFE));
+      dR=Math.min(dR,Math.max(0,mR-SAFE));
+      b.l+=dL; b.r-=dR;
+    }
+  }
+  if(cH>tH+1){
+    const rm=Math.min(cH-tH,sm);
+    const mT=mnY-b.t,mB=b.b-mxY,tot=mT+mB;
+    if(tot>SAFE*2){
+      let dT=rm*(mT/tot),dB=rm*(mB/tot);
+      dT=Math.min(dT,Math.max(0,mT-SAFE));
+      dB=Math.min(dB,Math.max(0,mB-SAFE));
+      b.t+=dT; b.b-=dB;
+    }
+  }
+}
+
+function updParts(g,dt){
+  for(let i=g.parts.length-1;i>=0;i--){
+    const p=g.parts[i];
+    p.x+=p.vx*dt; p.y+=p.vy*dt;
+    p.vx*=0.95; p.vy*=0.95;
+    p.life-=dt;
+    if(p.life<=0) g.parts.splice(i,1);
+  }
+}
+
+// ═══════════════ RENDERING ═══════════════
+function rGrid(ctx,cam,W,H){
+  ctx.strokeStyle='rgba(255,255,255,0.055)';
+  ctx.lineWidth=1;
+  const sx=Math.floor(cam.x/GRID)*GRID;
+  const sy=Math.floor(cam.y/GRID)*GRID;
+  ctx.beginPath();
+  for(let x=sx;x<cam.x+W+GRID;x+=GRID){
+    const d=x-cam.x; ctx.moveTo(d,0); ctx.lineTo(d,H);
+  }
+  for(let y=sy;y<cam.y+H+GRID;y+=GRID){
+    const d=y-cam.y; ctx.moveTo(0,d); ctx.lineTo(W,d);
+  }
+  ctx.stroke();
+}
+
+function rZone(ctx,g,cam,W,H,t){
+  const b=g.bnd;
+  const bx=b.l-cam.x,by=b.t-cam.y,bw=b.r-b.l,bh=b.b-b.t;
+
+  // danger overlay
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0,0,W,H);
+  ctx.moveTo(bx,by);ctx.lineTo(bx,by+bh);ctx.lineTo(bx+bw,by+bh);ctx.lineTo(bx+bw,by);ctx.closePath();
+  ctx.clip('evenodd');
+  ctx.fillStyle='rgba(150,20,15,0.22)';
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
+
+  // pulsing border
+  const pulse=1+Math.sin(t*4)*0.2;
+  ctx.strokeStyle=`rgba(255,60,30,${(0.6+Math.sin(t*4)*0.15).toFixed(2)})`;
+  ctx.lineWidth=3*pulse;
+  ctx.strokeRect(bx,by,bw,bh);
+  ctx.strokeStyle='rgba(255,60,30,0.12)';
+  ctx.lineWidth=14*pulse;
+  ctx.strokeRect(bx,by,bw,bh);
+}
+
+function rPlayer(ctx,p,cam,me){
+  if(!p.alive)return;
+  const sx=p.x-cam.x,sy=p.y-cam.y;
+  const W=window.innerWidth,H=window.innerHeight;
+  if(sx<-60||sx>W+60||sy<-60||sy>H+60)return;
+
+  const skinImg=me&&playerSkinId!=='default'?skinCache[playerSkinId]:null;
+
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();ctx.arc(sx+2,sy+3,P_RAD,0,Math.PI*2);ctx.fill();
+
+  if(skinImg){
+    // sprite skin clipped to circle
+    ctx.save();
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD,0,Math.PI*2);ctx.clip();
+    const zs=P_RAD*2.8;
+    ctx.drawImage(skinImg,sx-zs/2,sy-zs/2,zs,zs);
+    ctx.restore();
+    ctx.strokeStyle='rgba(0,0,0,0.4)';ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD,0,Math.PI*2);ctx.stroke();
+    // aim triangle
+    const td=P_RAD+8,bd=P_RAD*0.7,hw=4;
+    const tx=sx+Math.cos(p.ang)*td,ty=sy+Math.sin(p.ang)*td;
+    const pp=p.ang+Math.PI/2;
+    ctx.fillStyle='rgba(255,255,255,0.75)';
+    ctx.beginPath();
+    ctx.moveTo(tx,ty);
+    ctx.lineTo(sx+Math.cos(p.ang)*bd+Math.cos(pp)*hw,sy+Math.sin(p.ang)*bd+Math.sin(pp)*hw);
+    ctx.lineTo(sx+Math.cos(p.ang)*bd-Math.cos(pp)*hw,sy+Math.sin(p.ang)*bd-Math.sin(pp)*hw);
+    ctx.closePath();ctx.fill();
+  }else{
+    // default skin - circle + nose
+    ctx.fillStyle=p.col;
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.15)';
+    ctx.beginPath();ctx.arc(sx-3,sy-4,P_RAD*0.45,0,Math.PI*2);ctx.fill();
+    const td=P_RAD+8,bd=P_RAD*0.55,hw=5.5;
+    const tx=sx+Math.cos(p.ang)*td,ty=sy+Math.sin(p.ang)*td;
+    const pp=p.ang+Math.PI/2;
+    ctx.fillStyle=p.col;
+    ctx.beginPath();
+    ctx.moveTo(tx,ty);
+    ctx.lineTo(sx+Math.cos(p.ang)*bd+Math.cos(pp)*hw,sy+Math.sin(p.ang)*bd+Math.sin(pp)*hw);
+    ctx.lineTo(sx+Math.cos(p.ang)*bd-Math.cos(pp)*hw,sy+Math.sin(p.ang)*bd-Math.sin(pp)*hw);
+    ctx.closePath();ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.35)';ctx.lineWidth=1.5;ctx.stroke();
+  }
+
+  // name
+  ctx.fillStyle=me?'#fff':'rgba(255,255,255,0.85)';
+  ctx.font=me?'bold 13px sans-serif':'11px sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='bottom';
+  ctx.fillText(p.name,sx,sy-P_RAD-10);
+
+  // cooldown ring
+  if(me&&p.cd>0&&p.reloading<=0){
+    const r=1-p.cd/p.baseCD;
+    ctx.strokeStyle='rgba(255,255,255,0.4)';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD+6,-Math.PI/2,-Math.PI/2+r*Math.PI*2);ctx.stroke();
+  }
+
+  // reload ring
+  if(me&&p.reloading>0){
+    const r=1-p.reloading/RELOAD;
+    ctx.strokeStyle='rgba(255,160,30,0.5)';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD+6,-Math.PI/2,-Math.PI/2+r*Math.PI*2);ctx.stroke();
+    ctx.fillStyle='rgba(255,160,30,0.85)';
+    ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+    ctx.fillText('RELOAD',sx,sy+P_RAD+12);
+  }
+
+  // ammo dots
+  if(me){
+    const dotR=2.5, gap=8, totalW=(MAG-1)*gap;
+    const startX=sx-totalW/2, dotY=sy+P_RAD+6;
+    for(let i=0;i<MAG;i++){
+      const dx=startX+i*gap;
+      if(i<p.ammo){
+        ctx.fillStyle='rgba(255,255,255,0.8)';
+      }else{
+        ctx.fillStyle='rgba(255,255,255,0.15)';
+      }
+      ctx.beginPath();ctx.arc(dx,dotY,dotR,0,Math.PI*2);ctx.fill();
+    }
+  }
+
+  // boost indicator (discreet)
+  if(me&&p.boostCd>0){
+    const r=1-p.boostCd/BOOST_CD;
+    ctx.strokeStyle='rgba(0,200,255,0.18)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD+9,-Math.PI/2,-Math.PI/2+r*Math.PI*2);ctx.stroke();
+  }
+  if(me&&p.boost>0){
+    ctx.fillStyle='rgba(0,200,255,0.07)';
+    ctx.beginPath();ctx.arc(sx,sy,P_RAD+14,0,Math.PI*2);ctx.fill();
+  }
+}
+
+function rProj(ctx,g,cam){
+  const W=window.innerWidth,H=window.innerHeight;
+  for(const p of g.proj){
+    const sx=p.x-cam.x,sy=p.y-cam.y;
+    if(sx<-20||sx>W+20||sy<-20||sy>H+20)continue;
+    ctx.fillStyle='rgba(255,255,100,0.2)';
+    ctx.beginPath();ctx.arc(sx,sy,B_RAD*3.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#ffffcc';
+    ctx.beginPath();ctx.arc(sx,sy,B_RAD,0,Math.PI*2);ctx.fill();
+  }
+}
+
+function rParts(ctx,g,cam){
+  for(const p of g.parts){
+    ctx.globalAlpha=Math.max(0,p.life/p.ml);
+    ctx.fillStyle=p.col;
+    ctx.beginPath();ctx.arc(p.x-cam.x,p.y-cam.y,p.r,0,Math.PI*2);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+
+function rMinimap(ctx,g,W,H){
+  const mw=170,mh=170,mx=W-mw-12,my=H-mh-12;
+  const sc=mw/MAP;
+
+  ctx.fillStyle='rgba(0,0,0,0.55)';
+  ctx.fillRect(mx-1,my-1,mw+2,mh+2);
+  ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.lineWidth=1;
+  ctx.strokeRect(mx,my,mw,mh);
+
+  const b=g.bnd;
+  ctx.fillStyle='rgba(255,60,30,0.1)';
+  ctx.fillRect(mx,my,mw,mh);
+  ctx.clearRect(mx+b.l*sc,my+b.t*sc,(b.r-b.l)*sc,(b.b-b.t)*sc);
+  ctx.fillStyle='rgba(26,26,46,0.8)';
+  ctx.fillRect(mx+b.l*sc,my+b.t*sc,(b.r-b.l)*sc,(b.b-b.t)*sc);
+
+  ctx.strokeStyle='rgba(255,60,30,0.7)';ctx.lineWidth=1.5;
+  ctx.strokeRect(mx+b.l*sc,my+b.t*sc,(b.r-b.l)*sc,(b.b-b.t)*sc);
+
+  for(const p of g.players){
+    if(!p.alive||p.human)continue;
+    ctx.fillStyle='rgba(255,255,255,0.35)';
+    ctx.fillRect(mx+p.x*sc-1,my+p.y*sc-1,2,2);
+  }
+
+  const h=g.players[0];
+  if(h.alive){
+    ctx.fillStyle='#00ff88';
+    ctx.beginPath();ctx.arc(mx+h.x*sc,my+h.y*sc,3,0,Math.PI*2);ctx.fill();
+  }
+}
+
+// ═══════════════ REACT COMPONENTS ═══════════════
+const overlay={position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:10};
+
+function Lobby({count}){
+  const pct=count/MAX_P*100;
+  const [sel,setSel]=useState(playerSkinId);
+  const pick=(id)=>{setSel(id);playerSkinId=id;};
+  const card=(s)=>{
+    const active=sel===s.id;
+    return(
+      <div key={s.id} onClick={()=>pick(s.id)} style={{
+        cursor:'pointer',textAlign:'center',padding:'10px 14px',borderRadius:12,
+        background:active?'rgba(0,255,136,0.12)':'rgba(255,255,255,0.04)',
+        border:active?'2px solid #00ff88':'2px solid rgba(255,255,255,0.1)',
+        transition:'all 0.15s',minWidth:80}}>
+        {s.file?(
+          <img src={s.file} alt={s.label} style={{width:52,height:52,borderRadius:'50%',objectFit:'cover',display:'block',margin:'0 auto 6px'}}/>
+        ):(
+          <div style={{width:52,height:52,borderRadius:'50%',background:'#00ff88',margin:'0 auto 6px',
+            display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <div style={{width:0,height:0,borderLeft:'10px solid #111',borderTop:'6px solid transparent',borderBottom:'6px solid transparent',marginLeft:3}}/>
+          </div>
+        )}
+        <span style={{fontSize:'0.8rem',color:active?'#00ff88':'#aaa',fontWeight:active?700:400}}>{s.label}</span>
+      </div>
+    );
+  };
+  return(
+    <div style={{...overlay,background:'rgba(0,0,0,0.75)'}}>
+      <div style={{textAlign:'center',color:'#fff'}}>
+        <h1 style={{fontSize:'4.5rem',fontWeight:900,letterSpacing:'-2px',marginBottom:24,
+          background:'linear-gradient(135deg,#00ff88,#00bbff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
+          BATTLE.io
+        </h1>
+        <p style={{fontSize:'0.85rem',color:'#888',marginBottom:10}}>Choose your character</p>
+        <div style={{display:'flex',gap:12,justifyContent:'center',marginBottom:20}}>
+          {SKINS.map(s=>card(s))}
+        </div>
+        <p style={{fontSize:'1.15rem',color:'#ccc',marginBottom:14}}>
+          Players: {count} / {MAX_P}
+        </p>
+        <div style={{width:320,height:14,background:'#333',borderRadius:7,margin:'0 auto 16px',overflow:'hidden'}}>
+          <div style={{width:`${pct}%`,height:'100%',background:'linear-gradient(90deg,#00ff88,#00bbff)',
+            borderRadius:7,transition:'width 0.04s'}}/>
+        </div>
+        <p style={{color:'#777',fontSize:'0.9rem'}}>Waiting...</p>
+      </div>
+    </div>
+  );
+}
+
+function Countdown({count}){
+  return(
+    <div style={{...overlay,pointerEvents:'none'}}>
+      <div style={{fontSize:'9rem',fontWeight:900,color:'#fff',
+        textShadow:'0 0 50px rgba(0,255,136,0.5),0 0 100px rgba(0,255,136,0.25)'}}>
+        {count>0?count:'GO!'}
+      </div>
+    </div>
+  );
+}
+
+function HUD({alive,kills}){
+  return(
+    <div style={{position:'absolute',top:14,left:'50%',transform:'translateX(-50%)',
+      display:'flex',gap:16,alignItems:'center',
+      background:'rgba(0,0,0,0.5)',padding:'8px 26px',borderRadius:22,
+      color:'#fff',fontSize:'1rem',fontWeight:600,zIndex:10,
+      backdropFilter:'blur(5px)',border:'1px solid rgba(255,255,255,0.08)'}}>
+      <span>Alive: {alive} / {MAX_P}</span>
+      <span style={{color:'#ff6666',borderLeft:'1px solid rgba(255,255,255,0.15)',paddingLeft:16}}>
+        Kills: {kills}
+      </span>
+    </div>
+  );
+}
+
+function TopBar({volume,setVolume,showRules,setShowRules}){
+  const bst={background:'rgba(0,0,0,0.4)',border:'1px solid rgba(255,255,255,0.1)',
+    borderRadius:10,padding:'5px 9px',cursor:'pointer',
+    color:'rgba(255,255,255,0.6)',fontSize:'1rem',lineHeight:1,
+    backdropFilter:'blur(4px)'};
+  return(
+    <div style={{position:'absolute',top:12,right:12,zIndex:20,
+      display:'flex',alignItems:'center',gap:8}}>
+      <span style={{color:'rgba(255,255,255,0.5)',fontSize:'0.95rem'}}>
+        {volume<=0?'\u{1F507}':volume<0.4?'\u{1F509}':'\u{1F50A}'}
+      </span>
+      <input type="range" min="0" max="100" value={Math.round(volume*100)}
+        onChange={e=>{const v=e.target.valueAsNumber/100;setVolume(v);SFX.vol=v;}}
+        style={{width:80,accentColor:'#00ff88',cursor:'pointer',opacity:0.7}}/>
+      <button onClick={()=>setShowRules(r=>!r)} style={bst} title="Rules">?</button>
+      {showRules&&<Rules onClose={()=>setShowRules(false)}/>}
+    </div>
+  );
+}
+
+function Rules({onClose}){
+  return(
+    <div style={{position:'fixed',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
+      zIndex:100,background:'rgba(0,0,0,0.6)'}} onClick={onClose}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:'#1a1a2e',border:'1px solid rgba(255,255,255,0.12)',borderRadius:16,
+        padding:'28px 34px',maxWidth:420,color:'#ddd',fontSize:'0.92rem',lineHeight:1.7,
+        boxShadow:'0 8px 40px rgba(0,0,0,0.5)'}}>
+        <h2 style={{margin:'0 0 14px',fontSize:'1.3rem',color:'#fff',
+          background:'linear-gradient(135deg,#00ff88,#00bbff)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>
+          BATTLE.io &mdash; Rules
+        </h2>
+        <p><b style={{color:'#fff'}}>Goal:</b> Be the last one standing among 100 players.</p>
+        <p style={{margin:'8px 0 0'}}><b style={{color:'#fff'}}>Controls:</b></p>
+        <ul style={{margin:'2px 0 0 18px',padding:0}}>
+          <li><b>Mouse</b> &mdash; move toward cursor (farther = faster, max speed at 180px)</li>
+          <li><b>Left click</b> &mdash; shoot (one shot = one kill)</li>
+          <li><b>Right click / Space</b> &mdash; dash boost (1.5s cooldown)</li>
+        </ul>
+        <p style={{margin:'10px 0 0'}}><b style={{color:'#fff'}}>Magazine:</b> You have 5 bullets per magazine. After firing all 5, you must wait 3s to reload all bullets at once.</p>
+        <p style={{margin:'10px 0 0'}}><b style={{color:'#fff'}}>Kill rewards:</b></p>
+        <ul style={{margin:'2px 0 0 18px',padding:0}}>
+          <li>Each kill permanently reduces your fire cooldown by 0.1s</li>
+          <li>Each kill instantly resets your dash cooldown</li>
+        </ul>
+        <p style={{margin:'10px 0 0'}}><b style={{color:'#fff'}}>Zone:</b> The map shrinks as players die, pushing survivors closer together. Stay inside the red border!</p>
+        <button onClick={onClose} style={{
+          marginTop:18,background:'rgba(255,255,255,0.1)',border:'1px solid rgba(255,255,255,0.15)',
+          color:'#fff',padding:'7px 24px',borderRadius:8,cursor:'pointer',fontSize:'0.9rem'}}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function GameOver({placement,kills,onReplay}){
+  const w=placement===1;
+  return(
+    <div style={{...overlay,background:'rgba(0,0,0,0.65)'}}>
+      <div style={{textAlign:'center',color:'#fff'}}>
+        {w?(
+          <h1 style={{fontSize:'5.5rem',fontWeight:900,color:'#ffd700',
+            textShadow:'0 0 40px rgba(255,215,0,0.6),0 0 80px rgba(255,215,0,0.25)'}}>
+            VICTORY!
+          </h1>
+        ):(
+          <>
+            <p style={{fontSize:'1.15rem',color:'#aaa',marginBottom:6}}>Eliminated</p>
+            <h1 style={{fontSize:'4.5rem',fontWeight:900}}>#{placement}</h1>
+          </>
+        )}
+        <p style={{color:'#ff6666',fontSize:'1.3rem',fontWeight:700,margin:'10px 0 4px'}}>
+          {kills} kill{kills!==1?'s':''}
+        </p>
+        <p style={{color:'#888',margin:'4px 0 28px',fontSize:'0.95rem'}}>
+          {w?'Last one standing!':placement<=10?`Top ${placement}!`:`Top ${Math.ceil(placement/MAX_P*100)}%`}
+        </p>
+        <button onClick={onReplay} style={{
+          background:'linear-gradient(135deg,#00ff88,#00bbff)',border:'none',color:'#111',
+          padding:'13px 44px',borderRadius:28,fontSize:'1.1rem',fontWeight:700,
+          cursor:'pointer',letterSpacing:1,boxShadow:'0 4px 20px rgba(0,255,136,0.3)'}}>
+          Play Again
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════ MAIN APP ═══════════════
+function App(){
+  const canvasRef=useRef(null);
+  const gRef=useRef(null);
+  const mouse=useRef({x:window.innerWidth/2,y:window.innerHeight/2,dn:false,boost:false});
+  const ui=useRef({gs:'LOBBY',lc:1,cd:3,al:MAX_P,pl:1,kl:0});
+  const [,fu]=useState(0);
+  const [volume,setVolume]=useState(0.7);
+  const [showRules,setShowRules]=useState(false);
+  const rr=useCallback(()=>fu(n=>n+1),[]);
+
+  const replay=useCallback(()=>{
+    gRef.current=mkGame();
+    const u=ui.current;
+    u.gs='LOBBY';u.lc=1;u.cd=3;u.al=MAX_P;u.pl=1;u.kl=0;
+    rr();
+  },[rr]);
+
+  useEffect(()=>{
+    const cv=canvasRef.current;
+    if(!cv)return;
+    const ctx=cv.getContext('2d');
+
+    function resize(){cv.width=window.innerWidth;cv.height=window.innerHeight;}
+    resize();
+    window.addEventListener('resize',resize);
+
+    const onM=e=>{mouse.current.x=e.clientX;mouse.current.y=e.clientY;};
+    const onD=e=>{
+      SFX.init();
+      if(e.button===0)mouse.current.dn=true;
+      if(e.button===2)mouse.current.boost=true;
+    };
+    const onU=e=>{
+      if(e.button===0)mouse.current.dn=false;
+      if(e.button===2)mouse.current.boost=false;
+    };
+    const onK=e=>{SFX.init();if(e.code==='Space'){e.preventDefault();mouse.current.boost=true;}};
+    const onKU=e=>{if(e.code==='Space')mouse.current.boost=false;};
+    const onC=e=>e.preventDefault();
+    window.addEventListener('mousemove',onM);
+    window.addEventListener('mousedown',onD);
+    window.addEventListener('mouseup',onU);
+    window.addEventListener('keydown',onK);
+    window.addEventListener('keyup',onKU);
+    cv.addEventListener('contextmenu',onC);
+
+    const g=mkGame();
+    gRef.current=g;
+    let aid;
+
+    function loop(ts){
+      const g=gRef.current;
+      if(!g){aid=requestAnimationFrame(loop);return;}
+      if(g.lt===0)g.lt=ts;
+      const dt=Math.min((ts-g.lt)/1000,0.05);
+      g.lt=ts; g.time+=dt;
+
+      const u=ui.current;
+      const m=mouse.current;
+      const W=cv.width,H=cv.height;
+      let dirty=false;
+
+      // ─── STATE MACHINE ───
+      if(g.state==='LOBBY'){
+        g.lobbyT+=dt;
+        const nc=Math.min(MAX_P,1+Math.floor(g.lobbyT*22));
+        if(nc!==g.lobbyN){g.lobbyN=nc;u.lc=nc;dirty=true;}
+        if(g.lobbyN>=MAX_P){
+          g.state='COUNTDOWN';g.cdT=3;u.gs='COUNTDOWN';u.cd=3;dirty=true;
+        }
+      }else if(g.state==='COUNTDOWN'){
+        g.cdT-=dt;
+        const c=Math.max(0,Math.ceil(g.cdT));
+        if(c!==u.cd){u.cd=c;dirty=true;if(c>0)SFX.tick();else SFX.go();}
+        if(g.cdT<=0){g.state='PLAYING';u.gs='PLAYING';dirty=true;}
+      }else if(g.state==='PLAYING'){
+        SFX.px=g.players[0].x;SFX.py=g.players[0].y;
+        updHuman(g.players[0],g,m,dt);
+        for(let i=1;i<g.players.length;i++) updBot(g.players[i],g,dt);
+        updProj(g,dt);
+
+        const prevA=g.alive;
+        collisions(g);
+
+        const hp=g.players[0];
+        if(!hp.alive&&g.state==='PLAYING'){
+          u.pl=prevA;
+          g.state='GAMEOVER';u.gs='GAMEOVER';dirty=true;
+          SFX.lose();
+        }else if(g.alive<=1&&hp.alive){
+          u.pl=1;
+          g.state='GAMEOVER';u.gs='GAMEOVER';dirty=true;
+          SFX.win();
+        }
+        if(g.alive!==u.al){u.al=g.alive;dirty=true;}
+        const hk=g.players[0].kills;
+        if(hk!==u.kl){u.kl=hk;dirty=true;}
+
+        updShrink(g,dt);
+        updParts(g,dt);
+      }else if(g.state==='GAMEOVER'){
+        updParts(g,dt);
+        for(let i=1;i<g.players.length;i++) updBot(g.players[i],g,dt);
+        updProj(g,dt);
+        collisions(g);
+        updShrink(g,dt);
+        if(g.alive!==u.al){u.al=g.alive;dirty=true;}
+      }
+
+      if(dirty) rr();
+
+      // ─── RENDER ───
+      ctx.fillStyle='#1a1a2e';
+      ctx.fillRect(0,0,W,H);
+
+      const hp=g.players[0];
+      const cam={x:hp.x-W/2,y:hp.y-H/2};
+
+      rGrid(ctx,cam,W,H);
+      rZone(ctx,g,cam,W,H,g.time);
+
+      for(let i=g.players.length-1;i>=1;i--) rPlayer(ctx,g.players[i],cam,false);
+      rPlayer(ctx,hp,cam,true);
+      rProj(ctx,g,cam);
+      rParts(ctx,g,cam);
+
+      if(g.state==='PLAYING'||g.state==='GAMEOVER') rMinimap(ctx,g,W,H);
+
+      aid=requestAnimationFrame(loop);
+    }
+
+    aid=requestAnimationFrame(loop);
+
+    return()=>{
+      cancelAnimationFrame(aid);
+      window.removeEventListener('resize',resize);
+      window.removeEventListener('mousemove',onM);
+      window.removeEventListener('mousedown',onD);
+      window.removeEventListener('mouseup',onU);
+      window.removeEventListener('keydown',onK);
+      window.removeEventListener('keyup',onKU);
+      cv.removeEventListener('contextmenu',onC);
+    };
+  },[rr]);
+
+  const u=ui.current;
+  return(
+    <div style={{position:'relative',width:'100vw',height:'100vh'}}>
+      <canvas ref={canvasRef} style={{display:'block',cursor:'crosshair'}}/>
+      {u.gs!=='LOBBY'&&<TopBar volume={volume} setVolume={setVolume} showRules={showRules} setShowRules={setShowRules}/>}
+      {u.gs==='LOBBY'&&<Lobby count={u.lc}/>}
+      {u.gs==='COUNTDOWN'&&<Countdown count={u.cd}/>}
+      {u.gs==='PLAYING'&&<HUD alive={u.al} kills={u.kl}/>}
+      {u.gs==='GAMEOVER'&&<GameOver placement={u.pl} kills={u.kl} onReplay={replay}/>}
+    </div>
+  );
+}
+
+// ═══════════════ MOUNT ═══════════════
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
