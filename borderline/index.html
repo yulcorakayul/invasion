@@ -293,7 +293,7 @@ input[type=text]:focus{border-color:var(--alpha)}
       <dl><dt>Vent</dt><dd>faible au sol, jusqu'à ×1,4 en altitude ; le prochain front est annoncé sous l'horloge</dd>
       <dt>Événements</dt><dd>annoncés 8 s avant : El Niño (mer +24), La Niña, ouragan, éruption solaire (défenses coupées), cendres (projectiles freinés), choc pétrolier, ruée vers l'or, cessez-le-feu, aide internationale, ravitaillement à abattre</dd></dl>
       <h4>À retenir</h4>
-      <dl><dt>Territoire</dt><dd>c'est tes PV et ton revenu ; sous 5 % tu es éliminé</dd><dt>Canon</dt><dd>une explosion tout près le sonne (recharge +1,7 s) : bouge pour ne pas rester une cible</dd><dt>Bâtiments</dt><dd>prennent du temps et encaissent 3–4 impacts</dd></dl>
+      <dl><dt>Territoire</dt><dd>c'est tes PV et ton revenu ; sous 5 % tu es éliminé</dd><dt>Canon</dt><dd>une explosion tout près le sonne (recharge +1,7 s) : bouge pour ne pas rester une cible</dd><dt>Bâtiments</dt><dd>prennent du temps et encaissent 3–4 impacts ; vise une grotte ou un cratère pour construire à l'abri (seule la Foreuse les atteint bien), des fondations rattrapent les pentes ; la DCA doit voir le ciel</dd></dl>
     </div>
     <div id="banner"></div>
     <footer id="dock">
@@ -571,7 +571,7 @@ class World {
   weaponCd(p, wi) { return WEAP[wi].cd * (1 - 0.15 * p.upg.cad) * (this.sd() ? 0.7 : 1) / (p.hcap || 1); } // équipe en infériorité numérique : tir plus rapide
   building(p) { return p.bld.find(b => b.prog < 1); }
   icost(k) { return k === 'fuel' && this.isCl('oil') ? ITEM.fuel.cost * 2 : ITEM[k].cost; }
-  why(p, k, x) { // null si l'achat est possible, sinon la raison
+  why(p, k, x, y) { // null si l'achat est possible, sinon la raison
     const it = Object.hasOwn(ITEM, k) ? ITEM[k] : null; if (!it) return 'inconnu';
     if (!p.alive || this.over) return 'hors jeu';
     if (it.max && p.bld.filter(b => b.type === k).length >= it.max) return 'maximum atteint';
@@ -581,20 +581,35 @@ class World {
     if (k === 'shield' && this.t < p.shU && p.shHp > 0) return 'bouclier actif';
     if (k === 'fuel' && p.fuel > FUEL_MAX - 5) return 'réservoir plein';
     if (p.gold < this.icost(k)) return 'or insuffisant';
-    if (it.place && x !== undefined) { const r = this.placeWhy(p, k, x); if (r) return r; }
+    if (it.place && x !== undefined) { const r = this.placeWhy(p, k, x, y); if (r) return r; }
     return null;
   }
-  placeWhy(p, k, x) {
+  // emplacement d'un bâtiment : sol le plus proche du point visé (surface, fond de cratère ou grotte),
+  // fondations pour rattraper une pente, et assez de hauteur sous plafond
+  spot(x, y) {
+    x = Math.round(x); y = isFinite(+y) ? clamp(Math.round(+y), 0, H - 1) : 0;
+    const y0 = this.settle(x, y); let top = y0, bot = y0;
+    for (const dx of [-10, -5, 5, 10]) { const f = this.settle(x + dx, y0 - 3); top = Math.min(top, f); bot = Math.max(bot, f); }
+    let room = true;
+    for (let dx = -8; dx <= 8 && room; dx += 4) for (let yy = top - 16; yy < top; yy++) if (this.solid(x + dx, yy)) { room = false; break; }
+    return { y: top, bot, room, cave: this.surf(x) < top - 4 };
+  }
+  placeWhy(p, k, x, y) {
     x = Math.round(x); const it = ITEM[k];
     if (!(x >= p.x0 + 10 && x <= p.x1 - 10)) return 'hors de ton territoire';
-    const s = this.surf(x);
-    if (s >= this.water - (it.bld ? 30 : 5)) return 'sous l’eau';
-    if (k === 'wall' && s < this.orig[x] - 24) return 'trop haut (pas de tour)';
     if (it.bld) {
-      if (p.bld.some(b => Math.abs(b.x - x) < 26)) return 'trop près d’un bâtiment';
-      if (Math.abs(x - p.cx) < 16) return 'trop près du canon';
-      if (Math.abs(this.surf(x - 6) - this.surf(x + 6)) > 14) return 'terrain trop pentu';
+      const sp = this.spot(x, y);
+      if (sp.y >= this.water - 30) return 'sous l’eau';
+      if (sp.bot - sp.y > 40) return 'terrain trop accidenté';
+      if (!sp.room) return 'plafond trop bas';
+      if (k === 'dca' && sp.cave) return 'la DCA doit voir le ciel';
+      if (p.bld.some(b => Math.hypot(b.x - x, b.y - sp.y) < 26)) return 'trop près d’un bâtiment';
+      if (Math.hypot(x - p.cx, sp.y - p.cy) < 18) return 'trop près du canon';
+      return null;
     }
+    const s = this.surf(x);
+    if (s >= this.water - 5) return 'sous l’eau';
+    if (k === 'wall' && s < this.orig[x] - 24) return 'trop haut (pas de tour)';
     return null;
   }
   // ---- actions (hôte) ----
@@ -615,14 +630,18 @@ class World {
     this.emit(['L', (++this.pc) * 10, pi, wi, o.x, o.y, o.vx, o.vy, Math.round(this.wind * 10) / 10, rm, this.isCl('ash') ? ASH_DRAG : 0]);
     return true;
   }
-  buy(pi, k, x) {
+  buy(pi, k, x, y) {
     const p = this.players[pi]; if (!p) return false;
     const it = Object.hasOwn(ITEM, k) ? ITEM[k] : null; if (!it) return false;
     if (it.place) { x = +x; if (!isFinite(x)) x = this.autoX(p, k); if (x < 0) return false; x = Math.round(x); }
-    if (this.why(p, k, it.place ? x : undefined)) return false;
+    if (this.why(p, k, it.place ? x : undefined, y)) return false;
     const cost = this.icost(k); p.gold -= cost; p.spent[it.tab === 2 ? 2 : 1] += cost;
     if (it.instant) { p.fuel = Math.min(FUEL_MAX, p.fuel + FUEL_BUY); }
-    else if (it.bld) p.bld.push({ type: k, x, y: this.surf(x), cdT: 0, prog: 0, hp: this.maxHp(p, k) });
+    else if (it.bld) {
+      const sp = this.spot(x, y);
+      if (sp.bot > sp.y + 1) this.emit(['R', x - 11, sp.y, 23, sp.bot - sp.y + 2, pi]); // fondations : plateforme de terre sous le bâtiment
+      p.bld.push({ type: k, x, y: sp.y, cdT: 0, prog: 0, hp: this.maxHp(p, k) });
+    }
     else p.jobs.push({ k, x: it.place ? x : p.mid, end: this.t + it.bt, dur: it.bt });
     this.emit(['B', pi, k]);
     return true;
@@ -953,7 +972,7 @@ class World {
       cr: this.crate ? [Math.round(this.crate.x), Math.round(this.crate.y)] : 0,
       p: this.players.map(p => [Math.floor(p.gold), Math.round(p.terr * 1000), Math.round(p.cx), Math.round(p.ang), Math.ceil(p.cd * 10), Math.ceil(p.shU * 10), p.shHp,
         '' + p.upg.cal + p.upg.cad + p.upg.vit + p.upg.arm, p.alive ? 1 : 0, Math.round(p.inc * 10),
-        p.bld.map(b => BCODE[b.type] + b.x + (b.prog < 1 ? '~' + pc(b.prog) : '') + (b.hp < this.maxHp(p, b.type) ? '^' + b.hp : '')).join(','), p.ai ? 1 : 0,
+        p.bld.map(b => BCODE[b.type] + b.x + '@' + Math.round(b.y) + (b.prog < 1 ? '~' + pc(b.prog) : '') + (b.hp < this.maxHp(p, b.type) ? '^' + b.hp : '')).join(','), p.ai ? 1 : 0,
         p.jobs.map(j => JCODE[j.k] + j.x + '~' + pc(1 - (j.end - this.t) / j.dur)).join(','),
         p.res ? p.res.k + '~' + pc(1 - (p.res.end - this.t) / p.res.dur) + '~' + p.res.dur : '',
         Math.round(p.cdDur * 10), p.spent.join(','), Math.ceil((p.icd.terra || 0) * 10), p.shots || 0, Math.round(p.fuel * 10), Math.round(p.stunT * 10)])
@@ -972,9 +991,9 @@ class World {
       if (i !== me) p.ang = a[3];
       p.cd = a[4] / 10; p.shU = a[5] / 10; p.shHp = a[6];
       p.upg = { cal: +a[7][0], cad: +a[7][1], vit: +a[7][2], arm: +(a[7][3] || 0) }; p.alive = !!a[8]; p.inc = a[9] / 10; p.ai = !!a[11];
-      const nl = a[10] ? a[10].split(',').map(s2 => { const [s3, hp] = s2.split('^'); const [h, pr] = s3.split('~'); const type = BDEC[h[0]]; return { type, x: +h.slice(1), prog: pr === undefined ? 1 : +pr / 100, cdT: 0, hp: hp === undefined ? ITEM[type].hp + p.upg.arm : +hp }; }) : [];
+      const nl = a[10] ? a[10].split(',').map(s2 => { const [s3, hp] = s2.split('^'); const [h, pr] = s3.split('~'); const type = BDEC[h[0]], [hx, hy] = h.slice(1).split('@'); return { type, x: +hx, sy: hy === undefined ? undefined : +hy, prog: pr === undefined ? 1 : +pr / 100, cdT: 0, hp: hp === undefined ? ITEM[type].hp + p.upg.arm : +hp }; }) : [];
       for (const b of p.bld) { const n = nl.find(n => n.type === b.type && n.x === b.x); if (!n) { if (!b.pred) this.on('bdead', b, i); } else if (n.hp < b.hp) this.on('bhit', n, i); }
-      for (const n of nl) { const old = p.bld.find(b => b.type === n.type && b.x === n.x); n.y = old ? old.y : this.surf(n.x); if (old && n.prog < 1) n.prog = Math.max(n.prog, Math.min(old.prog, 0.999)); }
+      for (const n of nl) { const old = p.bld.find(b => b.type === n.type && b.x === n.x); n.y = old ? old.y : n.sy !== undefined ? n.sy : this.surf(n.x); if (old && n.prog < 1) n.prog = Math.max(n.prog, Math.min(old.prog, 0.999)); }
       p.bld = nl;
       p.jobs = a[12] ? a[12].split(',').map(s2 => { const [h, pr] = s2.split('~'); return { k: JDEC[h[0]], x: +h.slice(1), prog: +pr / 100 }; }) : [];
       if (a[13]) { const [k, pr, dur] = a[13].split('~'); p.res = { k, prog: +pr / 100, dur: +dur }; } else p.res = null;
@@ -1505,17 +1524,18 @@ class Renderer {
     }
   }
   ghost(g, w, px, t) {
-    const c = this.c, p = g.p, x = Math.round(clamp(g.x, 0, W - 1)), y = w.surf(x), col = g.ok ? '#3ef0b5' : '#ff5b5b';
+    const c = this.c, p = g.p, x = Math.round(clamp(g.x, 0, W - 1)), y = g.sp ? g.sp.y : w.surf(x), col = g.ok ? '#3ef0b5' : '#ff5b5b';
     c.save(); c.setLineDash([6 * px, 6 * px]); c.lineWidth = px; c.strokeStyle = rgba(p.color, 0.6);
     for (const xx of [p.x0, p.x1]) { c.beginPath(); c.moveTo(xx, this.view.y0); c.lineTo(xx, H); c.stroke(); }
     c.strokeStyle = col; c.lineWidth = 1.5 * px;
     if (ITEM[g.k].bld) {
+      if (g.sp && g.sp.bot > y + 1) { c.fillStyle = rgba(col, 0.18); c.fillRect(x - 11, y, 23, g.sp.bot - y + 2); c.strokeRect(x - 11, y, 23, g.sp.bot - y + 2); } // fondations prévues
       this.building({ type: g.k, x, y, prog: 1 }, p, px, t, col);
       if (g.k === 'dca') { c.beginPath(); c.arc(x, y - 10, DCA_RANGE, Math.PI, Math.PI * 2); c.stroke(); }
     } else if (g.k === 'wall') c.strokeRect(x - 6, y - 72, 12, 72);
     else if (g.k === 'terra') { c.beginPath(); c.arc(x, w.orig[x] + 18, 40, 0, Math.PI * 2); c.stroke(); }
     c.restore();
-    const label = g.ok ? `${ITEM[g.k].name} · ◆${ITEM[g.k].cost} · clic pour poser` : g.reason;
+    const label = g.ok ? `${ITEM[g.k].name} · ◆${ITEM[g.k].cost}${g.sp && g.sp.cave ? ' · en grotte' : g.sp && g.sp.bot > y + 1 ? ' · fondations' : ''} · clic pour poser` : g.reason;
     c.font = `600 ${12 * px}px "IBM Plex Mono", monospace`; const tw = c.measureText(label).width + 16 * px;
     const ly = Math.min(y + 20 * px, w.water - 30 * px);
     c.fillStyle = 'rgba(7,10,16,0.88)'; c.fillRect(x - tw / 2, ly, tw, 22 * px);
@@ -1773,7 +1793,7 @@ function pulseCard(k) { const id = k.startsWith('u:') ? k : k; const b = documen
 // ---------- CONSEILS DE PREMIÈRE PARTIE ----------
 const TIPS = {
   aim: () => COARSE ? 'Glisse le doigt pour viser (la distance règle la puissance), relâche pour tirer. Relâche sur ton canon pour annuler.' : 'Vise avec la souris : plus tu t’éloignes du canon, plus le tir est puissant. Clic pour tirer (◆10).',
-  mine: () => `Ton or monte : pose une Mine (${COARSE ? 'onglet Économie' : 'touche C puis 1'}), plutôt à l’arrière de ton pays, loin des tirs.`,
+  mine: () => `Ton or monte : pose une Mine (${COARSE ? 'onglet Économie' : 'touche C puis 1'}), plutôt à l’arrière de ton pays, loin des tirs. Vise une grotte ou un cratère pour la mettre à l’abri.`,
   hit: () => `Ton % de territoire, c’est à la fois tes PV et ton revenu. Sous 5 % tu es éliminé. Terraformer (${COARSE ? 'Défense' : 'X puis 3'}) reconstruit le sol.`,
   dca: () => `Une DCA (${COARSE ? 'Défense' : 'X puis 2'}) abat les tirs qui retombent près d’elle. Place-la à côté de tes mines.`,
   evo: () => `Évolution (${COARSE ? 'dernier onglet' : 'touche V'}) : Cadence et Calibre rendent chaque tir plus fort. Une recherche à la fois.`,
@@ -2023,20 +2043,21 @@ const Ctl = {
     }
     this.send(k);
   },
-  placeAt(x) {
+  placeAt(x, y) {
     const w = S.world, p = this.me(), k = S.place; if (!p || !k) return;
-    const r = w.why(p, k, x); if (r) { Snd.deny(); feed(`${ITEM[k].name} : ${r}`); return; }
-    this.send(k, Math.round(x));
+    if (!ITEM[k].bld) y = undefined;
+    const r = w.why(p, k, x, y); if (r) { Snd.deny(); feed(`${ITEM[k].name} : ${r}`); return; }
+    this.send(k, Math.round(x), y === undefined ? undefined : Math.round(y));
     if (!S.keys.shift) S.place = null;
     updateHud(true);
   },
-  send(k, x) {
+  send(k, x, y) {
     const w = S.world, p = this.me(), it = ITEM[k];
     if (S.role === 'client') {
-      sendCmd(x === undefined ? ['b', k] : ['b', k, x]); p.gold -= w.icost(k);
+      sendCmd(x === undefined ? ['b', k] : y === undefined ? ['b', k, x] : ['b', k, x, y]); p.gold -= w.icost(k);
       if (it.instant) p.fuel = Math.min(FUEL_MAX, p.fuel + FUEL_BUY);
-      else if (it.bld) p.bld.push({ type: k, x, y: w.surf(x), prog: 0, cdT: 0, pred: 1 }); else p.jobs.push({ k, x: x ?? p.mid, prog: 0 });
-    } else if (!w.buy(S.me, k, x)) Snd.deny();
+      else if (it.bld) p.bld.push({ type: k, x, y: w.spot(x, y).y, prog: 0, cdT: 0, pred: 1 }); else p.jobs.push({ k, x: x ?? p.mid, prog: 0 });
+    } else if (!w.buy(S.me, k, x, y)) Snd.deny();
   },
   upg(k) {
     const w = S.world, p = this.me(); if (!p || !p.alive || w.over) return; const l = p.upg[k];
@@ -2051,7 +2072,7 @@ const Ctl = {
 function worldAt(e) { const r = R.cv.getBoundingClientRect(); return R.toWorld(e.clientX - r.left, e.clientY - r.top); }
 function updateAim(e) {
   const p = Ctl.me(); if (!p || S.screen !== 'game') return;
-  const q = worldAt(e); S.placeX = q.x; S.aimX = q.x;
+  const q = worldAt(e); S.placeX = q.x; S.placeY = q.y; S.aimX = q.x;
   if (S.place) return;
   const dx = q.x - p.cx, dy = (p.cy - 8) - q.y;
   S.aim.ang = Math.round(Math.atan2(dy, dx) * 1800 / Math.PI) / 10; S.aim.pw = Math.round(clamp(Math.hypot(dx, dy) / 4.2, 5, 100));
@@ -2069,7 +2090,7 @@ cv.addEventListener('pointerup', e => {
   const pr = S.press; S.press = null;
   if (!pr || pr.id !== e.pointerId || S.screen !== 'game' || !S.world) return; // le geste doit commencer sur le champ de bataille
   updateAim(e);
-  if (S.place) { if (e.button === 2) Ctl.cancel(); else if (pr.button === 0) Ctl.placeAt(S.placeX); return; }
+  if (S.place) { if (e.button === 2) Ctl.cancel(); else if (pr.button === 0) Ctl.placeAt(S.placeX, S.placeY); return; }
   if (pr.button !== 0) return;
   if (pr.type !== 'mouse') { // relâcher sur son propre canon annule le tir
     const p = Ctl.me(), q = worldAt(e); if (p && Math.hypot(q.x - p.cx, q.y - p.cy) < 45) { feed('Tir annulé'); return; }
@@ -2379,7 +2400,7 @@ function hostNet(nr, peers, now) {
       const last = Net.lastSeq[p.i] || 0; let mx = last, n = 0;
       for (const c of (Array.isArray(pr.cmds) ? pr.cmds.slice(-10) : [])) {
         if (!Array.isArray(c) || !(+c[0] > last) || n >= 4) continue; mx = Math.max(mx, +c[0]); n++;
-        if (c[1] === 'f') w.fire(p.i, c[2], c[3] / 10, c[4], c[5]); else if (c[1] === 'b') w.buy(p.i, String(c[2]), c[3]); else if (c[1] === 'u') w.upgrade(p.i, String(c[2]));
+        if (c[1] === 'f') w.fire(p.i, c[2], c[3] / 10, c[4], c[5]); else if (c[1] === 'b') w.buy(p.i, String(c[2]), c[3], c[4]); else if (c[1] === 'u') w.upgrade(p.i, String(c[2]));
       }
       Net.lastSeq[p.i] = mx;
     }
@@ -2484,7 +2505,7 @@ function frame(now) {
     else if (aiming) { const o = S.world.muzzle(p, S.aim.ang, S.aim.pw); preview = { x: o.x, y: o.y, vx: o.vx, vy: o.vy, wind: S.world.wind, dr: S.world.isCl('ash') ? ASH_DRAG : 0, w: 0, age: 0, dim: !!S.place }; }
     // sifflement d'une méga-bombe qui retombe sur moi
     if (S.world) for (const q of S.world.proj) if (q.w === 3 && !q.wh && q.vy > 0 && q.land && myZone(S.world, q.land.x) && q.y > q.land.y - 380) { q.wh = 1; Snd.whistle(); }
-    if (p && S.place && S.placeX !== undefined) { const reason = S.world.why(p, S.place, S.placeX); ghost = { k: S.place, x: S.placeX, ok: !reason, reason, p }; }
+    if (p && S.place && S.placeX !== undefined) { const bl = ITEM[S.place].bld, py = bl ? S.placeY : undefined, reason = S.world.why(p, S.place, S.placeX, py); ghost = { k: S.place, x: S.placeX, sp: bl ? S.world.spot(S.placeX, py) : null, ok: !reason, reason, p }; }
     R.draw(dt, { me: S.world ? S.me : -1, preview, ghost, reticle, reticleOk, focus: S.world ? camFocus() : null });
   }
   if (S.world && now - S.hudT > 100) { S.hudT = now; updateHud(); $('#t-cancel').hidden = !S.place; }
