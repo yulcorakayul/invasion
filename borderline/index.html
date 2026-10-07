@@ -127,6 +127,7 @@ input[type=text]:focus{border-color:var(--alpha)}
 #feed{position:absolute;right:16px;top:calc(var(--hudh,96px) + 6px);display:grid;gap:4px;justify-items:end;pointer-events:none;max-width:min(380px,calc(100% - 32px))}
 #feed div{font-size:12px;background:rgba(7,10,16,.8);padding:4px 8px;border-right:2px solid var(--line2);animation:fin .25s ease-out;text-align:right}
 @keyframes fin{from{transform:translateX(8px);opacity:0}}
+@keyframes blink{50%{opacity:.35}}
 #banner{position:absolute;left:50%;top:26%;transform:translateX(-50%);max-width:calc(100% - 32px);text-align:center;pointer-events:none;font:700 clamp(22px,4.5vw,44px)/1.05 var(--display);letter-spacing:.12em;text-transform:uppercase;opacity:0;transition:opacity .3s;background:rgba(7,10,16,.72);padding:14px 22px;border-top:1px solid var(--line2);border-bottom:1px solid var(--line2)}
 #banner small{display:block;font:500 13px var(--mono);letter-spacing:.14em;color:var(--mute);margin-top:10px}
 #banner.on{opacity:1}
@@ -137,6 +138,7 @@ input[type=text]:focus{border-color:var(--alpha)}
 .purse .g{font:700 28px/1 var(--display);color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
 .purse .g::before{content:"◆ ";font-size:16px;vertical-align:4px}
 .purse .inc{font-size:11px;color:var(--mute);font-variant-numeric:tabular-nums}
+.purse .fuel{font-size:11px;color:#ffb36b;font-variant-numeric:tabular-nums}.purse .fuel.low{color:#ff5b5b;animation:blink 1s steps(2) infinite}
 .shop{flex:1;min-width:0;display:grid;gap:8px}
 .tabs{display:flex;gap:2px}
 .tab{background:none;border:0;border-bottom:2px solid transparent;padding:2px 10px 5px;font:600 11px var(--display);letter-spacing:.16em;color:var(--mute);cursor:pointer;text-transform:uppercase}
@@ -241,7 +243,7 @@ input[type=text]:focus{border-color:var(--alpha)}
         <li><b>Temps</b><span>Bâtiments, défenses et recherches prennent du temps. Tu choisis où les poser ; ils encaissent quelques impacts.</span></li>
         <li><b>Climat</b><span>Courant-jet plus fort en altitude, fronts annoncés, et événements mondiaux : El Niño, ouragans, éruptions, cessez-le-feu…</span></li>
         <li><b>Équipes</b><span>Une équipe en infériorité tire et gagne plus. Quand un allié tombe, son or te revient.</span></li>
-        <li><b>9:00</b><span>Mort subite : la mer monte jusqu'à tout engloutir vers 11:30, munitions à moitié prix. Si tout le monde coule, la plus grande surface l'emporte.</span></li>
+        <li><b>6:00</b><span>Mort subite : la mer monte jusqu'à tout engloutir vers 8:00, munitions à moitié prix. Si tout le monde coule, la plus grande surface l'emporte.</span></li>
       </ul>
     </div>
     <div class="coord" id="coord">DÉMO · IA CONTRE IA</div>
@@ -277,7 +279,8 @@ input[type=text]:focus{border-color:var(--alpha)}
         <dt>Souris</dt><dd>viser · la distance règle la puissance</dd>
         <dt>Clic · Espace</dt><dd>tirer</dd>
         <dt>Doigt</dt><dd>glisser pour viser, relâcher pour tirer, relâcher sur ton canon pour annuler</dd>
-        <dt>Q / A · D</dt><dd>déplacer le canon (◀ ▶ sur mobile)</dd>
+        <dt>Q / A · D</dt><dd>déplacer le canon (◀ ▶ sur mobile) · consomme de l'essence ; tu peux te replier chez un allié</dd>
+        <dt>R</dt><dd>faire le plein d'essence (+50 L)</dd>
         <dt>Molette</dt><dd>changer d'arme</dd>
         <dt>Z X C V · Tab</dt><dd>Attaque, Défense, Économie, Évolution</dd>
         <dt>1 – 5</dt><dd>actions de l'onglet ouvert</dd>
@@ -288,13 +291,13 @@ input[type=text]:focus{border-color:var(--alpha)}
       </dl>
       <h4>Climat</h4>
       <dl><dt>Vent</dt><dd>faible au sol, jusqu'à ×1,4 en altitude ; le prochain front est annoncé sous l'horloge</dd>
-      <dt>Événements</dt><dd>annoncés 12 s avant : El Niño (mer +24), La Niña, ouragan, éruption solaire (défenses coupées), cendres (projectiles freinés), choc pétrolier, ruée vers l'or, cessez-le-feu, aide internationale, ravitaillement à abattre</dd></dl>
+      <dt>Événements</dt><dd>annoncés 8 s avant : El Niño (mer +24), La Niña, ouragan, éruption solaire (défenses coupées), cendres (projectiles freinés), choc pétrolier, ruée vers l'or, cessez-le-feu, aide internationale, ravitaillement à abattre</dd></dl>
       <h4>À retenir</h4>
-      <dl><dt>Territoire</dt><dd>c'est tes PV et ton revenu ; sous 5 % tu es éliminé</dd><dt>Bâtiments</dt><dd>prennent du temps et encaissent 3–4 impacts</dd></dl>
+      <dl><dt>Territoire</dt><dd>c'est tes PV et ton revenu ; sous 5 % tu es éliminé</dd><dt>Canon</dt><dd>une explosion tout près le sonne (recharge +1,7 s) : bouge pour ne pas rester une cible</dd><dt>Bâtiments</dt><dd>prennent du temps et encaissent 3–4 impacts</dd></dl>
     </div>
     <div id="banner"></div>
     <footer id="dock">
-      <div class="purse"><div class="g" id="gold">0</div><div class="inc" id="inc">+0.0 / s</div></div>
+      <div class="purse"><div class="g" id="gold">0</div><div class="inc" id="inc">+0.0 / s</div><div class="fuel" id="fuel" title="Essence : déplacer ton canon en consomme · touche R pour faire le plein">⛽ 0 L</div></div>
       <div class="shop">
         <div class="tabs" role="tablist" aria-label="Boutique">
           <button class="tab on" data-tab="0" role="tab">Attaque<span class="hint">Z</span></button>
@@ -318,13 +321,21 @@ const SEA = 690, SD_START = 540, SD_END = 720, WATER_MIN = 250, T_MAX = 780, VMA
 const REGIONS = [[60, 1140], [1260, 2340]];
 const OUT_X = 1600; // le ciel continue au-delà des bords : un tir ne sort qu'à cette distance
 const COLORS = [['#46d9ff', '#3ef0b5', '#7d93ff'], ['#ff4f8b', '#ff9a3c', '#c77dff']];
+// vitesse de jeu : la simulation avance 1,5 s par seconde réelle ; tout ce qui est affiché est converti en secondes réelles
+const SPEED = 1.5;
+const fsec = s => String(Math.round(s / SPEED * 10) / 10).replace('.', ',');  // durée simulée → secondes réelles
+const frate = r => String(Math.round(r * SPEED * 10) / 10).replace('.', ','); // débit simulé → par seconde réelle
+const BASE_INC = 6, START_GOLD = 150, SHIELD_T = 18, DCA_RANGE = 210, DCA_CD = 4.5, STRIKE_T = 1.5, ASH_DRAG = 0.45, CRATE_GOLD = 250;
+// essence : déplacer son canon consomme du carburant, acheté avec de l'or (ou produit par les raffineries)
+const SHIELD_HP = 6;
+const FUEL_MAX = 100, FUEL_START = 40, FUEL_PX = 6, FUEL_BUY = 50, FUEL_REFIN = 0.4, MOVE_SPD = 90, STUN_T = 2.5;
 // cd = recharge en secondes après le tir
 const WEAP = [
   { k: 'shell', name: 'Obus', cost: 10, r: 24, cd: 3.2, bd: 1, desc: 'Tir de base, précis et bon marché', role: 'polyvalent' },
   { k: 'cluster', name: 'Grappe', cost: 45, r: 16, cd: 6, bd: 1, desc: 'Éclate en 5 au sommet : sature DCA et boucliers', role: 'anti-défense' },
   { k: 'drill', name: 'Foreuse', cost: 45, r: 34, cd: 6, bd: 3, desc: 'Creuse un tunnel puis explose : 3 dégâts aux bâtiments', role: 'anti-bâtiment' },
   { k: 'mega', name: 'Méga-bombe', cost: 140, r: 62, cd: 12, bd: 3, desc: 'Cratère géant, compte double sur un bouclier', role: 'zone' },
-  { k: 'orbital', name: 'Frappe orbitale', cost: 240, r: 52, cd: 20, bd: 3, desc: 'Vise un point : rayon du ciel après 1,5 s, ignore boucliers et DCA', role: 'frappe ciblée' },
+  { k: 'orbital', name: 'Frappe orbitale', cost: 240, r: 52, cd: 20, bd: 3, desc: `Vise un point : rayon du ciel après ${fsec(STRIKE_T)} s, ignore boucliers et DCA`, role: 'frappe ciblée' },
   { k: 'bomblet', name: 'Sous-munition', cost: 0, r: 16, cd: 0, bd: 1 }
 ];
 // recherches : coût et durée par niveau, une seule à la fois
@@ -336,13 +347,14 @@ const UPG = {
 };
 // bt = temps de construction / déploiement ; place = position choisie par le joueur
 const ITEM = {
-  shield: { tab: 1, name: 'Bouclier', cost: 100, desc: 'Dôme 18 s · 5 impacts', bt: 3 },
-  dca: { tab: 1, name: 'DCA', cost: 190, desc: 'Abat un tir descendant / 4,5 s', max: 2, bld: 1, bt: 10, place: 1, hp: 3 },
-  terra: { tab: 1, name: 'Terraformer', cost: 90, desc: 'Reconstruit le sol · recharge 10 s', bt: 4, place: 1, cdn: 10 },
+  shield: { tab: 1, name: 'Bouclier', cost: 85, desc: `Dôme ${fsec(SHIELD_T)} s · ${SHIELD_HP} impacts`, bt: 3 },
+  dca: { tab: 1, name: 'DCA', cost: 190, desc: `Abat un tir descendant / ${fsec(DCA_CD)} s`, max: 2, bld: 1, bt: 10, place: 1, hp: 3 },
+  terra: { tab: 1, name: 'Terraformer', cost: 90, desc: `Reconstruit le sol · recharge ${fsec(10)} s`, bt: 4, place: 1, cdn: 10 },
   wall: { tab: 1, name: 'Rempart', cost: 40, desc: 'Mur de terre où tu veux', bt: 3, place: 1 },
-  mine: { tab: 2, name: 'Mine', cost: 100, desc: '+2 or/s', max: 4, inc: 2, bld: 1, bt: 8, place: 1, hp: 3 },
-  refin: { tab: 2, name: 'Raffinerie', cost: 240, desc: '+5 or/s', max: 2, inc: 5, bld: 1, bt: 16, place: 1, hp: 4 },
-  bank: { tab: 2, name: 'Banque', cost: 200, desc: '+3 % de l’or / 5 s (max 20)', max: 1, bld: 1, bt: 12, place: 1, hp: 4 }
+  fuel: { tab: 1, name: 'Essence', cost: 30, desc: `+${FUEL_BUY} L pour déplacer ton canon (1 L ≈ ${FUEL_PX} m) · double pendant un choc pétrolier`, bt: 0, instant: 1 },
+  mine: { tab: 2, name: 'Mine', cost: 100, desc: `+${frate(2)} or/s`, max: 4, inc: 2, bld: 1, bt: 8, place: 1, hp: 3 },
+  refin: { tab: 2, name: 'Raffinerie', cost: 240, desc: `+${frate(5)} or/s et +${frate(FUEL_REFIN)} L d'essence/s`, max: 2, inc: 5, bld: 1, bt: 16, place: 1, hp: 4 },
+  bank: { tab: 2, name: 'Banque', cost: 200, desc: `+3 % de l’or / ${fsec(5)} s (max 20)`, max: 1, bld: 1, bt: 12, place: 1, hp: 4 }
 };
 const ATT_ITEMS = ['w0', 'w1', 'w2', 'w3', 'w4', 'u:cal', 'u:cad', 'u:vit'];
 const BCODE = { mine: 'm', refin: 'r', bank: 'b', dca: 'd' }, BDEC = { m: 'mine', r: 'refin', b: 'bank', d: 'dca' };
@@ -350,7 +362,6 @@ const JCODE = { shield: 's', wall: 'w', terra: 't' }, JDEC = { s: 'shield', w: '
 const TERRAIN_EV = new Set(['I', 'D', 'O', 'T', 'R']); // événements qui modifient le terrain (journalisés)
 const TUN = 120; // longueur du tunnel de la foreuse
 const REFUGE_INC = 2; // or/s gagné par allié quand un coéquipier tombe
-const BASE_INC = 6, START_GOLD = 150, SHIELD_T = 18, DCA_RANGE = 210, DCA_CD = 4.5, STRIKE_T = 1.5, ASH_DRAG = 0.45, CRATE_GOLD = 250;
 // vent « courant-jet » : faible au sol, fort en altitude (×0,35 au niveau de la mer, ×1 à 900 m, jusqu'à ×1,4)
 const windK = y => 0.35 + 0.65 * clamp((SEA - y) / 900, 0, 1.6);
 // événements mondiaux : annoncés 12 s à l'avance, un seul à la fois
@@ -431,7 +442,7 @@ class World {
           color: COLORS[ti][r.slot % 3], name: names[i], x0, x1, mid: (x0 + x1) / 2,
           gold: START_GOLD, cd: 0, cdDur: 1, upg: { cal: 0, cad: 0, vit: 0, arm: 0 }, res: null, jobs: [], bld: [], shU: 0, shHp: 0, alive: true,
           start: 1, cur: 1, terr: 1, cx: Math.round((x0 + x1) / 2), cy: 0, mx: (x0 + x1) / 2, ang: ti ? 135 : 45,
-          lastHit: -99, bankT: 5, icd: {}, hcap: maxT / tm.length, aiT: 1 + tr() * 1.5, inc: BASE_INC, spent: [0, 0, 0]
+          lastHit: -99, bankT: 5, icd: {}, hcap: maxT / tm.length, aiT: 1 + tr() * 1.5, inc: BASE_INC, spent: [0, 0, 0], fuel: FUEL_START, stunT: -99
         });
         for (let x = x0; x < x1; x++) this.own[x] = i;
       });
@@ -446,6 +457,7 @@ class World {
       for (let y = s; y < H; y++) this.mask[y * W + x] = 1;
     }
     for (const p of this.players) {
+      const mates = this.players.filter(q => q.team === p.team); p.rx0 = Math.min(...mates.map(q => q.x0)); p.rx1 = Math.max(...mates.map(q => q.x1)); // le canon peut se replier chez un allié
       p.start = p.cur = Math.max(1, this.count(p.i));
       p.cy = this.surf(p.cx);
       let sum = 0; for (let x = p.x0; x < p.x1; x++) sum += this.orig[x];
@@ -523,6 +535,7 @@ class World {
       case 'B': this.on('buy', e[2], e[3]); break;      // achat lancé
       case 'C': this.on('done', e[2], e[3]); break;     // chantier / recherche terminé
       case 'K': if (this.players[e[2]]) this.players[e[2]].alive = false; this.on('elim', e[2]); break;
+      case 'H': this.on('stun', e[2], e[3]); break;     // canon touché : sonné
       case 'Q': this.on('quit', e[2]); break;
       case 'Q2': this.on('back', e[2]); break;
       case 'E': this.over = true; this.win = e[2]; this.on('end', e[2]); break;
@@ -557,15 +570,17 @@ class World {
   wcost(wi) { return this.sd() ? Math.round(WEAP[wi].cost * 0.5) : WEAP[wi].cost; }
   weaponCd(p, wi) { return WEAP[wi].cd * (1 - 0.15 * p.upg.cad) * (this.sd() ? 0.7 : 1) / (p.hcap || 1); } // équipe en infériorité numérique : tir plus rapide
   building(p) { return p.bld.find(b => b.prog < 1); }
+  icost(k) { return k === 'fuel' && this.isCl('oil') ? ITEM.fuel.cost * 2 : ITEM[k].cost; }
   why(p, k, x) { // null si l'achat est possible, sinon la raison
     const it = Object.hasOwn(ITEM, k) ? ITEM[k] : null; if (!it) return 'inconnu';
     if (!p.alive || this.over) return 'hors jeu';
     if (it.max && p.bld.filter(b => b.type === k).length >= it.max) return 'maximum atteint';
-    if (it.bld && this.building(p)) return 'chantier occupé';
+    if (it.bld && p.bld.filter(b => b.prog < 1).length >= 2) return 'file de chantier pleine'; // un chantier + un en attente
     if (!it.bld && p.jobs.some(j => j.k === k)) return 'déjà en cours';
     if (it.cdn && this.t < (p.icd[k] || 0)) return 'en recharge';
     if (k === 'shield' && this.t < p.shU && p.shHp > 0) return 'bouclier actif';
-    if (p.gold < it.cost) return 'or insuffisant';
+    if (k === 'fuel' && p.fuel > FUEL_MAX - 5) return 'réservoir plein';
+    if (p.gold < this.icost(k)) return 'or insuffisant';
     if (it.place && x !== undefined) { const r = this.placeWhy(p, k, x); if (r) return r; }
     return null;
   }
@@ -576,7 +591,7 @@ class World {
     if (s >= this.water - (it.bld ? 30 : 5)) return 'sous l’eau';
     if (k === 'wall' && s < this.orig[x] - 24) return 'trop haut (pas de tour)';
     if (it.bld) {
-      if (p.bld.some(b => Math.abs(b.x - x) < 22)) return 'trop près d’un bâtiment';
+      if (p.bld.some(b => Math.abs(b.x - x) < 26)) return 'trop près d’un bâtiment';
       if (Math.abs(x - p.cx) < 16) return 'trop près du canon';
       if (Math.abs(this.surf(x - 6) - this.surf(x + 6)) > 14) return 'terrain trop pentu';
     }
@@ -605,8 +620,9 @@ class World {
     const it = Object.hasOwn(ITEM, k) ? ITEM[k] : null; if (!it) return false;
     if (it.place) { x = +x; if (!isFinite(x)) x = this.autoX(p, k); if (x < 0) return false; x = Math.round(x); }
     if (this.why(p, k, it.place ? x : undefined)) return false;
-    p.gold -= it.cost; p.spent[it.tab === 2 ? 2 : 1] += it.cost;
-    if (it.bld) p.bld.push({ type: k, x, y: this.surf(x), cdT: 0, prog: 0, hp: this.maxHp(p, k) });
+    const cost = this.icost(k); p.gold -= cost; p.spent[it.tab === 2 ? 2 : 1] += cost;
+    if (it.instant) { p.fuel = Math.min(FUEL_MAX, p.fuel + FUEL_BUY); }
+    else if (it.bld) p.bld.push({ type: k, x, y: this.surf(x), cdT: 0, prog: 0, hp: this.maxHp(p, k) });
     else p.jobs.push({ k, x: it.place ? x : p.mid, end: this.t + it.bt, dur: it.bt });
     this.emit(['B', pi, k]);
     return true;
@@ -620,6 +636,10 @@ class World {
   inShield(q, x, y) { if (y > q.shCy) return false; const a = (x - q.shCx) / q.shRx, b = (y - q.shCy) / q.shRy; return a * a + b * b < 1; }
   hitArea(x, y, r, bd) {
     const o = this.own[clamp(x | 0, 0, W - 1)]; if (o >= 0) this.players[o].lastHit = this.t;
+    for (const q of this.players) { // canon pris dans l'explosion : sonné, sa recharge s'allonge
+      if (!q.alive || Math.hypot(q.cx - x, q.cy - 6 - y) >= r + 10) continue;
+      q.cd = Math.max(q.cd, this.t) + STUN_T; q.cdDur = q.cd - this.t; q.stunT = this.t; this.emit(['H', q.i, Math.round(STUN_T * 10)]);
+    }
     for (const p of this.players) p.bld = p.bld.filter(b => {
       if (Math.hypot(b.x - x, b.y - 6 - y) >= r + 8) return true;
       b.hitT = this.t;
@@ -672,13 +692,16 @@ class World {
     }
   }
   moveCannon(p) {
-    const tx = clamp(p.mx, p.x0 + 6, p.x1 - 6);
-    if (Math.abs(tx - p.cx) > 0.5) { const nx = p.cx + Math.sign(tx - p.cx) * Math.min(Math.abs(tx - p.cx), 90 * DT); p.cy = this.settle(nx, p.cy - 6); p.cx = nx; }
+    const tx = clamp(p.mx, (p.rx0 ?? p.x0) + 6, (p.rx1 ?? p.x1) - 6);
+    if (Math.abs(tx - p.cx) > 0.5 && p.fuel > 0) {
+      const d = Math.min(Math.abs(tx - p.cx), MOVE_SPD * DT, p.fuel * FUEL_PX), nx = p.cx + Math.sign(tx - p.cx) * d;
+      p.fuel = Math.max(0, p.fuel - d / FUEL_PX); p.cy = this.settle(nx, p.cy - 6); p.cx = nx; p.moving = this.t;
+    }
   }
   tickClient() {
     this.t += DT;
     const bs = this.isCl('truce') ? 2 : 1;
-    for (const p of this.players) { for (const b of p.bld) if (b.prog < 1) b.prog = Math.min(0.999, b.prog + bs * DT / ITEM[b.type].bt); }
+    for (const p of this.players) { const b = this.building(p); if (b) b.prog = Math.min(0.999, b.prog + bs * DT / ITEM[b.type].bt); }
     this.stepProj(); this.settleThings();
   }
   tickHost() {
@@ -695,16 +718,18 @@ class World {
       if (!p.alive) continue;
       let inc = BASE_INC * p.hcap * Math.sqrt(clamp(p.terr, 0, 1)) + (p.refuge || 0);
       const bmul = this.isCl('gold') ? 2 : 1, bspd = this.isCl('truce') ? 2 : 1;
+      const site = this.building(p); // un seul chantier avance à la fois, le suivant attend
       for (const b of p.bld) {
-        if (b.prog < 1) { b.prog += bspd * DT / ITEM[b.type].bt; if (b.prog >= 1) { b.prog = 1; this.emit(['C', p.i, b.type]); } continue; }
+        if (b.prog < 1) { if (b !== site) continue; b.prog += bspd * DT / ITEM[b.type].bt; if (b.prog >= 1) { b.prog = 1; this.emit(['C', p.i, b.type]); } continue; }
         if (ITEM[b.type].inc) inc += ITEM[b.type].inc * bmul;
+        if (b.type === 'refin') p.fuel = Math.min(FUEL_MAX, p.fuel + FUEL_REFIN * DT);
       }
       if (this.isCl('oil')) inc *= 0.6;
       p.inc = inc; p.gold += inc * DT;
       if (t >= p.bankT) { p.bankT = t + 5; if (p.bld.some(b => b.type === 'bank' && b.prog >= 1)) p.gold += Math.min(20, p.gold * 0.03); }
       for (const j of p.jobs) if (t >= j.end) {
         j.done = true;
-        if (j.k === 'shield') { p.shU = t + SHIELD_T; p.shHp = 5; }
+        if (j.k === 'shield') { p.shU = t + SHIELD_T; p.shHp = SHIELD_HP; }
         else if (j.k === 'terra') { this.emit(['T', j.x, 40, p.i]); p.icd.terra = t + ITEM.terra.cdn; }
         else if (j.k === 'wall') this.emit(['R', j.x - 6, this.surf(j.x) - 72, 12, 84, p.i]);
         this.emit(['C', p.i, j.k]);
@@ -824,6 +849,12 @@ class World {
       if (bx > 0 && this.buy(p.i, 'terra', bx)) return;
     }
     if (f.wall && ok('wall') && this.hr() < f.wall) { const x = this.wallX(p); if (x > 0 && this.buy(p.i, 'wall', x)) return; }
+    // mobilité : faire le plein, fuir après avoir été sonné, gagner les hauteurs
+    if (p.fuel < 25 && g >= this.icost('fuel') + f.reserve * 0.5 && D >= 1 && this.hr() < 0.35 && ok('fuel') && this.buy(p.i, 'fuel')) return;
+    if (D >= 1 && p.fuel > 12 && Math.abs(p.mx - p.cx) < 2) {
+      if (t - p.stunT < 2.5 && this.hr() < 0.8) { const x = this.moveX(p, 60, 220); if (x !== null) p.mx = x; }
+      else if (t >= (p.posT || 0)) { p.posT = t + 35 + this.hr() * 25; if (p.fuel > 45) { const x = this.moveX(p, 30, 160, true); if (x !== null) p.mx = x; } }
+    }
     if (!p.res && f.res.length) { const k = f.res.find(k => p.upg[k] < 3); if (k && g >= UPG[k].cost[p.upg[k]] + f.resGold) { if (this.upgrade(p.i, k)) return; } }
     // attaque
     if (t < p.cd || this.isCl('truce')) return;
@@ -847,6 +878,19 @@ class World {
     const blur = flare ? 2.5 : 1, ea = AI_AIM[D][0] * blur, ep = AI_AIM[D][1] * blur;
     const dir = tg.x > p.cx ? 1 : -1, a = s.a + this.gauss() * ea;
     this.fire(p.i, wi, dir > 0 ? a : 180 - a, s.pw + this.gauss() * ep);
+  }
+  moveX(p, dmin, dmax, high) { // nouvelle position du canon : chez soi, à portée d'essence, de préférence en hauteur
+    const reach = Math.min(dmax, p.fuel * FUEL_PX * 0.8); if (reach < dmin) return null;
+    let best = null, bs = -1e9;
+    for (let n = 0; n < 14; n++) {
+      const x = Math.round(p.cx + (this.hr() < 0.5 ? -1 : 1) * (dmin + this.hr() * (reach - dmin)));
+      if (x < p.x0 + 20 || x > p.x1 - 20) continue;
+      const y = this.surf(x); if (y >= this.water - 20) continue;
+      let sc = (high ? 3 : 1) * (this.surf(p.cx) - y) / 10 + this.hr() * 2;
+      for (const b of p.bld) if (Math.abs(b.x - x) < 40) sc -= 3; // ne pas attirer les tirs sur ses bâtiments
+      if (sc > bs) { bs = sc; best = x; }
+    }
+    return high && bs < 2 ? null : best;
   }
   incomingThreat(p) { return this.proj.some(q => !q.dead && this.players[q.o].team !== p.team && q.vy > -200 && Math.abs(q.x - p.mid) < (p.x1 - p.x0) * 0.7); }
   safeX(p, k) { // bâtiment éco : à l'arrière, sous la DCA, espacé des autres
@@ -875,6 +919,7 @@ class World {
     const sh = shielded(q), order = { refin: 0, mine: 1, bank: 2, dca: 3 };
     const bl = q.bld.filter(b => b.type !== 'dca' || f.target === 'eco').sort((a, b) => order[a.type] - order[b.type]);
     if (!sh && bl.length && (f.target === 'eco' || this.hr() < 0.6)) { const b = bl[0]; return { x: b.x, y: b.y - 4, q, shielded: sh }; }
+    if (p.diff >= 2 && this.t - (q.moving ?? -99) > 3 && this.hr() < 0.25) return { x: q.cx, y: q.cy - 4, q, shielded: sh }; // canon immobile : le sonner
     let bx = q.mid, by = 9e9;
     for (let n = 0; n < 6; n++) { const x = Math.round(q.x0 + 25 + this.hr() * (q.x1 - q.x0 - 50)); const y = this.surf(x); if (y < by) { by = y; bx = x; } }
     return { x: bx, y: by, q, shielded: sh };
@@ -911,7 +956,7 @@ class World {
         p.bld.map(b => BCODE[b.type] + b.x + (b.prog < 1 ? '~' + pc(b.prog) : '') + (b.hp < this.maxHp(p, b.type) ? '^' + b.hp : '')).join(','), p.ai ? 1 : 0,
         p.jobs.map(j => JCODE[j.k] + j.x + '~' + pc(1 - (j.end - this.t) / j.dur)).join(','),
         p.res ? p.res.k + '~' + pc(1 - (p.res.end - this.t) / p.res.dur) + '~' + p.res.dur : '',
-        Math.round(p.cdDur * 10), p.spent.join(','), Math.ceil((p.icd.terra || 0) * 10), p.shots || 0])
+        Math.round(p.cdDur * 10), p.spent.join(','), Math.ceil((p.icd.terra || 0) * 10), p.shots || 0, Math.round(p.fuel * 10), Math.round(p.stunT * 10)])
     };
     if (this.over) o.win = this.win;
     return o;
@@ -933,7 +978,7 @@ class World {
       p.bld = nl;
       p.jobs = a[12] ? a[12].split(',').map(s2 => { const [h, pr] = s2.split('~'); return { k: JDEC[h[0]], x: +h.slice(1), prog: +pr / 100 }; }) : [];
       if (a[13]) { const [k, pr, dur] = a[13].split('~'); p.res = { k, prog: +pr / 100, dur: +dur }; } else p.res = null;
-      p.cdDur = (a[14] || 10) / 10; p.spent = String(a[15] || '0,0,0').split(',').map(Number); p.icd.terra = (a[16] || 0) / 10; p.shots = a[17] || 0;
+      p.cdDur = (a[14] || 10) / 10; p.spent = String(a[15] || '0,0,0').split(',').map(Number); p.icd.terra = (a[16] || 0) / 10; p.shots = a[17] || 0; if (a[18] !== undefined) p.fuel = a[18] / 10; if (a[19] !== undefined) p.stunT = a[19] / 10;
     });
     if (s.win !== undefined && !this.over) { this.over = true; this.win = s.win; }
   }
@@ -947,7 +992,8 @@ const $ = s => document.querySelector(s);
 const DIFF = DIFF_N;
 const CAM_X = 1400, CAM_Y = 2600; // jusqu'où la caméra recule pour suivre un tir
 const STARS = Array.from({ length: 260 }, (_, i) => { const r = mulberry32(i * 977 + 13); return [r() * (W + 2 * CAM_X) - CAM_X, -CAM_Y + r() * (CAM_Y + 380), r() * 1.6 + 0.4, r() * 6.28]; });
-const fmt = t => { t = Math.max(0, t | 0); return String(t / 60 | 0).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
+const fmt = t => { t = Math.max(0, t / SPEED | 0); // temps simulé → horloge réelle
+  return String(t / 60 | 0).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); };
 const cleanNick = s => String(s || '').replace(/[\u0000-\u001f\u007f-\u009f­​-‏‪-‮⁠-⁯﻿]/g, '').trim().slice(0, 14) || 'Joueur';
 function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
 const RGBC = {}; // cache hex → "r,g,b" (évite de reparser à chaque particule)
@@ -1172,8 +1218,8 @@ class Renderer {
     if (Math.abs(w.water - w.baseWater) > 1) { // niveau normal rappelé pendant El Niño / La Niña
       c.setLineDash([3 * px, 6 * px]); c.strokeStyle = 'rgba(219,230,245,0.35)'; c.beginPath(); c.moveTo(wx0, w.baseWater); c.lineTo(wx1, w.baseWater); c.stroke(); c.setLineDash([]);
     }
-    if (w.t > SD_START - 30 && w.baseWater > WATER_MIN + 1) { // niveau de la mer dans 30 s
-      const fut = lerp(SEA, WATER_MIN, clamp((w.t + 30 - SD_START) / (SD_END - SD_START), 0, 1));
+    if (w.t > SD_START - 30 * SPEED && w.baseWater > WATER_MIN + 1) { // niveau de la mer dans 30 s (réelles)
+      const fut = lerp(SEA, WATER_MIN, clamp((w.t + 30 * SPEED - SD_START) / (SD_END - SD_START), 0, 1));
       c.setLineDash([10 * px, 8 * px]); c.strokeStyle = 'rgba(124,200,255,0.55)'; c.lineWidth = 1.5 * px;
       c.beginPath(); c.moveTo(vx0, fut); c.lineTo(vx1, fut); c.stroke(); c.setLineDash([]);
       c.fillStyle = 'rgba(124,200,255,0.85)'; c.font = `${11 * px}px "IBM Plex Mono", monospace`; c.textBaseline = 'bottom';
@@ -1187,7 +1233,7 @@ class Renderer {
       c.fillStyle = rgba(col, off ? 0.02 : 0.06 + 0.02 * Math.sin(t * 4)); c.fill();
       c.setLineDash([10 * px, 6 * px]); c.lineDashOffset = -t * 20; c.strokeStyle = rgba(col, flick); c.lineWidth = 1.5 * px; c.stroke(); c.setLineDash([]);
       c.fillStyle = rgba(col, 0.9); c.textAlign = 'center'; c.font = `${11 * px}px "IBM Plex Mono", monospace`;
-      c.fillText(off ? 'BOUCLIER HORS SERVICE' : 'BOUCLIER ' + '■'.repeat(Math.max(0, p.shHp)) + ' ' + Math.ceil(p.shU - w.t) + 's', p.shCx, p.shCy - p.shRy - 16 * px); c.textAlign = 'left';
+      c.fillText(off ? 'BOUCLIER HORS SERVICE' : 'BOUCLIER ' + '■'.repeat(Math.max(0, p.shHp)) + ' ' + Math.ceil((p.shU - w.t) / SPEED) + 's', p.shCx, p.shCy - p.shRy - 16 * px); c.textAlign = 'left';
     }
     // bâtiments et chantiers
     for (const p of w.players) for (const b of p.bld) this.building(b, p, px, t, null, cl);
@@ -1207,6 +1253,13 @@ class Renderer {
       c.beginPath(); c.moveTo(x, y - 8); c.lineTo(x + Math.cos(ba) * len, y - 8 - Math.sin(ba) * len); c.stroke(); c.lineCap = 'butt';
       c.fillStyle = '#070a10'; c.beginPath(); c.arc(x, y - 1, 10, Math.PI, 0); c.fill();
       c.fillStyle = p.color; c.beginPath(); c.arc(x, y - 1, 8, Math.PI, 0); c.fill(); c.fillRect(x - 12, y - 2, 24, 3);
+      // en mouvement : poussière des chenilles ; sonné : étincelles qui tournent
+      const mv = p._lx !== undefined && Math.abs(p.cx - p._lx) > 0.15; p._lx = p.cx;
+      if (mv && Math.random() < 0.5) this.part({ x: x + (Math.random() - 0.5) * 20, y: y - 1, vx: (Math.random() - 0.5) * 30, vy: -20 - Math.random() * 20, l: 0.5, ml: 0.5, c: '#8a7a6a', s: 2, g: 60 });
+      if (w.t - (p.stunT ?? -99) < STUN_T) {
+        c.fillStyle = '#ff9a3c';
+        for (let k = 0; k < 3; k++) { const a2 = t * 6 + k * 2.094; c.beginPath(); c.arc(x + Math.cos(a2) * 13, y - 20 + Math.sin(a2) * 4, 2 * Math.max(1, px * 0.8), 0, 7); c.fill(); }
+      }
       // fanion : indique le vent au sol
       const fw = clamp(w.wind / 60, -1.4, 1.4), fx = x - 13, fy = y - 30;
       c.strokeStyle = 'rgba(219,230,245,0.6)'; c.lineWidth = 1.2 * px; c.beginPath(); c.moveTo(fx, y - 4); c.lineTo(fx, fy); c.stroke();
@@ -1222,7 +1275,11 @@ class Renderer {
         c.beginPath(); c.moveTo(x, y - 58 * px - 10 + bob); c.lineTo(x - 7 * px, y - 70 * px - 10 + bob); c.lineTo(x + 7 * px, y - 70 * px - 10 + bob); c.closePath(); c.fill();
         const rr = Math.max(22, 14 * px);
         c.strokeStyle = 'rgba(219,230,245,0.18)'; c.lineWidth = 3 * px; c.beginPath(); c.arc(x, y - 6, rr, 0, 7); c.stroke();
-        if (w.t < p.cd) { const k = clamp((p.cd - w.t) / (p.cdDur || 1), 0, 1); c.strokeStyle = '#f5c451'; c.beginPath(); c.arc(x, y - 6, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); c.stroke(); }
+        if (w.t < p.cd) { const k = clamp((p.cd - w.t) / (p.cdDur || 1), 0, 1); c.strokeStyle = w.t - (p.stunT ?? -99) < STUN_T ? '#ff9a3c' : '#f5c451'; c.beginPath(); c.arc(x, y - 6, rr, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); c.stroke(); }
+        // jauge d'essence sous le canon
+        const fw = 30 * px, fy2 = y + 5 * px, fk = clamp((p.fuel ?? 0) / FUEL_MAX, 0, 1);
+        c.fillStyle = 'rgba(7,10,16,0.75)'; c.fillRect(x - fw / 2 - px, fy2 - px, fw + 2 * px, 4 * px);
+        c.fillStyle = fk < 0.15 ? '#ff5b5b' : '#ff9a3c'; c.fillRect(x - fw / 2, fy2, fw * fk, 2 * px);
       }
     }
     c.textAlign = 'left';
@@ -1230,7 +1287,7 @@ class Renderer {
     if (o.preview) {
       const q = o.preview;
       if (cl === 'flare') { c.fillStyle = 'rgba(219,230,245,0.5)'; for (let i = 0; i < 18; i++) { c.beginPath(); c.arc(q.x + (Math.random() - 0.3) * 160 * Math.sign(q.vx || 1), q.y - Math.random() * 120, 1.6 * px, 0, 7); c.fill(); } }
-      else { c.fillStyle = 'rgba(219,230,245,0.85)'; for (let i = 0; i < 70; i++) { const r = w.physStep(q); if (r && r !== 'split') break; if (i % 3 === 0) { c.beginPath(); c.arc(q.x, q.y, (1.8 - i / 60) * px * 1.4, 0, 7); c.fill(); } } }
+      else { c.fillStyle = q.dim ? 'rgba(219,230,245,0.35)' : 'rgba(219,230,245,0.85)'; for (let i = 0; i < 70; i++) { const r = w.physStep(q); if (r && r !== 'split') break; if (i % 3 === 0) { c.beginPath(); c.arc(q.x, q.y, (1.8 - i / 60) * px * 1.4, 0, 7); c.fill(); } } }
     }
     if (o.reticle !== undefined && o.reticle !== null) this.reticle(o.reticle, w, px, t, o.reticleOk);
     // frappes orbitales en approche : laser de visée, réticule qui se resserre
@@ -1359,7 +1416,7 @@ class Renderer {
     const r0 = rr * (1.8 - k); c.beginPath(); c.arc(st.x, gy - 4, r0, 0, 7); c.stroke();
     c.beginPath(); for (const a of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) { c.moveTo(st.x + Math.cos(a) * (r0 - 8), gy - 4 + Math.sin(a) * (r0 - 8)); c.lineTo(st.x + Math.cos(a) * (r0 + 8), gy - 4 + Math.sin(a) * (r0 + 8)); } c.stroke();
     c.fillStyle = '#ff5b5b'; c.font = `700 ${12 * px}px "Chakra Petch", sans-serif`; c.textAlign = 'center';
-    c.fillText(`⚠ FRAPPE ORBITALE ${Math.max(0, STRIKE_T - (w.t - (st.t0 ?? w.t))).toFixed(1)} s`, st.x, gy - r0 - 12 * px); c.textAlign = 'left';
+    c.fillText(`⚠ FRAPPE ORBITALE ${(Math.max(0, STRIKE_T - (w.t - (st.t0 ?? w.t))) / SPEED).toFixed(1)} s`, st.x, gy - r0 - 12 * px); c.textAlign = 'left';
   }
   reticle(x, w, px, t, ok) {
     const c = this.c, gy = w.surf(clamp(x | 0, 0, W - 1)), rr = WEAP[4].r * w.rScale, col = ok ? '#f5c451' : '#ff5b5b';
@@ -1378,41 +1435,61 @@ class Renderer {
     c.fillStyle = '#f5c451'; c.font = `700 ${12 * px}px "Chakra Petch", sans-serif`; c.textAlign = 'center'; c.fillText('◆' + CRATE_GOLD, x, y + 22 * px + 8); c.textAlign = 'left';
     this.rings.length < 200 && Math.random() < 0.03 && this.rings.push({ x, y, r0: 10, r1: 34, l: 0.6, ml: 0.6, c: '#f5c451' });
   }
+  // bâtiments : silhouette agrandie selon le zoom + pastille de rôle à taille d'écran constante (lisible même dézoomé)
   building(b, p, px, t, ghost, cl) {
-    const c = this.c, x = b.x, y = b.y, col = ghost || p.color, prog = b.prog ?? 1;
+    const c = this.c, x = b.x, y = b.y, col = ghost || p.color, prog = b.prog ?? 1, built = prog >= 1;
+    const z = clamp(px * 1.15, 1.5, 2.0);
+    const hit = !ghost && b.hitT !== undefined && this.w && this.w.t - b.hitT < 0.25;
     c.save();
-    if (prog < 1 || ghost) { c.globalAlpha = ghost ? 0.85 : 0.35 + prog * 0.4; c.setLineDash([3, 2]); }
-    if (!ghost && b.hitT !== undefined && this.w && this.w.t - b.hitT < 0.25) c.globalAlpha = 0.4 + 0.6 * (Math.sin(t * 60) > 0 ? 1 : 0);
-    c.fillStyle = '#0b111a'; c.strokeStyle = col; c.lineWidth = 1.4;
-    c.beginPath();
-    if (b.type === 'mine') {
-      c.rect(x - 7, y - 8, 14, 8); c.fill(); c.stroke();
-      c.beginPath(); c.moveTo(x - 6, y - 8); c.lineTo(x, y - 18); c.lineTo(x + 6, y - 8); c.stroke();
-      c.beginPath(); c.arc(x, y - 18, 2.5, prog < 1 ? 0 : t * 3, (prog < 1 ? 0 : t * 3) + 5); c.stroke();
-      if (cl === 'gold' && prog >= 1 && Math.random() < 3 * (this.dt || 0.016)) this.part({ x: x + (Math.random() - 0.5) * 14, y: y - 12, vx: 0, vy: -30, l: 0.8, ml: 0.8, c: '#f5c451', s: 2, g: 0 });
-    } else if (b.type === 'refin') {
-      c.rect(x - 7, y - 13, 14, 13); c.fill(); c.stroke();
-      c.beginPath(); c.rect(x + 2, y - 21, 4, 8); c.fill(); c.stroke();
-      if (prog >= 1 && !ghost && Math.random() < 3.6 * (this.dt || 0.016)) this.part({ x: x + 4, y: y - 22, vx: 6, vy: -18, l: 1.4, ml: 1.4, c: cl === 'oil' ? '#3a3a3a' : '#7d90ad', s: 2.5, g: -4 });
-    } else if (b.type === 'bank') {
-      c.moveTo(x - 10, y - 9); c.lineTo(x, y - 16); c.lineTo(x + 10, y - 9); c.closePath(); c.fill(); c.stroke();
-      c.beginPath(); c.rect(x - 8, y - 9, 16, 9); c.fill(); c.stroke();
-      c.beginPath(); for (const dx of [-4, 0, 4]) { c.moveTo(x + dx, y - 8); c.lineTo(x + dx, y - 1); } c.stroke();
-    } else if (b.type === 'dca') {
-      c.arc(x, y, 7, Math.PI, 0); c.fill(); c.stroke();
-      const dir = p.team ? -1 : 1; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x, y - 5); c.lineTo(x + dir * 7, y - 15); c.stroke();
-      if (prog >= 1 && !ghost && cl !== 'flare') { c.lineWidth = 1; c.strokeStyle = rgba(col, 0.25); c.beginPath(); c.arc(x, y - 10, 30 + (t * 40) % 40, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }
-      if (cl === 'flare' && !ghost) { c.fillStyle = '#ff5b5b'; c.font = '8px "IBM Plex Mono", monospace'; c.textAlign = 'center'; c.fillText('OFF', x, y - 18); c.textAlign = 'left'; }
+    if (!built || ghost) c.globalAlpha = ghost ? 0.9 : 0.45 + prog * 0.35;
+    if (hit) c.globalAlpha = 0.4 + 0.6 * (Math.sin(t * 60) > 0 ? 1 : 0);
+    c.translate(x, y); c.scale(z, z);
+    c.lineJoin = 'round'; c.lineWidth = 1.5; c.strokeStyle = col;
+    const body = rgba(col, built && !ghost ? 0.28 : 0.1), dark = '#0b111a';
+    if (!built && !ghost) c.setLineDash([2.5, 2]);
+    const box = (x0, y0, w, h, f) => { c.beginPath(); c.rect(x0, y0, w, h); c.fillStyle = dark; c.fill(); c.fillStyle = f || body; c.fill(); c.stroke(); };
+    if (b.type === 'mine') { // chevalement de mine : pylône en A, molette, wagonnet
+      box(-9, -7, 18, 7);
+      c.beginPath(); c.moveTo(-7, -7); c.lineTo(-1, -22); c.lineTo(1, -22); c.lineTo(7, -7); c.moveTo(-4, -14); c.lineTo(4, -14); c.stroke();
+      const a = built && !ghost ? t * 3 : 0; c.beginPath(); c.arc(0, -22, 3.2, 0, 7); c.fillStyle = dark; c.fill(); c.stroke();
+      c.beginPath(); c.moveTo(Math.cos(a) * 3.2, -22 + Math.sin(a) * 3.2); c.lineTo(-Math.cos(a) * 3.2, -22 - Math.sin(a) * 3.2); c.stroke();
+      c.fillStyle = '#f5c451'; c.fillRect(-6, -5, 3, 3); c.fillRect(-1.5, -5, 3, 3); c.fillRect(3, -5, 3, 3);
+      if (cl === 'gold' && built && Math.random() < 3 * (this.dt || 0.016)) this.part({ x: x + (Math.random() - 0.5) * 14 * z, y: y - 14 * z, vx: 0, vy: -30, l: 0.8, ml: 0.8, c: '#f5c451', s: 2, g: 0 });
+    } else if (b.type === 'refin') { // raffinerie : deux cuves rondes, colonne, torchère
+      c.beginPath(); c.ellipse(-6, -7, 5, 7, 0, 0, 7); c.fillStyle = dark; c.fill(); c.fillStyle = body; c.fill(); c.stroke();
+      c.beginPath(); c.ellipse(4, -6, 4, 6, 0, 0, 7); c.fillStyle = dark; c.fill(); c.fillStyle = body; c.fill(); c.stroke();
+      box(8, -24, 4, 24);
+      c.beginPath(); c.moveTo(-11, -0.5); c.lineTo(13, -0.5); c.stroke();
+      if (built && !ghost && cl !== 'oil') { const f = 2.5 + Math.sin(t * 17) * 1 + Math.sin(t * 7) * 0.8; c.fillStyle = '#ff9a3c'; c.beginPath(); c.moveTo(8.5, -24); c.quadraticCurveTo(10, -26 - f * 2, 11.5, -24); c.fill(); }
+      if (built && !ghost && Math.random() < 3.6 * (this.dt || 0.016)) this.part({ x: x + 10 * z, y: y - 28 * z, vx: 6, vy: -18, l: 1.4, ml: 1.4, c: cl === 'oil' ? '#3a3a3a' : '#7d90ad', s: 2.5, g: -4 });
+    } else if (b.type === 'bank') { // banque : fronton, colonnes, marches
+      c.beginPath(); c.moveTo(-12, -13); c.lineTo(0, -21); c.lineTo(12, -13); c.closePath(); c.fillStyle = dark; c.fill(); c.fillStyle = body; c.fill(); c.stroke();
+      box(-11, -13, 22, 2.5);
+      c.beginPath(); for (const dx of [-8, -3, 3, 8]) { c.moveTo(dx, -10.5); c.lineTo(dx, -2.5); } c.lineWidth = 2.2; c.stroke(); c.lineWidth = 1.5;
+      box(-12, -2.5, 24, 2.5);
+      c.fillStyle = '#f5c451'; c.font = '700 6px "Chakra Petch", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('$', 0, -15.5);
+    } else if (b.type === 'dca') { // DCA : tourelle et double canon pointé vers l'ennemi
+      const dir = p.team ? -1 : 1;
+      box(-9, -4, 18, 4);
+      c.beginPath(); c.arc(0, -4, 7, Math.PI, 0); c.closePath(); c.fillStyle = dark; c.fill(); c.fillStyle = body; c.fill(); c.stroke();
+      c.lineWidth = 2.2; c.beginPath(); c.moveTo(-1 * dir, -8); c.lineTo(dir * 8, -21); c.moveTo(2 * dir, -7); c.lineTo(dir * 11, -19); c.stroke(); c.lineWidth = 1.5;
+      if (built && !ghost && cl !== 'flare') { c.setLineDash([]); c.lineWidth = 1; c.strokeStyle = rgba(col, 0.3); c.beginPath(); c.arc(0, -10, 22 + (t * 30) % 24, Math.PI * 1.15, Math.PI * 1.85); c.stroke(); }
     }
     c.restore();
-    const mhp = ITEM[b.type].hp + ((p.upg && p.upg.arm) || 0);
-    if (!ghost && b.hp !== undefined && b.hp < mhp) { // points de structure restants
-      for (let k = 0; k < mhp; k++) { c.fillStyle = k < b.hp ? col : 'rgba(255,91,91,0.7)'; c.fillRect(x - mhp * 2.5 + k * 5, y - 27, 3.5, 3.5); }
-    }
-    if (prog < 1 && !ghost) { // échafaudage + barre de progression
-      c.fillStyle = 'rgba(219,230,245,0.18)'; c.fillRect(x - 11, y + 3, 22, 3 * px + 1);
-      c.fillStyle = col; c.fillRect(x - 11, y + 3, 22 * prog, 3 * px + 1);
-    }
+    if (ghost) return;
+    // pastille : rôle (revenu / %, viseur DCA), points de structure, progression du chantier
+    const mhp = ITEM[b.type].hp + ((p.upg && p.upg.arm) || 0), hp = b.hp ?? mhp;
+    const by = y - 30 * z - 9 * px, br = 8.5 * px;
+    c.beginPath(); c.arc(x, by, br, 0, 7); c.fillStyle = built ? rgba(col, 0.92) : 'rgba(11,17,26,0.9)'; c.fill();
+    c.lineWidth = 1.2 * px; c.strokeStyle = col; c.stroke();
+    if (!built) { c.lineWidth = 2.2 * px; c.beginPath(); c.arc(x, by, br + 2.6 * px, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * prog); c.stroke(); }
+    const lab = b.type === 'mine' ? '+' + Math.round(ITEM.mine.inc * SPEED) : b.type === 'refin' ? '+' + Math.round(ITEM.refin.inc * SPEED) : b.type === 'bank' ? '%' : '';
+    c.fillStyle = built ? '#070a10' : col; c.textAlign = 'center'; c.textBaseline = 'middle';
+    if (lab) { c.font = `700 ${(lab.length > 2 ? 8.5 : 10) * px}px "Chakra Petch", sans-serif`; c.fillText(lab, x, by + 0.5 * px); }
+    else { c.strokeStyle = built ? '#070a10' : col; c.lineWidth = 1.4 * px; c.beginPath(); c.arc(x, by, 3.4 * px, 0, 7); c.moveTo(x - 5.5 * px, by); c.lineTo(x + 5.5 * px, by); c.moveTo(x, by - 5.5 * px); c.lineTo(x, by + 5.5 * px); c.stroke(); }
+    c.textAlign = 'left'; c.textBaseline = 'top';
+    const pw = 4 * px, gap = 1.6 * px, tw = mhp * pw + (mhp - 1) * gap, py = by + br + 3 * px;
+    for (let k = 0; k < mhp; k++) { c.fillStyle = k < hp ? rgba(col, built ? 0.95 : 0.5) : 'rgba(255,91,91,0.85)'; c.fillRect(x - tw / 2 + k * (pw + gap), py, pw, 2.4 * px); }
   }
   jobs(w, px, t) {
     const c = this.c;
@@ -1638,7 +1715,7 @@ function makeFx(w, real) {
     strike: s => {
       if (!real) return; Snd.charge();
       const me = w.players[S.me], sh = w.players[s.o];
-      if (me && sh && sh.team !== me.team && myZone(w, s.x)) { alertMe(); feed(`Frappe orbitale de ${sh.name} sur toi · impact dans 1,5 s`, sh.color); }
+      if (me && sh && sh.team !== me.team && myZone(w, s.x)) { alertMe(); feed(`Frappe orbitale de ${sh.name} sur toi · impact dans ${fsec(STRIKE_T)} s`, sh.color); }
     },
     shieldHit: (x, y, qi) => { if (vis()) { R.rings.push({ x, y, r0: 4, r1: 34, l: 0.4, ml: 0.4, c: w.players[qi].color }); R.burst(x, y, 10, w.players[qi].color, 160, 200, 0.4, 1.6); } if (real) Snd.hitShield(); },
     zap: (x, y, bx, by) => {
@@ -1653,7 +1730,7 @@ function makeFx(w, real) {
     buy: (pi, k) => {
       if (!mine(pi)) return; const p = w.players[pi]; Snd.blip(); pulseCard(k);
       if (k.startsWith('u:')) feed(`Recherche ${UPG[k.slice(2)].name} niv. ${p.upg[k.slice(2)] + 1} lancée`, p.color);
-      else if (ITEM[k] && ITEM[k].bld) feed(`Chantier : ${LBL[k]}`, p.color);
+      else if (ITEM[k] && ITEM[k].bld) feed(`${p.bld.filter(b => b.prog < 1).length > 1 ? 'En file' : 'Chantier'} : ${LBL[k]}`, p.color);
       else if (k === 'shield') feed('Bouclier en charge', p.color);
     },
     done: (pi, k) => {
@@ -1663,7 +1740,7 @@ function makeFx(w, real) {
     },
     climate: (k, phase, at) => {
       if (!real || !Object.hasOwn(CLIMATE, k)) return; const C = CLIMATE[k];
-      if (phase === 0) { feed(`Prévision : ${C.ico} ${C.name} dans 12 s`, '#7cc8ff'); Snd.forecast(); tipOnce('climate'); }
+      if (phase === 0) { feed(`Prévision : ${C.ico} ${C.name} dans ${fsec(12)} s`, '#7cc8ff'); Snd.forecast(); tipOnce('climate'); }
       else if (phase === 1) {
         banner(`${C.ico} ${C.name}`, C.desc); Snd.climate();
         if (k === 'aid') { const me = w.players[S.me]; const team = w.players.filter(p => p.alive).length ? null : null; if (me) feed('Aide internationale versée à l’équipe la plus touchée', '#3ef0b5'); }
@@ -1681,6 +1758,11 @@ function makeFx(w, real) {
       banner(`${p.name} tombe`, pi === S.me ? 'Ton territoire est passé sous 5 %' : `${p.nick} est éliminé`); feed(`${p.name} est éliminé`, p.color); Snd.elim();
       const me = w.players[S.me]; if (me && me.team === p.team && me.alive && pi !== S.me) feed(`Renforts : l'or de ${p.name} et +${REFUGE_INC} or/s pour toi`, me.color);
     },
+    stun: (pi, d) => {
+      const p = w.players[pi]; if (!p) return;
+      if (vis()) { R.float(p.cx, p.cy - 44, 'SONNÉ', '#ff9a3c'); R.rings.push({ x: p.cx, y: p.cy - 8, r0: 6, r1: 30, l: 0.5, ml: 0.5, c: '#ff9a3c' }); }
+      if (mine(pi)) { Snd.hurt(); alertMe(); feed(`Canon touché : sonné ${fsec(d / 10)} s · déplace-toi (${COARSE ? '◀ ▶' : 'A / D'}) pour ne pas rester une cible`, '#ff9a3c'); tipOnce('move'); }
+    },
     quit: pi => { if (real && w.players[pi]) feed(`${w.players[pi].nick} a quitté · l'IA prend le relais`, w.players[pi].color); },
     back: pi => { if (real && w.players[pi]) feed(`${w.players[pi].nick} est de retour`, w.players[pi].color); },
     end: () => { }
@@ -1695,9 +1777,10 @@ const TIPS = {
   hit: () => `Ton % de territoire, c’est à la fois tes PV et ton revenu. Sous 5 % tu es éliminé. Terraformer (${COARSE ? 'Défense' : 'X puis 3'}) reconstruit le sol.`,
   dca: () => `Une DCA (${COARSE ? 'Défense' : 'X puis 2'}) abat les tirs qui retombent près d’elle. Place-la à côté de tes mines.`,
   evo: () => `Évolution (${COARSE ? 'dernier onglet' : 'touche V'}) : Cadence et Calibre rendent chaque tir plus fort. Une recherche à la fois.`,
-  orb: () => `Frappe orbitale (arme 5) : ${COARSE ? 'touche' : 'clique sur'} la cible, le rayon tombe 1,5 s plus tard et traverse boucliers et DCA.`,
+  orb: () => `Frappe orbitale (arme 5) : ${COARSE ? 'touche' : 'clique sur'} la cible, le rayon tombe ${fsec(STRIKE_T)} s plus tard et traverse boucliers et DCA.`,
   wind: () => 'Le vent souffle plus fort en altitude : un tir en cloche dérive bien plus qu’un tir tendu. Le fanion de ton canon montre le vent au sol, le bandeau annonce le prochain front.',
   climate: () => 'Événement mondial annoncé : regarde sous l’horloge. Chaque événement change les règles quelques dizaines de secondes (mer, vent, économie, défenses).',
+  move: () => `Ton canon se déplace (${COARSE ? '◀ ▶' : 'A / D'}) en consommant de l’essence : change de position pour esquiver, gagner les hauteurs ou te replier chez un allié. Plein : ${COARSE ? 'Défense › Essence' : 'touche R'}. Les raffineries en produisent.`,
   sd: () => 'Mort subite : la mer monte jusqu’à tout engloutir. Les munitions coûtent moitié moins, frappe fort.'
 };
 let tipsSeen = new Set(String(store.get('bl-tips', '')).split(',').filter(Boolean)), tipT = 0;
@@ -1715,6 +1798,7 @@ function tipsTick(w, p) {
   if (w.t > 20 && p.gold >= ITEM.mine.cost && !p.bld.some(b => b.type === 'mine')) tipOnce('mine');
   if (w.t > 75 && !p.bld.some(b => b.type === 'dca')) tipOnce('dca');
   if (w.t > 150) tipOnce('evo');
+  if (w.t > 60) tipOnce('move');
   if (w.t > ORBITAL_T + 3) tipOnce('orb');
   if (w.t > SD_START + 4) tipOnce('sd');
   if (w.t > 40 && Math.abs(w.wind) > 25) tipOnce('wind');
@@ -1722,7 +1806,7 @@ function tipsTick(w, p) {
 
 // ---------- HUD ----------
 let hudRefs = [];
-const TAB_ITEMS = [['w0', 'w1', 'w2', 'w3', 'w4'], ['shield', 'dca', 'terra', 'wall'], ['mine', 'refin', 'bank'], ['u:cad', 'u:cal', 'u:vit', 'u:arm']];
+const TAB_ITEMS = [['w0', 'w1', 'w2', 'w3', 'w4'], ['shield', 'dca', 'terra', 'wall', 'fuel'], ['mine', 'refin', 'bank'], ['u:cad', 'u:cal', 'u:vit', 'u:arm']];
 // icônes (SVG statiques, couleur héritée du texte)
 const SV = d => `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const ICONS = {
@@ -1734,6 +1818,7 @@ const ICONS = {
   shield: SV('<path d="M3 17a9 9 0 0 1 18 0"/><path d="M2 17h20"/>'),
   dca: SV('<path d="M6 20a6 6 0 0 1 12 0"/><path d="M12 14 17 6"/><path d="M15 3l4 2"/>'),
   terra: SV('<path d="M2 18c3-5 6-5 9-2s6 3 11-2"/><path d="M12 4v8M9 9l3 3 3-3"/>'),
+  fuel: SV('<path d="M5 21V6l3-3h7v18z"/><path d="M5 21h10"/><path d="M15 8h2l2 2v8a1.5 1.5 0 0 1-3 0v-4h-1"/><rect x="7.5" y="8" width="5" height="4"/>'),
   wall: SV('<rect x="8" y="5" width="8" height="15"/><path d="M8 10h8M8 15h8M12 5v5M12 15v5"/>'),
   mine: SV('<path d="M4 20h16"/><rect x="7" y="14" width="10" height="6"/><path d="M8 14l4-8 4 8"/><circle cx="12" cy="6" r="1.5"/>'),
   refin: SV('<rect x="5" y="10" width="10" height="10"/><rect x="15" y="5" width="4" height="15"/><path d="M17 3v1"/>'),
@@ -1798,41 +1883,45 @@ function updateHud(force) {
   else { setText(ph, 'Mort subite · la mer monte'); ph.className = 'ph sd'; }
   const arr = v => v < -0.5 ? (Math.abs(v) > 45 ? '◂◂' : '◂') : v > 0.5 ? (Math.abs(v) > 45 ? '▸▸' : '▸') : '·';
   setText($('#wd'), `VENT ${arr(w.wind)} ${KMH(w.wind * 0.5)} km/h au sol · ${KMH(w.wind * 1.4)} en altitude`);
-  setText($('#wf'), w.windNextAt > w.t ? `prochain front : ${arr(w.windNext)} ${KMH(w.windNext * 1.4)} km/h en altitude dans ${Math.ceil(w.windNextAt - w.t)} s` : '');
+  setText($('#wf'), w.windNextAt > w.t ? `prochain front : ${arr(w.windNext)} ${KMH(w.windNext * 1.4)} km/h en altitude dans ${Math.ceil((w.windNextAt - w.t) / SPEED)} s` : '');
   const ce = $('#clim');
-  if (w.cl.cur) { const C = CLIMATE[w.cl.cur.k]; ce.hidden = false; ce.className = 'on'; setText(ce, `${C.ico} ${C.name} · ${Math.max(0, Math.ceil(w.cl.cur.t1 - w.t))} s`); ce.title = C.desc; }
-  else if (w.cl.next) { const C = CLIMATE[w.cl.next.k]; ce.hidden = false; ce.className = 'next'; setText(ce, `Prévision : ${C.ico} ${C.name} dans ${Math.max(0, Math.ceil(w.cl.next.at - w.t))} s`); ce.title = C.desc; }
+  if (w.cl.cur) { const C = CLIMATE[w.cl.cur.k]; ce.hidden = false; ce.className = 'on'; setText(ce, `${C.ico} ${C.name} · ${Math.max(0, Math.ceil((w.cl.cur.t1 - w.t) / SPEED))} s`); ce.title = C.desc; }
+  else if (w.cl.next) { const C = CLIMATE[w.cl.next.k]; ce.hidden = false; ce.className = 'next'; setText(ce, `Prévision : ${C.ico} ${C.name} dans ${Math.max(0, Math.ceil((w.cl.next.at - w.t) / SPEED))} s`); ce.title = C.desc; }
   else ce.hidden = true;
   const p = w.players[S.me];
   if (!p) { setText($('#gold'), '—'); setText($('#inc'), 'spectateur'); }
   else {
     S.goldShown = S.goldShown === undefined ? p.gold : S.goldShown + (p.gold - S.goldShown) * 0.35; if (Math.abs(S.goldShown - p.gold) < 1) S.goldShown = p.gold;
-    setText($('#gold'), String(Math.floor(S.goldShown))); setText($('#inc'), `+${p.inc.toFixed(1)} / s`);
+    setText($('#gold'), String(Math.floor(S.goldShown))); setText($('#inc'), `+${(p.inc * SPEED).toFixed(1)} / s`);
+    const fu = $('#fuel'); setText(fu, `⛽ ${Math.floor(p.fuel)} L`); fu.classList.toggle('low', p.fuel < 15);
     const pct = v => Math.floor(clamp(v, 0, 0.99) * 100) + ' %';
     document.querySelectorAll('#items .it').forEach(b => {
       const id = b.dataset.id; let cost = 0, lock = false, bar = 0, msg = null, sel = false, line = '';
       if (/^w\d$/.test(id)) {
         const i = +id[1]; cost = w.wcost(i); sel = i === S.weapon;
-        line = `◆${cost} · ${w.weaponCd(p, i).toFixed(1)} s` + (w.sd() ? ' · −50 %' : '');
+        line = `◆${cost} · ${(w.weaponCd(p, i) / SPEED).toFixed(1)} s` + (w.sd() ? ' · −50 %' : '');
         if (i === 4 && w.t < ORBITAL_T) { lock = true; msg = 'Dispo dans ' + fmt(ORBITAL_T - w.t); }
         else if (w.isCl('truce')) { lock = true; msg = 'Cessez-le-feu'; }
-        else if (w.t < p.cd && sel) msg = `Recharge ${(p.cd - w.t).toFixed(1)} s`;
+        else if (w.t < p.cd && sel) msg = (w.t - p.stunT < 0.5 + STUN_T ? 'Sonné · ' : 'Recharge ') + `${((p.cd - w.t) / SPEED).toFixed(1)} s`;
         else msg = ['Polyvalent', 'Anti-défense · ×5', 'Anti-bâtiment', 'Zone · bouclier ×2', 'Ignore les défenses'][i];
         bar = sel && w.t < p.cd ? clamp((p.cd - w.t) / (p.cdDur || 1), 0, 1) : 0;
       } else if (id.startsWith('u:')) {
         const k = id.slice(2), l = p.upg[k], maxed = l >= 3; cost = maxed ? 0 : UPG[k].cost[l];
-        line = ('●'.repeat(l) + '○'.repeat(3 - l)) + (maxed ? ' · max' : ` · ◆${cost} · ${UPG[k].time[l]} s`);
+        line = ('●'.repeat(l) + '○'.repeat(3 - l)) + (maxed ? ' · max' : ` · ◆${cost} · ${fsec(UPG[k].time[l])} s`);
         if (p.res && p.res.k === k) { msg = 'Recherche ' + pct(w.resProg(p)); bar = w.resProg(p); sel = true; }
         else if (p.res) { msg = 'Labo occupé'; lock = true; }
         else if (maxed) { msg = 'Niveau maximum'; lock = true; }
         else msg = UPG[k].desc;
       } else {
-        const it = ITEM[id]; cost = it.cost; line = `◆${cost} · ${it.bt} s`;
-        const job = p.jobs.find(j => j.k === id), site = it.bld && w.building(p), r = w.why(p, id);
+        const it = ITEM[id]; cost = w.icost(id); line = it.instant ? `◆${cost} · immédiat` : `◆${cost} · ${fsec(it.bt)} s`;
+        const job = p.jobs.find(j => j.k === id), queue = it.bld ? p.bld.filter(b => b.prog < 1) : [], mineQ = queue.find(b => b.type === id), r = w.why(p, id);
         if (job) { msg = 'En cours ' + pct(w.jobProg(job)); bar = w.jobProg(job); sel = true; }
-        else if (site) { msg = (site.type === id ? 'Chantier ' : 'Chantier occupé ') + pct(site.prog); if (site.type === id) { bar = site.prog; sel = true; } else lock = true; }
-        else if (id === 'shield' && w.t < p.shU && p.shHp > 0) { msg = `Actif · ${Math.ceil(p.shU - w.t)} s · ${p.shHp} impacts`; lock = true; }
-        else if (r === 'en recharge') { msg = 'Recharge ' + Math.ceil((p.icd[id] || 0) - w.t) + ' s'; lock = true; }
+        else if (mineQ && mineQ === queue[0]) { msg = 'Chantier ' + pct(mineQ.prog); bar = mineQ.prog; sel = true; }
+        else if (mineQ) { msg = 'En file d’attente'; sel = true; }
+        else if (queue.length >= 2) { msg = 'File de chantier pleine'; lock = true; }
+        else if (id === 'shield' && w.t < p.shU && p.shHp > 0) { msg = `Actif · ${Math.ceil((p.shU - w.t) / SPEED)} s · ${p.shHp} impacts`; lock = true; }
+        else if (r === 'en recharge') { msg = 'Recharge ' + Math.ceil(((p.icd[id] || 0) - w.t) / SPEED) + ' s'; lock = true; }
+        else if (id === 'fuel') { msg = `Réservoir ${Math.floor(p.fuel)}/${FUEL_MAX} L` + (w.isCl('oil') ? ' · prix ×2' : ''); bar = p.fuel / FUEL_MAX; if (r === 'réservoir plein') lock = true; }
         else if (r === 'maximum atteint') { msg = `Maximum ${it.max}/${it.max}`; lock = true; }
         else msg = it.desc + (it.max ? ` · ${p.bld.filter(x => x.type === id).length}/${it.max}` : '');
         if (S.place === id) { sel = true; msg = 'Clique sur ton territoire'; }
@@ -1915,7 +2004,7 @@ const Ctl = {
     const wd = WEAP[S.weapon];
     if (S.weapon === 4 && w.t < ORBITAL_T) { Snd.deny(); feed('Frappe orbitale verrouillée jusqu’à ' + fmt(ORBITAL_T)); return; }
     if (w.isCl('truce')) { Snd.deny(); feed('Cessez-le-feu : tirs suspendus'); return; }
-    if (w.t < p.cd) { Snd.deny(); feed(`Rechargement · ${(p.cd - w.t).toFixed(1)} s`); return; }
+    if (w.t < p.cd) { Snd.deny(); feed(`Rechargement · ${((p.cd - w.t) / SPEED).toFixed(1)} s`); return; }
     const wc = w.wcost(S.weapon);
     if (p.gold < wc) { Snd.deny(); feed(`Pas assez d'or pour ${wd.name} (◆ ${wc})`); return; }
     const tx = Math.round(clamp(S.aimX ?? p.mid, 0, W - 1));
@@ -1944,8 +2033,9 @@ const Ctl = {
   send(k, x) {
     const w = S.world, p = this.me(), it = ITEM[k];
     if (S.role === 'client') {
-      sendCmd(x === undefined ? ['b', k] : ['b', k, x]); p.gold -= it.cost;
-      if (it.bld) p.bld.push({ type: k, x, y: w.surf(x), prog: 0, cdT: 0, pred: 1 }); else p.jobs.push({ k, x: x ?? p.mid, prog: 0 });
+      sendCmd(x === undefined ? ['b', k] : ['b', k, x]); p.gold -= w.icost(k);
+      if (it.instant) p.fuel = Math.min(FUEL_MAX, p.fuel + FUEL_BUY);
+      else if (it.bld) p.bld.push({ type: k, x, y: w.surf(x), prog: 0, cdT: 0, pred: 1 }); else p.jobs.push({ k, x: x ?? p.mid, prog: 0 });
     } else if (!w.buy(S.me, k, x)) Snd.deny();
   },
   upg(k) {
@@ -2012,6 +2102,7 @@ window.addEventListener('keydown', e => {
   else if (k === 'v') setTab(3);
   else if (k === 'e') toggleCam();
   else if (k === 'f') Ctl.item('shield');
+  else if (k === 'r') Ctl.item('fuel');
   else if (k === 'm') toggleMute();
   else if (k === 'h' || k === '?') toggleHelp();
   else if (k === ' ') { e.preventDefault(); if (!S.place) Ctl.fire(); }
@@ -2032,7 +2123,10 @@ window.addEventListener('blur', () => { S.keys = {}; const p = Ctl.me(); if (p) 
 function localMove() {
   const w = S.world, p = Ctl.me(); if (!p || !p.alive) return;
   const dir = (S.keys.r || S.keys.tr ? 1 : 0) - (S.keys.l || S.keys.tl ? 1 : 0);
-  if (dir) { p.mx = dir > 0 ? p.x1 : p.x0; Net.dirty = true; }
+  if (dir) {
+    p.mx = dir > 0 ? (p.rx1 ?? p.x1) : (p.rx0 ?? p.x0); Net.dirty = true;
+    if (p.fuel <= 0.05 && performance.now() - (S.fuelMsg || 0) > 2500) { S.fuelMsg = performance.now(); Snd.deny(); feed(`Plus d'essence · ${COARSE ? 'Défense › Essence' : 'touche R'} pour faire le plein (◆${w.icost('fuel')})`, '#ff9a3c'); }
+  }
   if (!w.host) w.moveCannon(p); // prédiction locale
 }
 // boutons tactiles et outils
@@ -2280,7 +2374,7 @@ function hostNet(nr, peers, now) {
       Net.peerSeen[p.i] = 0;
       const pr = pe.presence || {};
       if (pr.sid !== Net.sidOf[p.i]) { Net.sidOf[p.i] = pr.sid; Net.lastSeq[p.i] = maxSeq(pr.cmds); } // page rechargée : on repart de ses commandes actuelles
-      if (typeof pr.mx === 'number' && isFinite(pr.mx)) p.mx = clamp(pr.mx, p.x0, p.x1);
+      if (typeof pr.mx === 'number' && isFinite(pr.mx)) p.mx = clamp(pr.mx, p.rx0 ?? p.x0, p.rx1 ?? p.x1);
       if (typeof pr.aim === 'number' && isFinite(pr.aim)) p.ang = clamp(pr.aim, -10, 190);
       const last = Net.lastSeq[p.i] || 0; let mx = last, n = 0;
       for (const c of (Array.isArray(pr.cmds) ? pr.cmds.slice(-10) : [])) {
@@ -2366,8 +2460,8 @@ function step() {
 }
 function loop() {
   const now = performance.now(), hosting = S.world && S.world.host;
-  acc += Math.min(hosting ? 3 : 0.25, (now - last) / 1000); last = now;
-  if (S.attract && S.attract.warm > 0 && !S.world) { const n = Math.min(S.attract.warm, 90); for (let i = 0; i < n; i++) S.attract.tickHost(); S.attract.warm -= n; }
+  acc += Math.min(hosting ? 3 : 0.25, (now - last) / 1000) * SPEED; last = now;
+  if (S.attract && S.attract.warm > 0 && !S.world) { const n = Math.min(S.attract.warm, 135); for (let i = 0; i < n; i++) S.attract.tickHost(); S.attract.warm -= n; }
   let n = 0; const cap = hosting ? 200 : 16;
   while (acc >= DT && n < cap) { acc -= DT; n++; step(); }
   if (n >= cap) acc = 0;
@@ -2385,9 +2479,9 @@ function frame(now) {
   if (w && !(w.warm > 0)) {
     let preview = null, ghost = null, reticle = null, reticleOk = false;
     const p = S.world && S.world.players[S.me];
-    const aiming = p && p.alive && !S.world.over && S.screen === 'game' && !S.place && (!COARSE || S.press);
-    if (aiming && S.weapon === 4) { reticle = clamp(S.aimX ?? p.mid, 0, W - 1); reticleOk = S.world.t >= ORBITAL_T; }
-    else if (aiming) { const o = S.world.muzzle(p, S.aim.ang, S.aim.pw); preview = { x: o.x, y: o.y, vx: o.vx, vy: o.vy, wind: S.world.wind, dr: S.world.isCl('ash') ? ASH_DRAG : 0, w: 0, age: 0 }; }
+    const aiming = p && p.alive && !S.world.over && S.screen === 'game' && (!COARSE || S.press || S.place);
+    if (aiming && S.weapon === 4 && !S.place) { reticle = clamp(S.aimX ?? p.mid, 0, W - 1); reticleOk = S.world.t >= ORBITAL_T; }
+    else if (aiming) { const o = S.world.muzzle(p, S.aim.ang, S.aim.pw); preview = { x: o.x, y: o.y, vx: o.vx, vy: o.vy, wind: S.world.wind, dr: S.world.isCl('ash') ? ASH_DRAG : 0, w: 0, age: 0, dim: !!S.place }; }
     // sifflement d'une méga-bombe qui retombe sur moi
     if (S.world) for (const q of S.world.proj) if (q.w === 3 && !q.wh && q.vy > 0 && q.land && myZone(S.world, q.land.x) && q.y > q.land.y - 380) { q.wh = 1; Snd.whistle(); }
     if (p && S.place && S.placeX !== undefined) { const reason = S.world.why(p, S.place, S.placeX); ghost = { k: S.place, x: S.placeX, ok: !reason, reason, p }; }
