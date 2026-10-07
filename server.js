@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { WebSocketServer } = require('ws');
+const borderlineRelay = require('./borderline/relay.js');
 
 const PORT = process.env.PORT || 3000;
 
@@ -24,6 +25,7 @@ const MIME={'.html':'text/html','.css':'text/css','.js':'application/javascript'
 
 const server = http.createServer((req, res) => {
   let url = req.url.split('?')[0];
+  if(url === '/borderline') { res.writeHead(301, {'Location':'/borderline/'}); res.end(); return; }
   if(url.endsWith('/')) url += 'index.html';
   const safePath = path.normalize(url).replace(/^(\.\.[\/\\])+/, '');
   let filePath = path.join(__dirname, safePath);
@@ -47,6 +49,8 @@ server.on('upgrade', (req, socket, head) => {
   const url = req.url.split('?')[0];
   if(url === '/battle/ws') {
     wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws, req));
+  } else if(url === borderlineRelay.path) {
+    borderlineRelay.handleUpgrade(req, socket, head);
   } else { socket.destroy(); }
 });
 
