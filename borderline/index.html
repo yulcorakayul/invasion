@@ -347,9 +347,9 @@ input[type=text]:focus{border-color:var(--alpha)}
 </div>
 <script>
 // ================= BORDERLINE · CORE (simulation déterministe) =================
-const W = 3600, H = 800, GRAV = 520, DT = 1 / 60;
-const SEA = 690, SD_START = 660, SD_END = 840, WATER_MIN = 250, T_MAX = 900, VMAX = 1420;
-const REGIONS = [[80, 1700], [1900, 3520]];
+const W = 4000, H = 800, GRAV = 520, DT = 1 / 60;
+const SEA = 690, SD_START = 660, SD_END = 840, WATER_MIN = 250, T_MAX = 900, VMAX = 1500;
+const REGIONS = [[80, 1640], [2360, 3920]]; // détroit de 720 m entre les deux camps
 const OUT_X = 1600; // le ciel continue au-delà des bords : un tir ne sort qu'à cette distance
 const COLORS = [['#46d9ff', '#3ef0b5', '#7d93ff'], ['#ff4f8b', '#ff9a3c', '#c77dff']];
 // vitesse de jeu : la simulation avance 1,5 s par seconde réelle ; tout ce qui est affiché est converti en secondes réelles
@@ -2505,7 +2505,7 @@ updateTools();
 function camFocus() {
   if (S.camMode !== 'camp' || !S.world) return null;
   const p = S.world.players[S.me]; const t = p ? p.team : 0, [a, b] = REGIONS[t];
-  return t === 0 ? [a - 80, b + 500] : [a - 500, b + 80];
+  return t === 0 ? [a - 80, b + 900] : [a - 900, b + 80];
 }
 
 // ---------- SALON ----------
