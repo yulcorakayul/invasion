@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confidentialité — BLOB DUEL</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07081f">
+<link rel="icon" type="image/png" href="img/icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --nuit: #07081f;
+  --nuit-2: #0f1238;
+  --trait: #262a66;
+  --texte: #e4e7ff;
+  --doux: #9da3d6;
+  --cyan: #26f2ff;
+  --magenta: #ff3dbe;
+  --jaune: #ffe640;
+  --skew: -12deg;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
+body {
+  margin: 0;
+  background: var(--nuit);
+  color: var(--texte);
+  font-family: "Archivo", system-ui, sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  font-variation-settings: "wdth" 100;
+}
+img { max-width: 100%; display: block; }
+a { color: var(--cyan); }
+a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--jaune); outline-offset: 3px; }
+
+.colonne { width: min(980px, 100% - 40px); margin-inline: auto; }
+
+/* --- Barre du haut --- */
+.barre { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; font-size: .95rem; color: var(--doux); }
+.barre a { color: var(--doux); text-decoration: none; }
+.barre a:hover { color: var(--texte); }
+
+/* --- Héros : le titre comme dans le jeu, puis le bandeau cyan / magenta --- */
+.heros { padding: 40px 0 0; }
+.titre {
+  margin: 0;
+  font-weight: 900;
+  font-style: italic;
+  font-variation-settings: "wdth" 125;
+  font-size: clamp(3.6rem, 13vw, 8.6rem);
+  line-height: .86;
+  letter-spacing: -.02em;
+  text-shadow: 6px 7px 0 rgba(0, 0, 0, .45);
+}
+.bandeau {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 26px 0 0;
+  transform: skewX(var(--skew));
+  font-weight: 800;
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.6vw, 1.6rem);
+  color: var(--nuit);
+}
+.bandeau > span { padding: 12px 26px; }
+.bandeau > span:first-child { background: var(--cyan); }
+.bandeau > span:last-child { background: var(--magenta); text-align: right; }
+.bandeau > span > * { display: inline-block; transform: skewX(calc(var(--skew) * -1)); }
+
+.intro {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 40px;
+  align-items: start;
+  margin-top: 40px;
+}
+.intro p { margin: 0 0 22px; font-size: 1.2rem; color: var(--texte); max-width: 34em; }
+.telecharger {
+  display: inline-block;
+  padding: 18px 34px;
+  background: var(--jaune);
+  color: var(--nuit);
+  font-weight: 900;
+  font-style: italic;
+  font-variation-settings: "wdth" 115;
+  font-size: 1.35rem;
+  text-decoration: none;
+  transform: skewX(var(--skew));
+  box-shadow: 8px 8px 0 #9c8a00;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.telecharger > span { display: inline-block; transform: skewX(calc(var(--skew) * -1)); }
+.telecharger:hover { transform: skewX(var(--skew)) translate(-2px, -2px); box-shadow: 10px 10px 0 #9c8a00; }
+.telecharger:active { transform: skewX(var(--skew)) translate(4px, 4px); box-shadow: 4px 4px 0 #9c8a00; }
+.fichier { margin-top: 26px; font-size: .95rem; color: var(--doux); }
+
+.capture { margin: 48px 0 0; border: 2px solid var(--trait); }
+.capture img { width: 100%; height: auto; }
+
+/* --- Sections --- */
+section { padding: 72px 0 0; }
+h2 {
+  margin: 0 0 22px;
+  font-weight: 900;
+  font-style: italic;
+  font-variation-settings: "wdth" 118;
+  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
+  line-height: 1.05;
+}
+h3 { margin: 0 0 6px; font-weight: 800; font-size: 1.15rem; }
+p { max-width: 62ch; }
+.doux { color: var(--doux); }
+
+/* Étapes réellement séquentielles : numérotées */
+ol.etapes { list-style: none; margin: 0; padding: 0; counter-reset: e; display: grid; gap: 18px; }
+ol.etapes > li { counter-increment: e; display: grid; grid-template-columns: 54px 1fr; gap: 16px; align-items: start; }
+ol.etapes > li::before {
+  content: counter(e);
+  display: grid; place-items: center;
+  width: 46px; height: 46px;
+  background: var(--nuit-2);
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  font-weight: 900; font-style: italic; font-size: 1.3rem;
+  transform: skewX(var(--skew));
+}
+ol.etapes p { margin: 0; }
+
+.alerte {
+  margin: 26px 0 0;
+  padding: 18px 22px;
+  border-left: 6px solid var(--jaune);
+  background: #17183a;
+  max-width: 62ch;
+}
+.alerte strong { color: var(--jaune); }
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 1px 7px;
+  border: 1px solid var(--trait);
+  border-bottom-width: 3px;
+  background: var(--nuit-2);
+  font-family: inherit;
+  font-size: .9em;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Deux situations côte à côte : même réseau / à distance */
+.cas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 30px; }
+.cas > div { padding-top: 14px; border-top: 3px solid var(--cyan); }
+.cas > div + div { border-top-color: var(--magenta); }
+.cas p { margin: 0 0 10px; }
+
+/* Règles */
+.regles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 40px; }
+.regles p { margin: 0; }
+
+/* Commandes */
+table { border-collapse: collapse; width: 100%; max-width: 760px; }
+th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--trait); vertical-align: top; }
+th { font-weight: 800; color: var(--doux); font-size: .95rem; }
+td:first-child { font-weight: 700; white-space: nowrap; }
+
+/* Cartes */
+.cartes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px 20px; }
+.cartes figure { margin: 0; }
+.cartes a { display: block; border: 2px solid var(--trait); }
+.cartes a:hover { border-color: var(--cyan); }
+.cartes figcaption { margin-top: 10px; }
+.cartes figcaption b { font-weight: 800; font-style: italic; font-size: 1.1rem; }
+.cartes figcaption span { display: block; color: var(--doux); font-size: .95rem; }
+
+/* FAQ */
+details { border-bottom: 1px solid var(--trait); padding: 4px 0; max-width: 760px; }
+summary { cursor: pointer; padding: 12px 0; font-weight: 700; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::before { content: "+"; display: inline-block; width: 1.4em; color: var(--magenta); font-weight: 900; }
+details[open] summary::before { content: "−"; }
+details p { margin: 0 0 14px 1.4em; color: var(--doux); }
+
+.avis { padding-bottom: 20px; }
+.avis .telecharger { background: var(--magenta); color: var(--nuit); box-shadow: 8px 8px 0 #8a1463; }
+.avis .telecharger:hover { box-shadow: 10px 10px 0 #8a1463; }
+
+footer { margin-top: 90px; padding: 26px 0 40px; border-top: 1px solid var(--trait); color: var(--doux); font-size: .9rem; }
+footer p { margin: 4px 0; max-width: none; }
+footer code { font-size: .8rem; word-break: break-all; }
+
+@media (max-width: 760px) {
+  .intro, .cas, .regles { grid-template-columns: 1fr; }
+  .cartes { grid-template-columns: 1fr 1fr; }
+  .bandeau > span { padding: 10px 14px; }
+}
+@media (max-width: 460px) {
+  .cartes { grid-template-columns: 1fr; }
+}
+.texte h2 { margin-top: 44px; font-size: 1.6rem; } .texte code { font-size: .9em; word-break: break-all; }</style>
+</head>
+<body>
+<div class="colonne">
+  <nav class="barre" aria-label="Site"><a href="./">← BLOB DUEL</a><a href="/">tdinvasion.com</a></nav>
+  <main class="texte">
+    <h1 class="titre" style="font-size:clamp(2.4rem,7vw,4.4rem)">Confidentialité</h1>
+    <p class="doux">Dernière mise à jour : 11 octobre 2026. S'applique au jeu BLOB DUEL (version de test 0.7.0) et à cette page.</p>
+
+    <h2>En bref</h2>
+    <p>BLOB DUEL ne crée aucun compte, n'affiche aucune publicité, n'envoie aucune statistique et ne contacte aucun serveur. Cette page de téléchargement n'utilise ni cookie ni outil de mesure d'audience.</p>
+
+    <h2>Sur ton ordinateur</h2>
+    <p>Le jeu enregistre un seul fichier, <code>settings.json</code>, dans <code>%APPDATA%\Godot\app_userdata\BLOB DUEL\</code>. Il contient tes réglages (volumes, plein écran, secousses, glow, niveau de l'IA, dernière carte, port réseau) et, si l'option est activée, le dernier code d'invitation saisi. Ce fichier ne quitte jamais ton ordinateur. Le jeu n'écrit pas de journal.</p>
+    <p>Pour tout effacer : <em>Paramètres → Données et confidentialité → Effacer mes données locales</em>, ou supprime le dossier ci-dessus. Tu peux aussi désactiver <em>Mémoriser le dernier code saisi</em>.</p>
+
+    <h2>En ligne</h2>
+    <p>Les deux ordinateurs se connectent directement l'un à l'autre. Ton adresse IP est donc connue de ton adversaire, comme pour toute connexion directe ; le code d'invitation de l'hôte contient son adresse IP. Pendant la partie, seules des informations de jeu circulent (déplacements, visée, tirs, score) : aucun nom, aucun identifiant d'appareil. Ces données ne passent par aucun serveur et ne sont conservées ni par le jeu ni par l'éditeur.</p>
+    <p>Partage ton code uniquement avec la personne avec qui tu veux jouer. Un réseau privé comme Tailscale évite d'exposer ton adresse IP publique.</p>
+
+    <h2>Hébergement de cette page</h2>
+    <p>Cette page et le fichier du jeu sont servis par l'hébergeur du site tdinvasion.com. Comme tout serveur web, il peut voir l'adresse IP des visiteurs au moment du téléchargement ; le site n'en fait aucun usage.</p>
+
+    <h2>Tes droits</h2>
+    <p>Aucune donnée personnelle n'est traitée pour le compte de l'éditeur. Pour toute question, écris sur le <a href="https://discord.gg/mPKWRdmxbw" rel="noopener">Discord</a>. Tu peux aussi contacter la CNIL (<a href="https://www.cnil.fr" rel="noopener">cnil.fr</a>).</p>
+
+    <h2>Changements</h2>
+    <p>Si une future version ajoute une collecte de données (classement en ligne, comptes…), cette page sera mise à jour avant.</p>
+  </main>
+  <footer><p><a href="./">Retour au téléchargement</a></p></footer>
+</div>
+</body>
+</html>
