@@ -20,35 +20,52 @@ const dist=(x1,y1,x2,y2)=>Math.sqrt((x2-x1)**2+(y2-y1)**2);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rndCol=()=>`hsl(${Math.random()*360|0},70%,55%)`;
 
-const MIME={'.html':'text/html','.css':'text/css','.js':'application/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.gif':'image/gif','.svg':'image/svg+xml','.ico':'image/x-icon','.xml':'application/xml','.txt':'text/plain'};
+// Service HTTP durci (liste blanche, en-têtes, limites) : voir security.js
+const security = require('./security');
+const { createBlobDuel } = require('./blobduel-download');
+const server = http.createServer(security.createHandler({ routes: createBlobDuel() }));
+security.hardenServer(server);
 
-const server = http.createServer((req, res) => {
-  let url = req.url.split('?')[0];
-  if(url.endsWith('/')) url += 'index.html';
-  const safePath = path.normalize(url).replace(/^(\.\.[\/\\])+/, '');
-  let filePath = path.join(__dirname, safePath);
-  fs.readFile(filePath, (err, data) => {
-    if(err) {
-      fs.readFile(path.join(__dirname, 'index.html'), (err2, data2) => {
-        if(err2) { res.writeHead(404); res.end('Not found'); return; }
-        res.writeHead(200, {'Content-Type':'text/html'});
-        res.end(data2);
-      });
-      return;
-    }
-    const ext = path.extname(filePath).toLowerCase();
-    res.writeHead(200, {'Content-Type': MIME[ext] || 'application/octet-stream'});
-    res.end(data);
+// --- WebSocket du mode battle : limites contre les abus ---
+const WS_MAX_TOTAL = Number(process.env.WS_MAX_TOTAL) || 300;
+const WS_MAX_PER_IP = Number(process.env.WS_MAX_PER_IP) || 6;
+const WS_MSG_PER_SEC = 60;
+const wsPerIp = new Map();
+function originAllowed(origin) {
+  if (!origin) return true; // clients hors navigateur : soumis aux mêmes limites
+  try {
+    const h = new URL(origin).hostname;
+    const extra = (process.env.WS_EXTRA_ORIGINS || '').split(',').map(x => x.trim()).filter(Boolean);
+    return h === 'tdinvasion.com' || h.endsWith('.tdinvasion.com') ||
+      h === 'localhost' || h === '127.0.0.1' || extra.includes(h) ||
+      h === 'crazygames.com' || h.endsWith('.crazygames.com') || h.endsWith('.crazygames.fr');
+  } catch (e) { return false; }
+}
+const wss = new WebSocketServer({ noServer: true, maxPayload: 4096, perMessageDeflate: false });
+server.on('upgrade', (req, socket, head) => {
+  socket.on('error', () => {});
+  const url = String(req.url || '').split('?')[0];
+  if (url !== '/battle/ws' || !originAllowed(req.headers.origin)) { socket.destroy(); return; }
+  const token = security.ipToken(req);
+  const n = wsPerIp.get(token) || 0;
+  if (clients.size >= WS_MAX_TOTAL || n >= WS_MAX_PER_IP) { socket.destroy(); return; }
+  wss.handleUpgrade(req, socket, head, ws => {
+    wsPerIp.set(token, (wsPerIp.get(token) || 0) + 1);
+    ws.once('close', () => {
+      const m = (wsPerIp.get(token) || 1) - 1;
+      if (m <= 0) wsPerIp.delete(token); else wsPerIp.set(token, m);
+    });
+    wss.emit('connection', ws, req);
   });
 });
-
-const wss = new WebSocketServer({ noServer: true });
-server.on('upgrade', (req, socket, head) => {
-  const url = req.url.split('?')[0];
-  if(url === '/battle/ws') {
-    wss.handleUpgrade(req, socket, head, ws => wss.emit('connection', ws, req));
-  } else { socket.destroy(); }
-});
+/** Nom affiché : texte simple, sans caractères de contrôle, 20 caractères max. */
+function cleanName(v) {
+  const s = (typeof v === 'string' ? v : '').replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, '').trim().slice(0, 20);
+  return s || 'Player';
+}
+function cleanSkin(v) {
+  return (typeof v === 'string' && /^[A-Za-z0-9_-]{1,30}$/.test(v)) ? v : 'default';
+}
 
 let game = null;
 const clients = new Map();
@@ -263,19 +280,26 @@ wss.on('connection', (ws) => {
   clients.set(ws, client);
   if(game.state==='LOBBY') assignSlot(ws,client);
   else safeSend(ws, JSON.stringify({t:'wait'}));
-  ws.on('message', (raw) => {
+  let msgWindow = Date.now(), msgCount = 0;
+  ws.on('message', (raw, isBinary) => {
+    // Limite de débit : au-delà de 60 messages/s, la connexion est fermée.
+    const now = Date.now();
+    if (now - msgWindow >= 1000) { msgWindow = now; msgCount = 0; }
+    if (++msgCount > WS_MSG_PER_SEC) { ws.close(1008, 'rate'); return; }
+    if (isBinary) return;
     try {
       const msg=JSON.parse(raw.toString());
+      if(!msg||typeof msg!=='object') return;
       if(msg.t==='join'){
-        client.name=(msg.name||'Player').slice(0,20);
-        client.skin=(msg.skin||'default').slice(0,30);
+        client.name=cleanName(msg.name);
+        client.skin=cleanSkin(msg.skin);
         if(client.id>=0&&game.players[client.id]){game.players[client.id].name=client.name;game.players[client.id].skinId=client.skin;}
         else if(game.state==='LOBBY') assignSlot(ws,client);
       } else if(msg.t==='input'){
-        client.input.ang=typeof msg.ang==='number'?msg.ang:0;
-        client.input.dist=typeof msg.dist==='number'?clamp(msg.dist,0,1):0;
-        client.input.shooting=!!msg.shooting;
-        client.input.boost=!!msg.boost;
+        client.input.ang=Number.isFinite(msg.ang)?msg.ang:0;
+        client.input.dist=Number.isFinite(msg.dist)?clamp(msg.dist,0,1):0;
+        client.input.shooting=msg.shooting===true;
+        client.input.boost=msg.boost===true;
       }
     } catch(e){}
   });

@@ -17,203 +17,7 @@
 <meta name="theme-color" content="#07081f">
 <link rel="icon" type="image/png" href="img/icone.png">
 <link rel="apple-touch-icon" href="img/icone-180.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&display=swap" rel="stylesheet">
-<style>
-:root {
-  --nuit: #07081f;
-  --nuit-2: #0f1238;
-  --trait: #262a66;
-  --texte: #e4e7ff;
-  --doux: #9da3d6;
-  --cyan: #26f2ff;
-  --magenta: #ff3dbe;
-  --jaune: #ffe640;
-  --skew: -12deg;
-}
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation: none !important; transition: none !important; } }
-body {
-  margin: 0;
-  background: var(--nuit);
-  color: var(--texte);
-  font-family: "Archivo", system-ui, sans-serif;
-  font-size: 1.0625rem;
-  line-height: 1.6;
-  font-variation-settings: "wdth" 100;
-}
-img { max-width: 100%; display: block; }
-a { color: var(--cyan); }
-a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--jaune); outline-offset: 3px; }
-
-.colonne { width: min(980px, 100% - 40px); margin-inline: auto; }
-
-/* --- Barre du haut --- */
-.barre { display: flex; justify-content: space-between; align-items: center; padding: 18px 0; font-size: .95rem; color: var(--doux); }
-.barre a { color: var(--doux); text-decoration: none; }
-.barre a:hover { color: var(--texte); }
-
-/* --- Héros : le titre comme dans le jeu, puis le bandeau cyan / magenta --- */
-.heros { padding: 40px 0 0; }
-.titre {
-  margin: 0;
-  font-weight: 900;
-  font-style: italic;
-  font-variation-settings: "wdth" 125;
-  font-size: clamp(3.6rem, 13vw, 8.6rem);
-  line-height: .86;
-  letter-spacing: -.02em;
-  text-shadow: 6px 7px 0 rgba(0, 0, 0, .45);
-}
-.bandeau {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin: 26px 0 0;
-  transform: skewX(var(--skew));
-  font-weight: 800;
-  font-style: italic;
-  font-size: clamp(1.05rem, 2.6vw, 1.6rem);
-  color: var(--nuit);
-}
-.bandeau > span { padding: 12px 26px; }
-.bandeau > span:first-child { background: var(--cyan); }
-.bandeau > span:last-child { background: var(--magenta); text-align: right; }
-.bandeau > span > * { display: inline-block; transform: skewX(calc(var(--skew) * -1)); }
-
-.intro {
-  display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  gap: 40px;
-  align-items: start;
-  margin-top: 40px;
-}
-.intro p { margin: 0 0 22px; font-size: 1.2rem; color: var(--texte); max-width: 34em; }
-.intro p.doux { color: var(--doux); }
-.telecharger {
-  display: inline-block;
-  padding: 18px 34px;
-  background: var(--jaune);
-  color: var(--nuit);
-  font-weight: 900;
-  font-style: italic;
-  font-variation-settings: "wdth" 115;
-  font-size: 1.35rem;
-  text-decoration: none;
-  transform: skewX(var(--skew));
-  box-shadow: 8px 8px 0 #9c8a00;
-  transition: transform .12s ease, box-shadow .12s ease;
-}
-.telecharger > span { display: inline-block; transform: skewX(calc(var(--skew) * -1)); }
-.telecharger:hover { transform: skewX(var(--skew)) translate(-2px, -2px); box-shadow: 10px 10px 0 #9c8a00; }
-.telecharger:active { transform: skewX(var(--skew)) translate(4px, 4px); box-shadow: 4px 4px 0 #9c8a00; }
-.intro .fichier { margin: 26px 0 0; font-size: .95rem; color: var(--doux); }
-
-.capture { margin: 48px 0 0; border: 2px solid var(--trait); }
-.capture img { width: 100%; height: auto; }
-
-/* --- Sections --- */
-section { padding: 72px 0 0; }
-h2 {
-  margin: 0 0 22px;
-  font-weight: 900;
-  font-style: italic;
-  font-variation-settings: "wdth" 118;
-  font-size: clamp(1.8rem, 4.5vw, 2.6rem);
-  line-height: 1.05;
-}
-h3 { margin: 0 0 6px; font-weight: 800; font-size: 1.15rem; }
-p { max-width: 62ch; }
-.doux { color: var(--doux); }
-
-/* Étapes réellement séquentielles : numérotées */
-ol.etapes { list-style: none; margin: 0; padding: 0; counter-reset: e; display: grid; gap: 18px; }
-ol.etapes > li { counter-increment: e; display: grid; grid-template-columns: 54px 1fr; gap: 16px; align-items: start; }
-ol.etapes > li::before {
-  content: counter(e);
-  display: grid; place-items: center;
-  width: 46px; height: 46px;
-  background: var(--nuit-2);
-  border: 2px solid var(--cyan);
-  color: var(--cyan);
-  font-weight: 900; font-style: italic; font-size: 1.3rem;
-  transform: skewX(var(--skew));
-}
-ol.etapes p { margin: 0; }
-
-.alerte {
-  margin: 26px 0 0;
-  padding: 18px 22px;
-  border-left: 6px solid var(--jaune);
-  background: #17183a;
-  max-width: 62ch;
-}
-.alerte strong { color: var(--jaune); }
-
-kbd {
-  display: inline-block;
-  min-width: 1.6em;
-  padding: 1px 7px;
-  border: 1px solid var(--trait);
-  border-bottom-width: 3px;
-  background: var(--nuit-2);
-  font-family: inherit;
-  font-size: .9em;
-  font-weight: 700;
-  text-align: center;
-}
-
-/* Deux situations côte à côte : même réseau / à distance */
-.cas { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 30px; }
-.cas > div { padding-top: 14px; border-top: 3px solid var(--cyan); }
-.cas > div + div { border-top-color: var(--magenta); }
-.cas p { margin: 0 0 10px; }
-
-/* Règles */
-.regles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px 40px; }
-.regles p { margin: 0; }
-
-/* Commandes */
-table { border-collapse: collapse; width: 100%; max-width: 760px; }
-th, td { text-align: left; padding: 11px 12px; border-bottom: 1px solid var(--trait); vertical-align: top; }
-th { font-weight: 800; color: var(--doux); font-size: .95rem; }
-td:first-child { font-weight: 700; white-space: nowrap; }
-
-/* Cartes */
-.cartes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px 20px; }
-.cartes figure { margin: 0; }
-.cartes a { display: block; border: 2px solid var(--trait); }
-.cartes a:hover { border-color: var(--cyan); }
-.cartes figcaption { margin-top: 10px; }
-.cartes figcaption b { font-weight: 800; font-style: italic; font-size: 1.1rem; }
-.cartes figcaption span { display: block; color: var(--doux); font-size: .95rem; }
-
-/* FAQ */
-details { border-bottom: 1px solid var(--trait); padding: 4px 0; max-width: 760px; }
-summary { cursor: pointer; padding: 12px 0; font-weight: 700; list-style: none; }
-summary::-webkit-details-marker { display: none; }
-summary::before { content: "+"; display: inline-block; width: 1.4em; color: var(--magenta); font-weight: 900; }
-details[open] summary::before { content: "−"; }
-details p { margin: 0 0 14px 1.4em; color: var(--doux); }
-
-.avis { padding-bottom: 20px; }
-.avis .telecharger { background: var(--magenta); color: var(--nuit); box-shadow: 8px 8px 0 #8a1463; }
-.avis .telecharger:hover { box-shadow: 10px 10px 0 #8a1463; }
-
-footer { margin-top: 90px; padding: 26px 0 40px; border-top: 1px solid var(--trait); color: var(--doux); font-size: .9rem; }
-footer p { margin: 4px 0; max-width: none; }
-footer code { font-size: .8rem; word-break: break-all; }
-
-@media (max-width: 760px) {
-  .intro, .cas, .regles { grid-template-columns: 1fr; }
-  .cartes { grid-template-columns: 1fr 1fr; }
-  .bandeau > span { padding: 10px 14px; }
-}
-@media (max-width: 460px) {
-  .cartes { grid-template-columns: 1fr; }
-}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -233,8 +37,14 @@ footer code { font-size: .8rem; word-break: break-all; }
     <div class="intro">
       <div>
         <p>Un duel en 1 contre 1 dans une arène néon. Les tirs sont lents&nbsp;: vise là où l'autre va être, esquive au dernier moment, et ne gaspille pas tes balles.</p>
-        <a class="telecharger" href="download/BlobDuel-0.7.0-windows.zip" download><span>Télécharger pour Windows</span></a>
-        <p class="fichier">Version de test 0.7.0 pour Windows 10 et 11. Fichier .zip de 32 Mo, gratuit.</p>
+        <form class="formulaire" method="post" action="/blobduel/telecharger">
+          <div class="champ-code<!--CHAMP_CODE-->">
+            <label for="code">Code d'accès (donné avec le lien)</label>
+            <input id="code" name="code" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64">
+          </div>
+          <button class="telecharger" type="submit"><span>Télécharger pour Windows</span></button>
+        </form>
+        <p class="fichier">Version de test 0.8.0 pour Windows 10 et 11. Fichier .zip de 25 Mo, gratuit. Usage personnel&nbsp;: merci de ne pas repartager le fichier, envoie plutôt le lien de cette page.</p>
       </div>
       <div>
         <p class="doux">Entraîne-toi contre l'IA, affronte un ami sur le même écran (clavier contre manette) ou joue en ligne avec un code d'invitation. Six cartes, dont trois avec un concept à elles&nbsp;: accélérateurs, portails, ricochets.</p>
@@ -250,7 +60,7 @@ footer code { font-size: .8rem; word-break: break-all; }
     <section id="installer">
       <h2>Installer</h2>
       <ol class="etapes">
-        <li><p><strong>Télécharge</strong> le fichier <em>BlobDuel-0.7.0-windows.zip</em>.</p></li>
+        <li><p><strong>Télécharge</strong> le fichier <em>BlobDuel-0.8.0-windows.zip</em>.</p></li>
         <li><p><strong>Fais un clic droit</strong> dessus, puis <em>Extraire tout</em>.</p></li>
         <li><p><strong>Double-clique</strong> sur <em>BlobDuel.exe</em> dans le dossier extrait. Rien d'autre à installer.</p></li>
       </ol>
@@ -262,7 +72,7 @@ footer code { font-size: .8rem; word-break: break-all; }
     <section id="jouer-a-deux">
       <h2>Jouer avec un ami</h2>
       <ol class="etapes">
-        <li><p>L'un de vous clique sur <em>Créer un salon</em>. Un code s'affiche, par exemple <strong style="white-space:nowrap">60001-04R9V-FN8BB</strong>.</p></li>
+        <li><p>L'un de vous clique sur <em>Créer un salon</em>. Un code s'affiche, par exemple <strong class="nowrap">60001-04R9V-FN8BB-Q4M2T</strong>.</p></li>
         <li><p>Il envoie ce code à l'autre, qui clique sur <em>Rejoindre un salon</em> et le colle.</p></li>
         <li><p>L'hôte choisit la carte, puis vous cliquez tous les deux sur <em>Prêt</em>.</p></li>
       </ol>
@@ -277,7 +87,7 @@ footer code { font-size: .8rem; word-break: break-all; }
           <p class="doux">Autre solution&nbsp;: ouvrir le port UDP 24680 sur la box de l'hôte.</p>
         </div>
       </div>
-      <p class="doux" style="margin-top:22px">Le code contient une clé secrète propre au salon&nbsp;: ne le partage qu'avec la personne avec qui tu joues.</p>
+      <p class="doux espace-haut">Le code contient une clé secrète propre au salon&nbsp;: ne le partage qu'avec la personne avec qui tu joues.</p>
     </section>
 
     <section id="regles">
@@ -323,8 +133,16 @@ footer code { font-size: .8rem; word-break: break-all; }
         <p>Certains antivirus se méfient des programmes récents et non signés. Le fichier officiel est celui de cette page&nbsp;; tu peux vérifier qu'il n'a pas été modifié grâce à son empreinte SHA-256, en bas de page. Si besoin, ajoute une exception pour le dossier du jeu.</p>
       </details>
       <details>
+        <summary>On me demande un code d'accès</summary>
+        <p>Cette version de test est réservée aux personnes invitées. Le code t'a été donné avec le lien de cette page. Après plusieurs codes faux, il faut attendre 15 minutes. Chaque personne peut télécharger le jeu quelques fois par jour.</p>
+      </details>
+      <details>
+        <summary>Le jeu est-il sûr&nbsp;?</summary>
+        <p>En ligne, tout ce qui passe entre les deux joueurs est chiffré, et la clé secrète du salon n'est jamais envoyée sur le réseau&nbsp;: chacun prouve qu'il la connaît sans la révéler. L'hôte vérifie chaque action de l'invité, ce qui empêche la plupart des triches. Le jeu ne demande aucun droit administrateur.</p>
+      </details>
+      <details>
         <summary>Mon ami n'arrive pas à rejoindre</summary>
-        <p>Vérifie qu'il a copié le code en entier (15 caractères). Sur deux réseaux différents, il faut Tailscale ou un port ouvert sur la box de l'hôte. Autorise aussi BlobDuel.exe dans le pare-feu Windows. Un nouveau code est créé à chaque salon.</p>
+        <p>Vérifie qu'il a copié le code en entier (20 caractères). Sur deux réseaux différents, il faut Tailscale ou un port ouvert sur la box de l'hôte. Autorise aussi BlobDuel.exe dans le pare-feu Windows. Un nouveau code est créé à chaque salon.</p>
       </details>
       <details>
         <summary>Ça marche sur Mac ou Linux&nbsp;?</summary>
@@ -348,8 +166,8 @@ footer code { font-size: .8rem; word-break: break-all; }
   </main>
 
   <footer>
-    <p>BLOB DUEL, version de test 0.7.0, publiée le 11 octobre 2026. <a href="confidentialite.html">Confidentialité</a></p>
-    <p>Empreinte SHA-256 du fichier&nbsp;: <code>030e79ba5c034138bb63a8d77bf69f55c233171ba76f1162dad23a9ba8bc6351</code></p>
+    <p>BLOB DUEL, version de test 0.8.0, publiée le 11 octobre 2026. <a href="confidentialite.html">Confidentialité</a> · <a href="licence.html">Licence</a></p>
+    <p>Empreinte SHA-256 du fichier&nbsp;: <code>e03c1276e3144d689c9c63e5e81a06546df67136c8811d9a72353fe55e9d9ed0</code></p>
   </footer>
 </div>
 

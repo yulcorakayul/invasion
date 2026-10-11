@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.log
+# Le jeu ne doit JAMAIS être commité en clair (seulement le .zip.enc chiffré)
+*.zip
+*.exe
+*.7z
